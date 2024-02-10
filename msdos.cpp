@@ -6386,7 +6386,7 @@ int msdos_mem_alloc(int mcb_seg, int paragraphs, int new_process)
 		if(!(new_process && !last_block)) {
 			if((malloc_strategy & 0x0f) >= 2 && found_seg) {
 				mcb = (mcb_t *)(mem + (found_seg << 4));
-				msdos_mem_split(found_seg + 1, mcb->paragraphs - paragraphs + 1);
+				msdos_mem_split(found_seg + 1, mcb->paragraphs - paragraphs - 1);
 				int next_seg = found_seg + 1 + mcb->paragraphs;
 				((mcb_t *)(mem + (next_seg << 4)))->psp = current_psp;
 				return(next_seg + 1);
@@ -10968,16 +10968,19 @@ inline void msdos_int_21h_27h()
 		process_t *process = msdos_process_info_get(current_psp);
 		UINT32 dta_laddr = (process->dta.w.h << 4) + process->dta.w.l;
 		UINT32 len = fcb->record_size * CPU_CX;
-		memset(mem + dta_laddr, 0, len);
 		DWORD num = 0;
 		if(!ReadFile(fcb->handle, mem + dta_laddr, len, &num, NULL) || num == 0) {
 			CPU_AL = 1;
+			CPU_CX = 0;
 		} else {
-			UINT16 nrec = num / fcb->record_size + ((num % fcb->record_size) != 0);
+			int leftover = num % fcb->record_size;
+			UINT16 nrec = num / fcb->record_size + (leftover != 0);
 			rec += nrec;
 			fcb->rand_record = (fcb->record_size >= 64) ? (fcb->rand_record & 0xff000000) | (rec & 0xffffff) : rec;
-			CPU_AL = (num == len) ? 0 : 3;
+			CPU_AL = !leftover ? ((num != len) ? 1 : 0) : 3;
 			CPU_CX = nrec;
+			if(leftover)
+				memset(mem + dta_laddr + num, 0, fcb->record_size - leftover);
 		}
 	}
 	fcb->current_block = rec / 128;
