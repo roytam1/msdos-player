@@ -127,6 +127,8 @@ SRCS_SOFTFLOAT = \
 	$(SRCD_SOFTFLOAT)fpu_constant.h \
 	$(SRCD_SOFTFLOAT)fsincos.c \
 	$(SRCD_SOFTFLOAT)fyl2x.c \
+	$(SRCD_SOFTFLOAT)fpatan.c \
+	$(SRCD_SOFTFLOAT)f2xm1.c \
 	$(SRCD_SOFTFLOAT)mamesf.h \
 	$(SRCD_SOFTFLOAT)milieu.h \
 	$(SRCD_SOFTFLOAT)softfloat-macros \
