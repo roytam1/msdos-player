@@ -1,3 +1,10 @@
+#ifndef _MAMESF_H
+#define _MAMESF_H
+
+#ifdef _MSC_VER
+#include <stdint.h>
+#endif
+
 /*----------------------------------------------------------------------------
 | One of the macros `BIGENDIAN' or `LITTLEENDIAN' must be defined.
 *----------------------------------------------------------------------------*/
@@ -64,3 +71,5 @@ typedef int64_t sbits64;
 | to be `static'.
 *----------------------------------------------------------------------------*/
 //#define INLINE static inline
+
+#endif
