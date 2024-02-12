@@ -1,0 +1,8 @@
+# .gitignore - List of filenames git should ignore
+
+# Filenames that should be ignored wherever they appear
+*.suo
+*.user
+*.sdf
+*.ncb
+out/**
