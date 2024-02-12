@@ -10919,6 +10919,7 @@ inline void msdos_int_21h_23h()
 	if(hFile == INVALID_HANDLE_VALUE) {
 		CPU_AL = 0xff;
 	} else {
+		if (!fcb->record_size) fcb->record_size = 64;
 		UINT32 size = GetFileSize(hFile, NULL);
 		UINT32 rec = size / fcb->record_size + ((size % fcb->record_size) != 0);
 		fcb->rand_record = (fcb->record_size >= 64) ? (fcb->rand_record & 0xff000000) | (rec & 0xffffff) : rec;
