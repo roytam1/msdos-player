@@ -3002,7 +3002,7 @@ void x87_fild_m16int(UINT8 modrm)
 	if (x87_check_exceptions())
 	{
 		x87_set_stack_top(ST_TO_PHYS(7));
-		x87_write_stack(0, value, true);
+		x87_write_stack(0, value, TRUE);
 	}
 
 	CYCLES(13);
@@ -3030,7 +3030,7 @@ void x87_fild_m32int(UINT8 modrm)
 	if (x87_check_exceptions())
 	{
 		x87_set_stack_top(ST_TO_PHYS(7));
-		x87_write_stack(0, value, true);
+		x87_write_stack(0, value, TRUE);
 	}
 
 	CYCLES(9);
@@ -3058,7 +3058,7 @@ void x87_fild_m64int(UINT8 modrm)
 	if (x87_check_exceptions())
 	{
 		x87_set_stack_top(ST_TO_PHYS(7));
-		x87_write_stack(0, value, true);
+		x87_write_stack(0, value, TRUE);
 	}
 
 	CYCLES(10);
@@ -3099,7 +3099,7 @@ void x87_fbld(UINT8 modrm)
 	if (x87_check_exceptions())
 	{
 		x87_set_stack_top(ST_TO_PHYS(7));
-		x87_write_stack(0, value, true);
+		x87_write_stack(0, value, TRUE);
 	}
 
 	CYCLES(75);
@@ -3402,7 +3402,7 @@ void x87_fistp_m16int(UINT8 modrm)
 		else
 		{
 			float_exception_flags = float_flag_invalid;
-			m16int = (uint16_t)0x8000;
+			m16int = (UINT16)0x8000;
 		}
 	}
 
@@ -3480,7 +3480,7 @@ void x87_fistp_m64int(UINT8 modrm)
 		else
 		{
 			float_exception_flags = float_flag_invalid;
-			m64int = 0x8000000000000000U;
+			m64int = U64(0x8000000000000000);
 		}
 	}
 
