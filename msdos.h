@@ -8,6 +8,90 @@
 #ifndef _MSDOS_H_
 #define _MSDOS_H_
 
+#if defined(_MSC_VER) && _MSC_VER < 1600
+
+/* WinCon.h */
+typedef struct _CONSOLE_FONT_INFOEX {
+  ULONG cbSize;
+  DWORD nFont;
+  COORD dwFontSize;
+  UINT  FontFamily;
+  UINT  FontWeight;
+  WCHAR FaceName[LF_FACESIZE];
+} CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+
+#define ENABLE_INSERT_MODE      0x0020
+#define ENABLE_QUICK_EDIT_MODE  0x0040
+#define ENABLE_EXTENDED_FLAGS   0x0080
+
+/* WinNT.h */
+#define SUBLANG_RUSSIAN_RUSSIA                      0x01    // Russian (Russia) 0x0419
+#define LANG_ZULU                        0x35
+#define SUBLANG_ZULU_SOUTH_AFRICA                   0x01    // isiZulu / Zulu (South Africa) 0x0435 zu-ZA
+#define SUBLANG_GREEK_GREECE                        0x01    // Greek (Greece)
+#define SUBLANG_BULGARIAN_BULGARIA                  0x01    // Bulgarian (Bulgaria) 0x0402
+#define SUBLANG_HUNGARIAN_HUNGARY                   0x01    // Hungarian (Hungary) 0x040e
+#define SUBLANG_ROMANIAN_ROMANIA                    0x01    // Romanian (Romania) 0x0418
+#define SUBLANG_SLOVAK_SLOVAKIA                     0x01    // Slovak (Slovakia) 0x041b sk-SK
+#define SUBLANG_DANISH_DENMARK                      0x01    // Danish (Denmark) 0x0406
+#define SUBLANG_POLISH_POLAND                       0x01    // Polish (Poland) 0x0415
+#define SUBLANG_INDONESIAN_INDONESIA                0x01    // Indonesian (Indonesia) 0x0421 id-ID
+#define LANG_CHINESE_TRADITIONAL       0x7c04   // Use with the ConvertDefaultLocale function
+#define SUBLANG_JAPANESE_JAPAN                      0x01    // Japanese (Japan) 0x0411
+#define SUBLANG_VIETNAMESE_VIETNAM                  0x01    // Vietnamese (Vietnam) 0x042a vi-VN
+#define LANG_CHINESE_SIMPLIFIED          0x04   // Use with the ConvertDefaultLocale function
+#define SUBLANG_TURKISH_TURKEY                      0x01    // Turkish (Turkey) 0x041f tr-TR
+#define SUBLANG_HINDI_INDIA                         0x01    // Hindi (India) 0x0439 hi-IN
+#define LANG_PASHTO                      0x63
+#define SUBLANG_PASHTO_AFGHANISTAN                  0x01    // Pashto (Afghanistan)
+#define LANG_SINHALESE                   0x5b
+#define SUBLANG_SINHALESE_SRI_LANKA                 0x01    // Sinhalese (Sri Lanka)
+#define LANG_PERSIAN                     0x29
+#define SUBLANG_PERSIAN_IRAN                        0x01    // Persian (Iran) 0x0429 fa-IR
+#define SUBLANG_BELARUSIAN_BELARUS                  0x01    // Belarusian (Belarus) 0x0423 be-BY
+#define SUBLANG_THAI_THAILAND                       0x01    // Thai (Thailand) 0x041e th-TH
+#define LANG_WOLOF                       0x88
+#define SUBLANG_WOLOF_SENEGAL                       0x01    // Wolof (Senegal)
+#define LANG_HAUSA                       0x68
+#define SUBLANG_HAUSA_NIGERIA_LATIN                 0x01    // Hausa (Latin, Nigeria) 0x0468 ha-NG-Latn
+#define LANG_AMHARIC                     0x5e
+#define SUBLANG_AMHARIC_ETHIOPIA                    0x01    // Amharic (Ethiopia) 0x045e
+#define LANG_TSWANA                      0x32
+#define SUBLANG_FAEROESE_FAROE_ISLANDS              0x01    // Faroese (Faroe Islands) 0x0438 fo-FO
+#define LANG_GREENLANDIC                 0x6f
+#define SUBLANG_GREENLANDIC_GREENLAND               0x01    // Greenlandic (Greenland) 0x046f kl-GL
+#define LANG_LUXEMBOURGISH               0x6e
+#define SUBLANG_LUXEMBOURGISH_LUXEMBOURG            0x01    // Luxembourgish (Luxembourg) 0x046e lb-LU
+#define LANG_IRISH                       0x3c   // Use with the SUBLANG_IRISH_IRELAND Sublanguage ID
+#define SUBLANG_IRISH_IRELAND                       0x02    // Irish (Ireland)
+#define SUBLANG_ICELANDIC_ICELAND                   0x01    // Icelandic (Iceland) 0x040f
+#define SUBLANG_ALBANIAN_ALBANIA                    0x01    // Albanian (Albania) 0x041c sq-AL
+#define LANG_MALTESE                     0x3a
+#define SUBLANG_MALTESE_MALTA                       0x01    // Maltese (Malta) 0x043a mt-MT
+#define SUBLANG_FINNISH_FINLAND                     0x01    // Finnish (Finland) 0x040b
+#define SUBLANG_LATVIAN_LATVIA                      0x01    // Latvian (Latvia) 0x0426 lv-LV
+#define SUBLANG_ESTONIAN_ESTONIA                    0x01    // Estonian (Estonia) 0x0425 et-EE
+#define SUBLANG_SERBIAN_CROATIA                     0x01    // Croatian (Croatia) 0x041a hr-HR
+#define SUBLANG_SLOVENIAN_SLOVENIA                  0x01    // Slovenian (Slovenia) 0x0424 sl-SI
+#define LANG_BOSNIAN                     0x1a   // Use with SUBLANG_BOSNIAN_* Sublanguage IDs
+#define SUBLANG_BOSNIAN_BOSNIA_HERZEGOVINA_LATIN    0x05    // Bosnian (Bosnia and Herzegovina - Latin) 0x141a bs-BA-Latn
+#define SUBLANG_BOSNIAN_BOSNIA_HERZEGOVINA_CYRILLIC 0x08    // Bosnian (Bosnia and Herzegovina - Cyrillic) 0x201a bs-BA-Cyrl
+#define SUBLANG_MACEDONIAN_MACEDONIA                0x01    // Macedonian (Macedonia (FYROM)) 0x042f mk-MK
+#define SUBLANG_CZECH_CZECH_REPUBLIC                0x01    // Czech (Czech Republic) 0x0405
+#define SUBLANG_UKRAINIAN_UKRAINE                   0x01    // Ukrainian (Ukraine) 0x0422 uk-UA
+#define LANG_KHMER                       0x53
+#define SUBLANG_KHMER_CAMBODIA                      0x01    // Khmer (Cambodia) 0x0453 kh-KH
+#define SUBLANG_DIVEHI_MALDIVES                     0x01    // Divehi (Maldives) 0x0465 div-MV
+#define SUBLANG_HEBREW_ISRAEL                       0x01    // Hebrew (Israel) 0x040d
+#define SUBLANG_MONGOLIAN_CYRILLIC_MONGOLIA         0x01    // Mongolian (Cyrillic, Mongolia)
+#define SUBLANG_NEPALI_NEPAL                        0x01    // Nepali (Nepal) 0x0461 ne-NP
+
+/* sal.h (dummy here) */
+#define _In_
+#define _Out_opt_
+
+#endif
+
 #pragma pack(1)
 typedef union {
 	UINT32 dw;
