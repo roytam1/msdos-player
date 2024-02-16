@@ -5,4 +5,4 @@
 *.user
 *.sdf
 *.ncb
-out/**
+out*/**

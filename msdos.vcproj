@@ -20,8 +20,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug_i86|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_i86-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_i86-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -42,7 +42,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -52,10 +52,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -75,11 +75,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -97,7 +97,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -111,8 +111,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i86|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_i86-x64"
+			IntermediateDirectory=".\out-vc8\Debug_i86-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -134,7 +134,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -144,10 +144,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -167,11 +167,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -189,7 +189,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -203,8 +203,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i186|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_i186-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_i186-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -225,7 +225,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -235,10 +235,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -258,11 +258,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -280,7 +280,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -294,8 +294,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i186|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_i186-x64"
+			IntermediateDirectory=".\out-vc8\Debug_i186-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -317,7 +317,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -327,10 +327,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -350,11 +350,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -372,7 +372,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -386,8 +386,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_v30|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_v30-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_v30-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -408,7 +408,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -418,10 +418,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -441,11 +441,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -463,7 +463,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -477,8 +477,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_v30|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_v30-x64"
+			IntermediateDirectory=".\out-vc8\Debug_v30-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -500,7 +500,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -510,10 +510,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -533,11 +533,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -555,7 +555,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -569,8 +569,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i286|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_i286-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_i286-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -591,7 +591,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -601,10 +601,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -624,11 +624,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -646,7 +646,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -660,8 +660,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i286|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_i286-x64"
+			IntermediateDirectory=".\out-vc8\Debug_i286-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -683,7 +683,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -693,10 +693,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -716,11 +716,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -738,7 +738,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -752,8 +752,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i386|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_i386-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_i386-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -774,7 +774,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -784,10 +784,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -807,11 +807,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -829,7 +829,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -843,8 +843,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i386|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_i386-x64"
+			IntermediateDirectory=".\out-vc8\Debug_i386-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -866,7 +866,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -876,10 +876,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -899,11 +899,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -921,7 +921,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -935,8 +935,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i486|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_i486-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_i486-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -957,7 +957,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -967,10 +967,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -990,11 +990,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1012,7 +1012,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1026,8 +1026,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_i486|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_i486-x64"
+			IntermediateDirectory=".\out-vc8\Debug_i486-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1049,7 +1049,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1059,10 +1059,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1082,11 +1082,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1104,7 +1104,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1118,8 +1118,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1140,7 +1140,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1150,10 +1150,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1173,11 +1173,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1195,7 +1195,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1209,8 +1209,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1232,7 +1232,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1242,10 +1242,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1265,11 +1265,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1287,7 +1287,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1301,8 +1301,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_mediagx|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_mediagx-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_mediagx-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1323,7 +1323,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1333,10 +1333,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1356,11 +1356,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1378,7 +1378,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1392,8 +1392,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_mediagx|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_mediagx-x64"
+			IntermediateDirectory=".\out-vc8\Debug_mediagx-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1415,7 +1415,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1425,10 +1425,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1448,11 +1448,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1470,7 +1470,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1484,8 +1484,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium_pro|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium_pro-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium_pro-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1506,7 +1506,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1516,10 +1516,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1539,11 +1539,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1561,7 +1561,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1575,8 +1575,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium_pro|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium_pro-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium_pro-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1598,7 +1598,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1608,10 +1608,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1631,11 +1631,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1653,7 +1653,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1667,8 +1667,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium_mmx|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium_mmx-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium_mmx-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1689,7 +1689,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1699,10 +1699,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1722,11 +1722,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1744,7 +1744,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1758,8 +1758,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium_mmx|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium_mmx-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium_mmx-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1781,7 +1781,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1791,10 +1791,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1814,11 +1814,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1836,7 +1836,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1850,8 +1850,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium2|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium2-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium2-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1872,7 +1872,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1882,10 +1882,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1905,11 +1905,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1927,7 +1927,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -1941,8 +1941,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium2|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium2-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium2-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -1964,7 +1964,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -1974,10 +1974,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -1997,11 +1997,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -2019,7 +2019,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2033,8 +2033,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium3|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium3-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium3-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2055,7 +2055,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2065,10 +2065,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -2088,11 +2088,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -2110,7 +2110,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2124,8 +2124,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium3|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium3-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium3-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2147,7 +2147,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2157,10 +2157,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -2180,11 +2180,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -2202,7 +2202,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2216,8 +2216,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium4|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory=".\out-vc8\Debug_pentium4-Win32"
+			IntermediateDirectory=".\out-vc8\Debug_pentium4-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2238,7 +2238,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2248,10 +2248,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -2271,11 +2271,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -2293,7 +2293,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2307,8 +2307,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug_pentium4|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Debug_pentium4-x64"
+			IntermediateDirectory=".\out-vc8\Debug_pentium4-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2330,7 +2330,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Debug/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2340,10 +2340,10 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/msdos.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
@@ -2363,11 +2363,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Debug/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\Debug/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -2385,7 +2385,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Debug/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2399,8 +2399,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i86|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_i86-Win32"
+			IntermediateDirectory=".\out-vc8\Release_i86-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2422,7 +2422,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2433,10 +2433,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2454,10 +2454,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2476,7 +2476,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2490,8 +2490,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i86|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_i86-x64"
+			IntermediateDirectory=".\out-vc8\Release_i86-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2514,7 +2514,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2525,10 +2525,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2546,10 +2546,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2568,7 +2568,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2582,8 +2582,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i186|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_i186-Win32"
+			IntermediateDirectory=".\out-vc8\Release_i186-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2605,7 +2605,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2616,10 +2616,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2637,10 +2637,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2659,7 +2659,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2673,8 +2673,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i186|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_i186-x64"
+			IntermediateDirectory=".\out-vc8\Release_i186-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2697,7 +2697,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2708,10 +2708,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2729,10 +2729,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2751,7 +2751,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2765,8 +2765,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_v30|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_v30-Win32"
+			IntermediateDirectory=".\out-vc8\Release_v30-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2788,7 +2788,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2799,10 +2799,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2820,10 +2820,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2842,7 +2842,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2856,8 +2856,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_v30|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_v30-x64"
+			IntermediateDirectory=".\out-vc8\Release_v30-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2880,7 +2880,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2891,10 +2891,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -2912,10 +2912,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -2934,7 +2934,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -2948,8 +2948,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i286|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_i286-Win32"
+			IntermediateDirectory=".\out-vc8\Release_i286-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -2971,7 +2971,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -2982,10 +2982,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3003,10 +3003,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3025,7 +3025,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3039,8 +3039,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i286|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_i286-x64"
+			IntermediateDirectory=".\out-vc8\Release_i286-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3063,7 +3063,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3074,10 +3074,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3095,10 +3095,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3117,7 +3117,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3131,8 +3131,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i386|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_i386-Win32"
+			IntermediateDirectory=".\out-vc8\Release_i386-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3154,7 +3154,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3165,10 +3165,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3186,10 +3186,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3208,7 +3208,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3222,8 +3222,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i386|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_i386-x64"
+			IntermediateDirectory=".\out-vc8\Release_i386-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3246,7 +3246,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3257,10 +3257,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3278,10 +3278,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3300,7 +3300,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3314,8 +3314,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i486|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_i486-Win32"
+			IntermediateDirectory=".\out-vc8\Release_i486-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3337,7 +3337,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3348,10 +3348,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3369,10 +3369,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3391,7 +3391,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3405,8 +3405,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_i486|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_i486-x64"
+			IntermediateDirectory=".\out-vc8\Release_i486-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3429,7 +3429,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3440,10 +3440,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3461,10 +3461,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3483,7 +3483,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3497,8 +3497,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3520,7 +3520,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3531,10 +3531,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3552,10 +3552,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3574,7 +3574,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3588,8 +3588,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3612,7 +3612,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3623,10 +3623,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3644,10 +3644,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3666,7 +3666,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3680,8 +3680,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_mediagx|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_mediagx-Win32"
+			IntermediateDirectory=".\out-vc8\Release_mediagx-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3703,7 +3703,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3714,10 +3714,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3735,10 +3735,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3757,7 +3757,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3771,8 +3771,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_mediagx|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_mediagx-x64"
+			IntermediateDirectory=".\out-vc8\Release_mediagx-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3795,7 +3795,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3806,10 +3806,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3827,10 +3827,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3849,7 +3849,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3863,8 +3863,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium_pro|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium_pro-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium_pro-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3886,7 +3886,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3897,10 +3897,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -3918,10 +3918,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -3940,7 +3940,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -3954,8 +3954,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium_pro|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium_pro-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium_pro-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -3978,7 +3978,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -3989,10 +3989,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4010,10 +4010,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4032,7 +4032,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4046,8 +4046,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium_mmx|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium_mmx-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium_mmx-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4069,7 +4069,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4080,10 +4080,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4101,10 +4101,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4123,7 +4123,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4137,8 +4137,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium_mmx|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium_mmx-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium_mmx-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4161,7 +4161,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4172,10 +4172,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4193,10 +4193,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4215,7 +4215,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4229,8 +4229,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium2|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium2-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium2-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4252,7 +4252,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4263,10 +4263,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4284,10 +4284,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4306,7 +4306,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4320,8 +4320,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium2|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium2-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium2-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4344,7 +4344,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4355,10 +4355,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4376,10 +4376,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4398,7 +4398,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4412,8 +4412,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium3|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium3-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium3-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4435,7 +4435,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4446,10 +4446,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4467,10 +4467,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4489,7 +4489,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4503,8 +4503,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium3|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium3-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium3-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4527,7 +4527,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4538,10 +4538,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4559,10 +4559,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4581,7 +4581,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4595,8 +4595,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium4|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\out-vc8\Release_pentium4-Win32"
+			IntermediateDirectory=".\out-vc8\Release_pentium4-Win32"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4618,7 +4618,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4629,10 +4629,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4650,10 +4650,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4672,7 +4672,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -4686,8 +4686,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release_pentium4|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory=".\out-vc8\Release_pentium4-x64"
+			IntermediateDirectory=".\out-vc8\Release_pentium4-x64"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -4710,7 +4710,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\Release/msdos.tlb"
+				TypeLibraryName="$(OutDir)\msdos.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -4721,10 +4721,10 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				PrecompiledHeaderFile=".\Release/msdos.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile="$(OutDir)\msdos.pch"
+				AssemblerListingLocation="$(OutDir)\"
+				ObjectFile="$(OutDir)\"
+				ProgramDataBaseFileName="$(OutDir)\"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 			/>
@@ -4742,10 +4742,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib winmm.lib psapi.lib wsock32.lib setupapi.lib mpr.lib"
-				OutputFile=".\Release/msdos.exe"
+				OutputFile="$(OutDir)\msdos.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\Release/msdos.pdb"
+				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
@@ -4764,7 +4764,7 @@
 			<Tool
 				Name="VCBscMakeTool"
 				SuppressStartupBanner="true"
-				OutputFile=".\Release/msdos.bsc"
+				OutputFile="$(OutDir)\msdos.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
