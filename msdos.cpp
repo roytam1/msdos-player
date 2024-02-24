@@ -2505,7 +2505,7 @@ bool is_started_from(const char *name)
 			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwParentProcessID);
 			if(hProcess != NULL) {
 				char module_path[MAX_PATH];
-				if(GetProcessImageFileNameA(hProcess, module_path, MAX_PATH)) {
+				if(GetModuleFileNameExA(hProcess, NULL, module_path, MAX_PATH)) {
 					int path_len = (int)strlen(module_path);
 					int name_len = (int)strlen(name);
 					if(path_len >= name_len) {
