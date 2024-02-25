@@ -5,6 +5,10 @@
 	Date   : 2009.11.09-
 */
 
+#define COMPILE_NEWAPIS_STUBS
+#define WANT_GETLONGPATHNAME_WRAPPER
+#include <newapis.h>	//Probe_GetLongPathName
+
 #include "common.h"
 #include "msdos.h"
 
@@ -12890,7 +12894,7 @@ inline void msdos_int_21h_47h(int lfn)
 		if(!lfn) {
 			strcpy(path, msdos_short_path(path));
 		} else {
-			GetLongPathNameA(path, path, MAX_PATH);
+			Probe_GetLongPathName(path, path, MAX_PATH);
 		}
 		if(path[1] == ':') {
 			// the returned path does not include a drive or the initial backslash
@@ -13676,7 +13680,7 @@ inline void msdos_int_21h_60h(int lfn)
 			my_strupr(full);
 			break;
 		case 2:
-			GetLongPathNameA(full, full, MAX_PATH);
+			Probe_GetLongPathName(full, full, MAX_PATH);
 			break;
 		}
 		path = full;
