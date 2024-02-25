@@ -12426,7 +12426,7 @@ inline void msdos_int_21h_44h()
 		}
 		break;
 	case 0x0a: // Check If Handle Is Remote
-		if(!(file_handler[fd].info & 0x8000) && msdos_is_remote_drive(msdos_drive_number(file_handler[fd].path))) {
+		if(!(file_handler[(char)fd].info & 0x8000) && msdos_is_remote_drive(msdos_drive_number(file_handler[(char)fd].path))) {
 			CPU_DX = 0x8000;
 		} else {
 			CPU_DX = 0x0000;
