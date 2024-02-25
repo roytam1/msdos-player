@@ -2534,13 +2534,20 @@ bool is_started_from_console()
 			if(lpfnGetConsoleProcessList) { // Windows XP or later
 				DWORD dwProcessList[32];
 				result = (lpfnGetConsoleProcessList(dwProcessList, 32) > 1);
-				FreeLibrary(hLibrary);
-				return(result);
 			}
 			FreeLibrary(hLibrary);
 		}
 	}
-	return is_started_from("cmd.exe") || is_started_from("powershell.exe");
+	//return is_started_from("cmd.exe") || is_started_from("powershell.exe");
+	else {
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		if (GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE), &csbi)) {
+			// if cursor position is (0,0) then we may be launched in a separate console
+			// Notice: a 4NT console window without scrollback and run with `cls && msdos.exe` can trigger this as well
+			result = !((!csbi.dwCursorPosition.X) && (!csbi.dwCursorPosition.Y));
+		}
+	}
+	return(result);
 }
 
 BOOL is_greater_windows_version(DWORD dwMajorVersion, DWORD dwMinorVersion, WORD wServicePackMajor, WORD wServicePackMinor)
@@ -2895,6 +2902,7 @@ void get_sio_port_numbers()
 
 int main(int argc, char *argv[], char *envp[])
 {
+	bool started_from_console = is_started_from_console();
 	is_winxp_or_later = is_greater_windows_version( 5, 1, 0, 0);
 	is_xp_64_or_later = is_greater_windows_version( 5, 2, 0, 0);
 	is_vista_or_later = is_greater_windows_version( 6, 0, 0, 0);
@@ -3167,7 +3175,7 @@ int main(int argc, char *argv[], char *envp[])
 			"\t-l\tdraw box lines with ank characters\n"
 		);
 		
-		if(!is_started_from_console()) {
+		if(!started_from_console) {
 			fprintf(stderr, "\nStart this program from a command prompt!\n\nHit any key to quit...");
 			while(!_kbhit()) {
 				Sleep(10);
