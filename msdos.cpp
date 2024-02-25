@@ -2484,7 +2484,7 @@ long get_section_in_exec_file(FILE *fp, const char *name)
 	return(0);
 }
 
-bool is_started_from(const char *name)
+/*bool is_started_from(const char *name)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	bool result = false;
@@ -2518,7 +2518,7 @@ bool is_started_from(const char *name)
 		CloseHandle(hSnapshot);
 	}
 	return(result);
-}
+}*/
 
 bool is_started_from_console()
 {
@@ -2694,7 +2694,7 @@ bool get_console_font_info(CONSOLE_FONT_INFOEX *fi)
 			GetCurrentConsoleFontExFunction lpfnGetCurrentConsoleFontEx = reinterpret_cast<GetCurrentConsoleFontExFunction>(::GetProcAddress(hLibrary, "GetCurrentConsoleFontEx"));
 			if(lpfnGetCurrentConsoleFontEx) {
 				if(lpfnGetCurrentConsoleFontEx(hStdout, FALSE, fi)) {
-					if(is_started_from("cmd.exe")) {
+					if(1/*is_started_from("cmd.exe")*/) {
 						char mbs[LF_FACESIZE];
 						WideCharToMultiByte(CP_THREAD_ACP, 0, fi->FaceName, (int)wcslen(fi->FaceName) + 1, mbs, LF_FACESIZE,NULL,NULL);
 						mbstowcs(fi->FaceName, mbs, LF_FACESIZE);
