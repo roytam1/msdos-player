@@ -5,9 +5,13 @@
 	Date   : 2009.11.09-
 */
 
+#if _MSC_VER < 1500
 #define COMPILE_NEWAPIS_STUBS
 #define WANT_GETLONGPATHNAME_WRAPPER
 #include <newapis.h>	//Probe_GetLongPathName
+#else
+#define Probe_GetLongPathName GetLongPathNameA
+#endif
 
 #include "common.h"
 #include "msdos.h"
