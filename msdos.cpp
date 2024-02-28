@@ -3686,26 +3686,29 @@ void change_console_size(int width, int height)
 	int cur_window_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	int cur_buffer_width  = csbi.dwSize.X;
 	int cur_buffer_height = csbi.dwSize.Y;
-	
-	// conhost-v2 may crash when cursor is at bottom line, so we need to change cursor position
-	if(csbi.dwCursorPosition.Y > height - 2) {
-		printf("\n"); // hack
+
+	// workaround win10 conhost v2 bug that crash when cursor is out of range
+	if(is_win10_or_later) {
+		co.X = 0;
+		co.Y = 0;
+		SetConsoleCursorPosition(hStdout, co);
 	}
-	if(csbi.srWindow.Top != 0 || csbi.dwCursorPosition.Y > height - 2) {
+
+	if(csbi.srWindow.Top != 0 || csbi.dwCursorPosition.Y > height - 1) {
 		if(cur_window_width == width && cur_window_height == height) {
 			ReadConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &csbi.srWindow);
 			SET_RECT(rect, 0, 0, width - 1, height - 1);
 			WriteConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &rect);
-		} else if(csbi.dwCursorPosition.Y > height - 2) {
+		} else if(csbi.dwCursorPosition.Y > height - 1) {
 			SET_RECT(rect, 0, csbi.dwCursorPosition.Y - (height - 1), width - 1, csbi.dwCursorPosition.Y);
 			ReadConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &rect);
 			SET_RECT(rect, 0, 0, width - 1, height - 1);
 			WriteConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &rect);
 		}
 	}
-	if(csbi.dwCursorPosition.X > width - 1 || csbi.dwCursorPosition.Y > height - 2) {
+	if(!is_win10_or_later && (csbi.dwCursorPosition.X > width - 1 || csbi.dwCursorPosition.Y > height - 1)) {
 		co.X = min(width - 1, csbi.dwCursorPosition.X - csbi.srWindow.Left);
-		co.Y = min(height - 2, csbi.dwCursorPosition.Y - csbi.srWindow.Top);
+		co.Y = min(height - 1, csbi.dwCursorPosition.Y - csbi.srWindow.Top);
 		SetConsoleCursorPosition(hStdout, co);
 		cursor_moved = true;
 		cursor_moved_by_crtc = false;
@@ -3739,6 +3742,15 @@ void change_console_size(int width, int height)
 			SetWindowPos(get_console_window_handle(), NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
 			SetConsoleWindowInfo(hStdout, TRUE, &rect);
 		}
+	}
+
+	// restore cursor position
+	if(is_win10_or_later) {
+		co.X = min(width - 1, csbi.dwCursorPosition.X - csbi.srWindow.Left);
+		co.Y = min(height - 1, csbi.dwCursorPosition.Y - csbi.srWindow.Top);
+		SetConsoleCursorPosition(hStdout, co);
+		cursor_moved = true;
+		cursor_moved_by_crtc = false;
 	}
 	
 	scr_width = scr_buf_size.X = width;
