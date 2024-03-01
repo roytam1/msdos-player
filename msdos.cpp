@@ -12229,8 +12229,12 @@ inline void msdos_int_21h_43h(int lfn)
 			typedef DWORD (WINAPI* GetCompressedFileSizeFunction)(_In_ LPCSTR, _Out_opt_ LPDWORD);
 			GetCompressedFileSizeFunction lpfnGetCompressedFileSizeA = NULL;
 			
-			if(GetFileAttributesExA(path, GetFileExInfoStandard, &tFileInfo) != 0) {
-				file_size = tFileInfo.nFileSizeLow;
+			//if(GetFileAttributesExA(path, GetFileExInfoStandard, &tFileInfo) != 0) {
+			//	file_size = tFileInfo.nFileSizeLow;
+			HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if(hFile != INVALID_HANDLE_VALUE) {
+				file_size = GetFileSize(hFile, &tFileInfo.nFileSizeHigh);
+				CloseHandle(hFile);
 				compressed_size = file_size; // temporary
 				
 				if((hLibrary = LoadLibraryA("Kernel32.dll")) != NULL) {
@@ -12310,7 +12314,9 @@ inline void msdos_int_21h_43h(int lfn)
 	case 0x08:
 		if(lfn) {
 			WIN32_FILE_ATTRIBUTE_DATA fad;
-			if(GetFileAttributesExA(path, GetFileExInfoStandard, (LPVOID)&fad)) {
+			HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			//if(GetFileAttributesExA(path, GetFileExInfoStandard, (LPVOID)&fad)) {
+			if(GetFileTime(hFile, &fad.ftCreationTime, &fad.ftLastAccessTime, &fad.ftLastWriteTime)) {
 				FILETIME *time, local;
 				time = CPU_BL == 0x04 ? &fad.ftLastWriteTime :
 						   0x06 ? &fad.ftLastAccessTime :
@@ -12328,6 +12334,7 @@ inline void msdos_int_21h_43h(int lfn)
 				CPU_AX = msdos_maperr(GetLastError());
 				CPU_SET_C_FLAG(1);
 			}
+			CloseHandle(hFile);
 		} else {
 			// 214304 DR DOS 5.0-6.0 internal - Get Encrypted Password
 			// 214306 DR DOS 6.0 - Get File Owner
