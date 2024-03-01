@@ -242,7 +242,7 @@ void ignore_invalid_parameters(const wchar_t *, const wchar_t *, const wchar_t *
 }
 #endif
 
-#define USE_VRAM_THREAD
+//#define USE_VRAM_THREAD
 
 #ifdef USE_VRAM_THREAD
 static CRITICAL_SECTION vram_crit_sect;

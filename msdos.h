@@ -268,7 +268,7 @@ void debugger_write_io_dword(UINT32 addr, UINT32 val);
 	service thread
 ---------------------------------------------------------------------------- */
 
-#define USE_SERVICE_THREAD
+//#define USE_SERVICE_THREAD
 
 UINT16 CPU_AX_in_service;
 UINT16 CPU_CX_in_service;
