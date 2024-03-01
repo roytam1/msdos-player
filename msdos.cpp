@@ -3005,9 +3005,13 @@ int main(int argc, char *argv[], char *envp[])
 	char new_exec_file[MAX_PATH];
 	bool convert_cmd_file = false;
 	unsigned int code_page = 0;
+	unsigned int old_error_mode = 0;
 	
 	char path[MAX_PATH], full[MAX_PATH], *name = NULL;
-	
+
+	if(!is_win2k_or_later)
+		old_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
+
 	GetModuleFileNameA(NULL, path, MAX_PATH);
 	GetFullPathNameA(path, MAX_PATH, full, &name);
 	
@@ -3657,6 +3661,8 @@ int main(int argc, char *argv[], char *envp[])
 	DeleteCriticalSection(&key_buf_crit_sect);
 	DeleteCriticalSection(&putch_crit_sect);
 #endif
+	if(!is_win2k_or_later)
+		SetErrorMode(old_error_mode);
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();
 #endif
