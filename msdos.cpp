@@ -83,6 +83,7 @@ void exit_handler();
 	#define unimplemented_xms nolog
 #endif
 
+BOOL is_nt_40_or_later;
 BOOL is_win2k_or_later;
 BOOL is_winxp_or_later;
 BOOL is_xp_64_or_later;
@@ -242,13 +243,8 @@ void ignore_invalid_parameters(const wchar_t *, const wchar_t *, const wchar_t *
 }
 #endif
 
-//#define USE_VRAM_THREAD
-
-#ifdef USE_VRAM_THREAD
+BOOL use_vram_thread = FALSE;
 static CRITICAL_SECTION vram_crit_sect;
-#else
-#define vram_flush()
-#endif
 
 #define VIDEO_REGEN *(UINT16 *)(mem + 0x44c)
 #define SCR_BUF(y,x) scr_buf[(y) * scr_buf_size.X + (x)]
@@ -431,13 +427,13 @@ UINT16 debugger_read_word(UINT32 byteaddress)
 		if(byteaddress == 0x41c) {
 			// pointer to first free slot in keyboard buffer
 			if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-				EnterCriticalSection(&key_buf_crit_sect);
-#endif
+				if(use_service_thread) {
+					EnterCriticalSection(&key_buf_crit_sect);
+				}
 				bool empty = pcbios_is_key_buffer_empty();
-#ifdef USE_SERVICE_THREAD
-				LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+				if(use_service_thread) {
+					LeaveCriticalSection(&key_buf_crit_sect);
+				}
 				if(empty) maybe_idle();
 			}
 		}
@@ -617,7 +613,6 @@ BOOL MyWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, D
 #define MyWriteConsoleOutputCharacterA WriteConsoleOutputCharacterA
 #endif
 
-#ifdef USE_VRAM_THREAD
 void vram_flush_char()
 {
 	if(vram_length_char != 0) {
@@ -645,92 +640,91 @@ void vram_flush()
 		LeaveCriticalSection(&vram_crit_sect);
 	}
 }
-#endif
 
 void write_text_vram_char(UINT32 offset, UINT8 data)
 {
-#ifdef USE_VRAM_THREAD
-	static UINT32 first_offset_char, last_offset_char;
-	
-	if(vram_length_char != 0) {
-		if(offset <= last_offset_char && offset >= first_offset_char) {
-			scr_char[(offset - first_offset_char) >> 1] = data;
-			return;
+	if(use_vram_thread) {
+		static UINT32 first_offset_char, last_offset_char;
+		
+		if(vram_length_char != 0) {
+			if(offset <= last_offset_char && offset >= first_offset_char) {
+				scr_char[(offset - first_offset_char) >> 1] = data;
+				return;
+			}
+			if(offset != last_offset_char + 2) {
+				vram_flush_char();
+			}
 		}
-		if(offset != last_offset_char + 2) {
-			vram_flush_char();
+		if(vram_length_char == 0) {
+			first_offset_char = offset;
+			vram_coord_char.X = (offset >> 1) % scr_width;
+			vram_coord_char.Y = (offset >> 1) / scr_width + scr_top;
 		}
+		scr_char[vram_length_char++] = data;
+		last_offset_char = offset;
+	} else {
+		COORD co;
+		DWORD num;
+		
+		co.X = (offset >> 1) % scr_width;
+		co.Y = (offset >> 1) / scr_width;
+		scr_char[0] = data;
+		MyWriteConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), scr_char, 1, co, &num);
 	}
-	if(vram_length_char == 0) {
-		first_offset_char = offset;
-		vram_coord_char.X = (offset >> 1) % scr_width;
-		vram_coord_char.Y = (offset >> 1) / scr_width + scr_top;
-	}
-	scr_char[vram_length_char++] = data;
-	last_offset_char = offset;
-#else
-	COORD co;
-	DWORD num;
-	
-	co.X = (offset >> 1) % scr_width;
-	co.Y = (offset >> 1) / scr_width;
-	scr_char[0] = data;
-	MyWriteConsoleOutputCharacterA(GetStdHandle(STD_OUTPUT_HANDLE), scr_char, 1, co, &num);
-#endif
 }
 
 void write_text_vram_attr(UINT32 offset, UINT8 data)
 {
-#ifdef USE_VRAM_THREAD
-	static UINT32 first_offset_attr, last_offset_attr;
-	
-	if(vram_length_attr != 0) {
-		if(offset <= last_offset_attr && offset >= first_offset_attr) {
-			scr_attr[(offset - first_offset_attr) >> 1] = data;
-			return;
+	if(use_vram_thread) {
+		static UINT32 first_offset_attr, last_offset_attr;
+		
+		if(vram_length_attr != 0) {
+			if(offset <= last_offset_attr && offset >= first_offset_attr) {
+				scr_attr[(offset - first_offset_attr) >> 1] = data;
+				return;
+			}
+			if(offset != last_offset_attr + 2) {
+				vram_flush_attr();
+			}
 		}
-		if(offset != last_offset_attr + 2) {
-			vram_flush_attr();
+		if(vram_length_attr == 0) {
+			first_offset_attr = offset;
+			vram_coord_attr.X = (offset >> 1) % scr_width;
+			vram_coord_attr.Y = (offset >> 1) / scr_width + scr_top;
 		}
+		scr_attr[vram_length_attr++] = data;
+		last_offset_attr = offset;
+	} else {
+		COORD co;
+		DWORD num;
+		
+		co.X = (offset >> 1) % scr_width;
+		co.Y = (offset >> 1) / scr_width;
+		scr_attr[0] = data;
+		WriteConsoleOutputAttribute(GetStdHandle(STD_OUTPUT_HANDLE), scr_attr, 1, co, &num);
 	}
-	if(vram_length_attr == 0) {
-		first_offset_attr = offset;
-		vram_coord_attr.X = (offset >> 1) % scr_width;
-		vram_coord_attr.Y = (offset >> 1) / scr_width + scr_top;
-	}
-	scr_attr[vram_length_attr++] = data;
-	last_offset_attr = offset;
-#else
-	COORD co;
-	DWORD num;
-	
-	co.X = (offset >> 1) % scr_width;
-	co.Y = (offset >> 1) / scr_width;
-	scr_attr[0] = data;
-	WriteConsoleOutputAttribute(GetStdHandle(STD_OUTPUT_HANDLE), scr_attr, 1, co, &num);
-#endif
 }
 
 void write_text_vram_byte(UINT32 offset, UINT8 data)
 {
-#ifdef USE_VRAM_THREAD
-	EnterCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		EnterCriticalSection(&vram_crit_sect);
+	}
 	if(offset & 1) {
 		write_text_vram_attr(offset, data);
 	} else {
 		write_text_vram_char(offset, data);
 	}
-#ifdef USE_VRAM_THREAD
-	LeaveCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		LeaveCriticalSection(&vram_crit_sect);
+	}
 }
 
 void write_text_vram_word(UINT32 offset, UINT16 data)
 {
-#ifdef USE_VRAM_THREAD
-	EnterCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		EnterCriticalSection(&vram_crit_sect);
+	}
 	if(offset & 1) {
 		write_text_vram_attr(offset    , (data     ) & 0xff);
 		write_text_vram_char(offset + 1, (data >> 8) & 0xff);
@@ -738,16 +732,16 @@ void write_text_vram_word(UINT32 offset, UINT16 data)
 		write_text_vram_char(offset    , (data     ) & 0xff);
 		write_text_vram_attr(offset + 1, (data >> 8) & 0xff);
 	}
-#ifdef USE_VRAM_THREAD
-	LeaveCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		LeaveCriticalSection(&vram_crit_sect);
+	}
 }
 
 void write_text_vram_dword(UINT32 offset, UINT32 data)
 {
-#ifdef USE_VRAM_THREAD
-	EnterCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		EnterCriticalSection(&vram_crit_sect);
+	}
 	if(offset & 1) {
 		write_text_vram_attr(offset    , (data      ) & 0xff);
 		write_text_vram_char(offset + 1, (data >>  8) & 0xff);
@@ -759,9 +753,9 @@ void write_text_vram_dword(UINT32 offset, UINT32 data)
 		write_text_vram_char(offset + 2, (data >> 16) & 0xff);
 		write_text_vram_attr(offset + 3, (data >> 24) & 0xff);
 	}
-#ifdef USE_VRAM_THREAD
-	LeaveCriticalSection(&vram_crit_sect);
-#endif
+	if(use_vram_thread) {
+		LeaveCriticalSection(&vram_crit_sect);
+	}
 }
 
 void write_byte(UINT32 byteaddress, UINT8 data)
@@ -1572,6 +1566,24 @@ void debugger_main()
 						CPU_DL = debugger_get_val(params[2]);
 					} else if(stricmp(params[1], "DH") == 0) {
 						CPU_DH = debugger_get_val(params[2]);
+					} else if(stricmp(params[1], "CF") == 0) {
+						CPU_SET_C_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "PF") == 0) {
+						CPU_SET_P_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "AF") == 0) {
+						CPU_SET_A_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "ZF") == 0) {
+						CPU_SET_Z_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "SF") == 0) {
+						CPU_SET_S_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "TF") == 0) {
+						CPU_SET_T_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "IF") == 0) {
+						CPU_SET_I_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "DF") == 0) {
+						CPU_SET_D_FLAG(debugger_get_val(params[2]) != 0);
+					} else if(stricmp(params[1], "OF") == 0) {
+						CPU_SET_O_FLAG(debugger_get_val(params[2]) != 0);
 					} else {
 						telnet_printf("unknown register %s\n", params[1]);
 					}
@@ -2457,13 +2469,13 @@ BOOL WINAPI ctrl_handler(DWORD dwCtrlType)
 {
 	if(dwCtrlType == CTRL_BREAK_EVENT) {
 		if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-			EnterCriticalSection(&key_buf_crit_sect);
-#endif
+			if(use_service_thread) {
+				EnterCriticalSection(&key_buf_crit_sect);
+			}
 			pcbios_clear_key_buffer();
-#ifdef USE_SERVICE_THREAD
-			LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+			if(use_service_thread) {
+				LeaveCriticalSection(&key_buf_crit_sect);
+			}
 		}
 //		key_code = key_recv = 0;
 		return TRUE;
@@ -2504,7 +2516,6 @@ void exit_handler()
 	hardware_release();
 }
 
-#ifdef USE_VRAM_THREAD
 DWORD WINAPI vram_thread(LPVOID)
 {
 	while(!msdos_exit) {
@@ -2524,7 +2535,6 @@ DWORD WINAPI vram_thread(LPVOID)
 	}
 	return 0;
 }
-#endif
 
 long get_section_in_exec_file(FILE *fp, const char *name)
 {
@@ -2977,11 +2987,14 @@ void get_sio_port_numbers()
 
 int main(int argc, char *argv[], char *envp[])
 {
+	is_nt_40_or_later = is_greater_windows_version( 4, 0, 0, 0);
 	is_win2k_or_later = is_greater_windows_version( 5, 0, 0, 0);
 	is_winxp_or_later = is_greater_windows_version( 5, 1, 0, 0);
 	is_xp_64_or_later = is_greater_windows_version( 5, 2, 0, 0);
 	is_vista_or_later = is_greater_windows_version( 6, 0, 0, 0);
 	is_win10_or_later = is_greater_windows_version(10, 0, 0, 0);
+	
+	use_service_thread = use_vram_thread = is_nt_40_or_later;
 	
 	input_cp = get_input_code_page();
 	output_cp = get_output_code_page();
@@ -3008,10 +3021,10 @@ int main(int argc, char *argv[], char *envp[])
 	unsigned int old_error_mode = 0;
 	
 	char path[MAX_PATH], full[MAX_PATH], *name = NULL;
-
-	if(!is_win2k_or_later)
+	
+	if(!is_win2k_or_later) {
 		old_error_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-
+	}
 	GetModuleFileNameA(NULL, path, MAX_PATH);
 	GetFullPathNameA(path, MAX_PATH, full, &name);
 	
@@ -3264,6 +3277,9 @@ int main(int argc, char *argv[], char *envp[])
 				Sleep(10);
 			}
 		}
+		if(!is_win2k_or_later) {
+			SetErrorMode(old_error_mode);
+		}
 #ifdef _DEBUG
 		_CrtDumpMemoryLeaks();
 #endif
@@ -3454,6 +3470,9 @@ int main(int argc, char *argv[], char *envp[])
 				fclose(fo);
 			}
 		}
+		if(!is_win2k_or_later) {
+			SetErrorMode(old_error_mode);
+		}
 #ifdef _DEBUG
 		_CrtDumpMemoryLeaks();
 #endif
@@ -3511,12 +3530,12 @@ int main(int argc, char *argv[], char *envp[])
 	
 	SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
 	
-#ifdef USE_SERVICE_THREAD
-	InitializeCriticalSection(&input_crit_sect);
-	InitializeCriticalSection(&key_buf_crit_sect);
-	InitializeCriticalSection(&putch_crit_sect);
-	main_thread_id = GetCurrentThreadId();
-#endif
+	if(use_service_thread) {
+		InitializeCriticalSection(&input_crit_sect);
+		InitializeCriticalSection(&key_buf_crit_sect);
+		InitializeCriticalSection(&putch_crit_sect);
+		main_thread_id = GetCurrentThreadId();
+	}
 	
 	key_buf_char = new FIFO(256);
 	key_buf_scan = new FIFO(256);
@@ -3542,10 +3561,10 @@ int main(int argc, char *argv[], char *envp[])
 		TIMECAPS caps;
 		timeGetDevCaps(&caps, sizeof(TIMECAPS));
 		timeBeginPeriod(caps.wPeriodMin);
-#ifdef USE_VRAM_THREAD
-		InitializeCriticalSection(&vram_crit_sect);
-		CloseHandle(CreateThread(NULL, 4096, vram_thread, NULL, 0, NULL));
-#endif
+		if(use_vram_thread) {
+			InitializeCriticalSection(&vram_crit_sect);
+			CloseHandle(CreateThread(NULL, 4096, vram_thread, NULL, 0, NULL));
+		}
 #ifdef USE_DEBUGGER
 		CloseHandle(CreateThread(NULL, 0, debugger_thread, NULL, 0, NULL));
 		// wait until telnet client starts and connects to me
@@ -3561,10 +3580,11 @@ int main(int argc, char *argv[], char *envp[])
 		}
 #endif
 		hardware_run();
-#ifdef USE_VRAM_THREAD
-		vram_flush();
-		DeleteCriticalSection(&vram_crit_sect);
-#endif
+		
+		if(use_vram_thread) {
+			vram_flush();
+			DeleteCriticalSection(&vram_crit_sect);
+		}
 		timeEndPeriod(caps.wPeriodMin);
 		
 		// hStdin/hStdout (and all handles) will be closed in msdos_finish()...
@@ -3656,13 +3676,14 @@ int main(int argc, char *argv[], char *envp[])
 		delete key_buf_data;
 		key_buf_data = NULL;
 	}
-#ifdef USE_SERVICE_THREAD
-	DeleteCriticalSection(&input_crit_sect);
-	DeleteCriticalSection(&key_buf_crit_sect);
-	DeleteCriticalSection(&putch_crit_sect);
-#endif
-	if(!is_win2k_or_later)
+	if(use_service_thread) {
+		DeleteCriticalSection(&input_crit_sect);
+		DeleteCriticalSection(&key_buf_crit_sect);
+		DeleteCriticalSection(&putch_crit_sect);
+	}
+	if(!is_win2k_or_later) {
 		SetErrorMode(old_error_mode);
+	}
 #ifdef _DEBUG
 	_CrtDumpMemoryLeaks();
 #endif
@@ -3806,9 +3827,9 @@ void clear_scr_buffer(WORD attr)
 
 bool update_console_input()
 {
-#ifdef USE_SERVICE_THREAD
-	EnterCriticalSection(&input_crit_sect);
-#endif
+	if(use_service_thread) {
+		EnterCriticalSection(&input_crit_sect);
+	}
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD dwNumberOfEvents = 0;
 	DWORD dwRead;
@@ -4012,9 +4033,9 @@ bool update_console_input()
 							// ignore shift, ctrl, alt, win and menu keys
 							if(scn != 0x1d && scn != 0x2a && scn != 0x36 && scn != 0x38 && !(scn >= 0x5b && scn <= 0x5d && scn == scn_old)) {
 								if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-									EnterCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										EnterCriticalSection(&key_buf_crit_sect);
+									}
 									if(chr == 0) {
 										if(scn >= 0x78 && scn != 0x84) {
 											pcbios_set_key_buffer(0x00, 0x00);
@@ -4023,9 +4044,9 @@ bool update_console_input()
 										}
 									}
 									pcbios_set_key_buffer(chr, scn);
-#ifdef USE_SERVICE_THREAD
-									LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										LeaveCriticalSection(&key_buf_crit_sect);
+									}
 								}
 							}
 						} else {
@@ -4047,13 +4068,13 @@ bool update_console_input()
 								}
 							}
 							if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-								EnterCriticalSection(&key_buf_crit_sect);
-#endif
+								if(use_service_thread) {
+									EnterCriticalSection(&key_buf_crit_sect);
+								}
 								pcbios_set_key_buffer(chr, scn);
-#ifdef USE_SERVICE_THREAD
-								LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+								if(use_service_thread) {
+									LeaveCriticalSection(&key_buf_crit_sect);
+								}
 							}
 						}
 					} else {
@@ -4061,26 +4082,26 @@ bool update_console_input()
 							// Ctrl + Break, Ctrl + C
 							if(scn == 0x46) {
 								if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-									EnterCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										EnterCriticalSection(&key_buf_crit_sect);
+									}
 									pcbios_set_key_buffer(0x00, 0x00);
-#ifdef USE_SERVICE_THREAD
-									LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										LeaveCriticalSection(&key_buf_crit_sect);
+									}
 								}
 								ctrl_break_pressed = true;
 								mem[0x471] = 0x80;
 								raise_int_1bh = true;
 							} else {
 								if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-									EnterCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										EnterCriticalSection(&key_buf_crit_sect);
+									}
 									pcbios_set_key_buffer(chr, scn);
-#ifdef USE_SERVICE_THREAD
-									LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+									if(use_service_thread) {
+										LeaveCriticalSection(&key_buf_crit_sect);
+									}
 								}
 								ctrl_c_pressed = (scn == 0x2e);
 							}
@@ -4093,13 +4114,13 @@ bool update_console_input()
 						kbd_status |= 1;
 					} else {
 						if(key_buf_data != NULL) {
-#ifdef USE_SERVICE_THREAD
-							EnterCriticalSection(&key_buf_crit_sect);
-#endif
+							if(use_service_thread) {
+								EnterCriticalSection(&key_buf_crit_sect);
+							}
 							key_buf_data->write(tmp_data);
-#ifdef USE_SERVICE_THREAD
-							LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+							if(use_service_thread) {
+								LeaveCriticalSection(&key_buf_crit_sect);
+							}
 						}
 					}
 					result = key_changed = true;
@@ -4109,9 +4130,9 @@ bool update_console_input()
 			}
 		}
 	}
-#ifdef USE_SERVICE_THREAD
-	LeaveCriticalSection(&input_crit_sect);
-#endif
+	if(use_service_thread) {
+		LeaveCriticalSection(&input_crit_sect);
+	}
 	return(result);
 }
 
@@ -4121,13 +4142,13 @@ bool update_key_buffer()
 		return(true);
 	}
 	if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-		EnterCriticalSection(&key_buf_crit_sect);
-#endif
+		if(use_service_thread) {
+			EnterCriticalSection(&key_buf_crit_sect);
+		}
 		bool empty = pcbios_is_key_buffer_empty();
-#ifdef USE_SERVICE_THREAD
-		LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+		if(use_service_thread) {
+			LeaveCriticalSection(&key_buf_crit_sect);
+		}
 		if(!empty) return(true);
 	}
 	return(false);
@@ -4413,9 +4434,7 @@ void msdos_psp_set_file_table(int fd, UINT8 value, int psp_seg);
 int msdos_psp_get_file_table(int fd, int psp_seg);
 void msdos_putch(UINT8 data, unsigned int_num, UINT8 reg_ah);
 void msdos_putch_fast(UINT8 data, unsigned int_num, UINT8 reg_ah);
-#ifdef USE_SERVICE_THREAD
 void msdos_putch_tmp(UINT8 data, unsigned int_num, UINT8 reg_ah);
-#endif
 const char *msdos_short_path(const char *path);
 const char *msdos_short_full_path(const char *path);
 const char *msdos_short_full_dir(const char *path);
@@ -5835,13 +5854,13 @@ int msdos_kbhit()
 		return(1);
 	}
 	if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-		EnterCriticalSection(&key_buf_crit_sect);
-#endif
+		if(use_service_thread) {
+			EnterCriticalSection(&key_buf_crit_sect);
+		}
 		bool empty = pcbios_is_key_buffer_empty();
-#ifdef USE_SERVICE_THREAD
-		LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+		if(use_service_thread) {
+			LeaveCriticalSection(&key_buf_crit_sect);
+		}
 		if(!empty) return(1);
 	}
 	return(_kbhit());
@@ -5885,26 +5904,26 @@ retry:
 	} else {
 		while(key_buf_char != NULL && key_buf_scan != NULL && !msdos_exit) {
 			if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-				EnterCriticalSection(&key_buf_crit_sect);
-#endif
+				if(use_service_thread) {
+					EnterCriticalSection(&key_buf_crit_sect);
+				}
 				bool empty = pcbios_is_key_buffer_empty();
-#ifdef USE_SERVICE_THREAD
-				LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+				if(use_service_thread) {
+					LeaveCriticalSection(&key_buf_crit_sect);
+				}
 				if(!empty) break;
 			}
 			if(!(fd < process->max_files && file_handler[fd].valid && file_handler[fd].atty && file_mode[file_handler[fd].mode].in)) {
 				// NOTE: stdin is redirected to stderr when we do "type (file) | more" on freedos's command.com
 				if(_kbhit()) {
 					if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-						EnterCriticalSection(&key_buf_crit_sect);
-#endif
+						if(use_service_thread) {
+							EnterCriticalSection(&key_buf_crit_sect);
+						}
 						pcbios_set_key_buffer(_getch(), 0x00);
-#ifdef USE_SERVICE_THREAD
-						LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+						if(use_service_thread) {
+							LeaveCriticalSection(&key_buf_crit_sect);
+						}
 					}
 				} else {
 					Sleep(10);
@@ -5920,13 +5939,13 @@ retry:
 			key_char = 0x0d;
 			key_scan = 0;
 		} else if(key_buf_char != NULL && key_buf_scan != NULL) {
-#ifdef USE_SERVICE_THREAD
-			EnterCriticalSection(&key_buf_crit_sect);
-#endif
+			if(use_service_thread) {
+				EnterCriticalSection(&key_buf_crit_sect);
+			}
 			pcbios_get_key_buffer(&key_char, &key_scan);
-#ifdef USE_SERVICE_THREAD
-			LeaveCriticalSection(&key_buf_crit_sect);
-#endif
+			if(use_service_thread) {
+				LeaveCriticalSection(&key_buf_crit_sect);
+			}
 		}
 	}
 	if(echo && key_char) {
@@ -6002,7 +6021,9 @@ int msdos_write(int fd, const void *buffer, unsigned int count)
 		}
 		return(count);
 	}
-	vram_flush();
+	if(use_vram_thread) {
+		vram_flush();
+	}
 	return(_write(fd, buffer, count));
 }
 
@@ -6088,8 +6109,9 @@ void msdos_putch_tmp(UINT8 data, unsigned int_num, UINT8 reg_ah)
 	// output to console
 	tmp[p++] = data;
 	
-	vram_flush();
-	
+	if(use_vram_thread) {
+		vram_flush();
+	}
 	if(is_kanji) {
 		// kanji character
 		is_kanji = 0;
@@ -7763,10 +7785,9 @@ void pcbios_set_console_size(int width, int height, bool clr_screen)
 			mem[ofs++] = 0x20;
 			mem[ofs++] = 0x07;
 		}
-		
-#ifdef USE_VRAM_THREAD
-		EnterCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			EnterCriticalSection(&vram_crit_sect);
+		}
 		for(int y = 0; y < clr_height; y++) {
 			for(int x = 0; x < scr_width; x++) {
 				SCR_BUF(y,x).Char.AsciiChar = ' ';
@@ -7778,9 +7799,9 @@ void pcbios_set_console_size(int width, int height, bool clr_screen)
 		WriteConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &rect);
 		vram_length_char = vram_last_length_char = 0;
 		vram_length_attr = vram_last_length_attr = 0;
-#ifdef USE_VRAM_THREAD
-		LeaveCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			LeaveCriticalSection(&vram_crit_sect);
+		}
 	}
 	COORD co;
 	co.X = 0;
@@ -7896,8 +7917,9 @@ inline void pcbios_int_10h_05h()
 		return;
 	}
 	if(mem[0x462] != CPU_AL) {
-		vram_flush();
-		
+		if(use_vram_thread) {
+			vram_flush();
+		}
 		HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 		SMALL_RECT rect;
 		SET_RECT(rect, 0, scr_top, scr_width - 1, scr_top + scr_height - 1);
@@ -7941,8 +7963,9 @@ inline void pcbios_int_10h_06h()
 	   CPU_CL >= scr_width  || CPU_CL > CPU_DL) {
 		return;
 	}
-	vram_flush();
-	
+	if(use_vram_thread) {
+		vram_flush();
+	}
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	SMALL_RECT rect;
 	SET_RECT(rect, 0, scr_top, scr_width - 1, scr_top + scr_height - 1);
@@ -7981,8 +8004,9 @@ inline void pcbios_int_10h_07h()
 	   CPU_CL >= scr_width  || CPU_CL > CPU_DL) {
 		return;
 	}
-	vram_flush();
-	
+	if(use_vram_thread) {
+		vram_flush();
+	}
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	SMALL_RECT rect;
 	SET_RECT(rect, 0, scr_top, scr_width - 1, scr_top + scr_height - 1);
@@ -8028,7 +8052,9 @@ inline void pcbios_int_10h_08h()
 	if(mem[0x462] == CPU_BH) {
 		HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 		co.Y += scr_top;
-		vram_flush();
+		if(use_vram_thread) {
+			vram_flush();
+		}
 		ReadConsoleOutputCharacterA(hStdout, scr_char, scr_width, co, &num);
 		ReadConsoleOutputAttribute(hStdout, scr_attr, scr_width, co, &num);
 		CPU_AL = scr_char[co_X];
@@ -8049,9 +8075,9 @@ inline void pcbios_int_10h_09h()
 	int end = min(dest + CPU_CX * 2, pcbios_get_shadow_buffer_address(CPU_BH, 0, scr_height));
 	
 	if(mem[0x462] == CPU_BH) {
-#ifdef USE_VRAM_THREAD
-		EnterCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			EnterCriticalSection(&vram_crit_sect);
+		}
 		int vram = pcbios_get_shadow_buffer_address(CPU_BH);
 		while(dest < end) {
 			write_text_vram_char(dest - vram, CPU_AL);
@@ -8059,9 +8085,9 @@ inline void pcbios_int_10h_09h()
 			write_text_vram_attr(dest - vram, CPU_BL);
 			mem[dest++] = CPU_BL;
 		}
-#ifdef USE_VRAM_THREAD
-		LeaveCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			LeaveCriticalSection(&vram_crit_sect);
+		}
 	} else {
 		while(dest < end) {
 			mem[dest++] = CPU_AL;
@@ -8081,18 +8107,18 @@ inline void pcbios_int_10h_0ah()
 	int end = min(dest + CPU_CX * 2, pcbios_get_shadow_buffer_address(CPU_BH, 0, scr_height));
 	
 	if(mem[0x462] == CPU_BH) {
-#ifdef USE_VRAM_THREAD
-		EnterCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			EnterCriticalSection(&vram_crit_sect);
+		}
 		int vram = pcbios_get_shadow_buffer_address(CPU_BH);
 		while(dest < end) {
 			write_text_vram_char(dest - vram, CPU_AL);
 			mem[dest++] = CPU_AL;
 			dest++;
 		}
-#ifdef USE_VRAM_THREAD
-		LeaveCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			LeaveCriticalSection(&vram_crit_sect);
+		}
 	} else {
 		while(dest < end) {
 			mem[dest++] = CPU_AL;
@@ -8163,26 +8189,27 @@ inline void pcbios_int_10h_0eh()
 	if(CPU_AL == 7) {
 		//MessageBeep(-1);
 	} else if(CPU_AL == 8 || CPU_AL == 10 || CPU_AL == 13) {
-		if(CPU_AL == 10) {
+		if(CPU_AL == 10 && use_vram_thread) {
 			vram_flush();
 		}
 		WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), &CPU_AL, 1, &num, NULL);
 		cursor_moved = true;
 	} else {
 		int dest = pcbios_get_shadow_buffer_address(mem[0x462], co.X, co.Y);
-#ifdef USE_VRAM_THREAD
-		EnterCriticalSection(&vram_crit_sect);
-#endif
+		if(use_vram_thread) {
+			EnterCriticalSection(&vram_crit_sect);
+		}
 		int vram = pcbios_get_shadow_buffer_address(mem[0x462]);
 		write_text_vram_char(dest - vram, CPU_AL);
-#ifdef USE_VRAM_THREAD
-		LeaveCriticalSection(&vram_crit_sect);
-#endif
-		
+		if(use_vram_thread) {
+			LeaveCriticalSection(&vram_crit_sect);
+		}
 		if(++co.X == scr_width) {
 			co.X = 0;
 			if(++co.Y == scr_height) {
-				vram_flush();
+				if(use_vram_thread) {
+					vram_flush();
+				}
 				WriteConsoleA(hStdout, "\n", 1, &num, NULL);
 				cursor_moved = true;
 			}
@@ -8298,8 +8325,9 @@ inline void pcbios_int_10h_13h()
 	co.X = CPU_DL;
 	co.Y = CPU_DH + scr_top;
 	
-	vram_flush();
-	
+	if(use_vram_thread) {
+		vram_flush();
+	}
 	switch(CPU_AL) {
 	case 0x00:
 	case 0x01:
@@ -8590,8 +8618,9 @@ inline void pcbios_int_10h_ffh()
 		COORD co;
 		DWORD num;
 		
-		vram_flush();
-		
+		if(use_vram_thread) {
+			vram_flush();
+		}
 		co.X = (CPU_DI >> 1) % scr_width;
 		co.Y = (CPU_DI >> 1) / scr_width;
 		int ofs = pcbios_get_shadow_buffer_address(0, co.X, co.Y);
@@ -10847,7 +10876,7 @@ inline void msdos_int_21h_14h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	process_t *process = msdos_process_info_get(current_psp);
@@ -10872,7 +10901,7 @@ inline void msdos_int_21h_15h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	process_t *process = msdos_process_info_get(current_psp);
@@ -11021,7 +11050,7 @@ inline void msdos_int_21h_21h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	UINT32 rec = (fcb->record_size >= 64) ? fcb->rand_record & 0xffffff : fcb->rand_record;
@@ -11048,7 +11077,7 @@ inline void msdos_int_21h_22h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	UINT32 rec = (fcb->record_size >= 64) ? fcb->rand_record & 0xffffff : fcb->rand_record;
@@ -11072,7 +11101,7 @@ inline void msdos_int_21h_23h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	const char *path = msdos_fcb_path(fcb);
@@ -11093,7 +11122,7 @@ inline void msdos_int_21h_24h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	UINT32 rec = fcb->current_block * 128 + fcb->cur_record;
@@ -11123,7 +11152,7 @@ inline void msdos_int_21h_27h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	UINT32 rec = (fcb->record_size >= 64) ? fcb->rand_record & 0xffffff : fcb->rand_record;
@@ -11160,7 +11189,7 @@ inline void msdos_int_21h_28h()
 {
 	ext_fcb_t *ext_fcb = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb = (fcb_t *)(ext_fcb + (ext_fcb->flag == 0xff ? 1 : 0));
-	if (!fcb->record_size) {
+	if(!fcb->record_size) {
 		fcb->record_size = 128;
 	}
 	UINT32 rec = (fcb->record_size >= 64) ? fcb->rand_record & 0xffffff : fcb->rand_record;
@@ -12235,11 +12264,12 @@ inline void msdos_int_21h_43h(int lfn)
 			typedef DWORD (WINAPI* GetCompressedFileSizeFunction)(_In_ LPCSTR, _Out_opt_ LPDWORD);
 			GetCompressedFileSizeFunction lpfnGetCompressedFileSizeA = NULL;
 			
-			//if(GetFileAttributesExA(path, GetFileExInfoStandard, &tFileInfo) != 0) {
-			//	file_size = tFileInfo.nFileSizeLow;
 			HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if(hFile != INVALID_HANDLE_VALUE) {
 				file_size = GetFileSize(hFile, &tFileInfo.nFileSizeHigh);
+				if(file_size == INVALID_FILE_SIZE) {
+					error = GetLastError();
+				}
 				CloseHandle(hFile);
 				compressed_size = file_size; // temporary
 				
@@ -12321,26 +12351,30 @@ inline void msdos_int_21h_43h(int lfn)
 		if(lfn) {
 			WIN32_FILE_ATTRIBUTE_DATA fad;
 			HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-			//if(GetFileAttributesExA(path, GetFileExInfoStandard, (LPVOID)&fad)) {
-			if(GetFileTime(hFile, &fad.ftCreationTime, &fad.ftLastAccessTime, &fad.ftLastWriteTime)) {
-				FILETIME *time, local;
-				time = CPU_BL == 0x04 ? &fad.ftLastWriteTime :
-						   0x06 ? &fad.ftLastAccessTime :
-							  &fad.ftCreationTime;
-				FileTimeToLocalFileTime(time, &local);
-				FileTimeToDosDateTime(&local, &CPU_DI, &CPU_CX);
-				if(CPU_BL == 0x08) {
-					ULARGE_INTEGER hund;
-					hund.LowPart = local.dwLowDateTime;
-					hund.HighPart = local.dwHighDateTime;
-					hund.QuadPart /= 100000;
-					CPU_SI = (UINT16)(hund.QuadPart % 200);
+			if(hFile != INVALID_HANDLE_VALUE) {
+				if(GetFileTime(hFile, &fad.ftCreationTime, &fad.ftLastAccessTime, &fad.ftLastWriteTime)) {
+					FILETIME *time, local;
+					time = (CPU_BL == 0x04) ? &fad.ftLastWriteTime :
+					       (CPU_BL == 0x06) ? &fad.ftLastAccessTime :
+					                          &fad.ftCreationTime;
+					FileTimeToLocalFileTime(time, &local);
+					FileTimeToDosDateTime(&local, &CPU_DI, &CPU_CX);
+					if(CPU_BL == 0x08) {
+						ULARGE_INTEGER hund;
+						hund.LowPart = local.dwLowDateTime;
+						hund.HighPart = local.dwHighDateTime;
+						hund.QuadPart /= 100000;
+						CPU_SI = (UINT16)(hund.QuadPart % 200);
+					}
+				} else {
+					CPU_AX = msdos_maperr(GetLastError());
+					CPU_SET_C_FLAG(1);
 				}
+				CloseHandle(hFile);
 			} else {
 				CPU_AX = msdos_maperr(GetLastError());
 				CPU_SET_C_FLAG(1);
 			}
-			CloseHandle(hFile);
 		} else {
 			// 214304 DR DOS 5.0-6.0 internal - Get Encrypted Password
 			// 214306 DR DOS 6.0 - Get File Owner
@@ -12562,7 +12596,7 @@ inline void msdos_int_21h_44h()
 		}
 		break;
 	case 0x0a: // Check If Handle Is Remote
-		if(!(file_handler[(char)fd].info & 0x8000) && msdos_is_remote_drive(msdos_drive_number(file_handler[(char)fd].path))) {
+		if(!(file_handler[fd].info & 0x8000) && msdos_is_remote_drive(msdos_drive_number(file_handler[fd].path))) {
 			CPU_DX = 0x8000;
 		} else {
 			CPU_DX = 0x0000;
