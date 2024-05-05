@@ -6530,11 +6530,10 @@ void msdos_mem_merge(int seg)
 	}
 }
 
-int msdos_mem_alloc(int mcb_seg, int paragraphs, int new_process)
+int msdos_mem_alloc(int mcb_seg, int paragraphs)
 {
 	while(1) {
 		mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
-		bool last_block;
 		int found_seg = 0;
 		
 		if(mcb->psp == 0) {
@@ -6542,28 +6541,25 @@ int msdos_mem_alloc(int mcb_seg, int paragraphs, int new_process)
 		} else {
 			msdos_mcb_check(mcb);
 		}
-		if(!(last_block = (mcb->mz == 'Z'))) {
+		if(mcb->mz != 'Z') {
 			// check if the next is dummy mcb to link to umb
 			if((malloc_strategy & 0x0f) >= 2 && (mcb->paragraphs >= paragraphs) && !mcb->psp) {
 				found_seg = mcb_seg;
 			}
 			int next_seg = mcb_seg + 1 + mcb->paragraphs;
 			mcb_t *next_mcb = (mcb_t *)(mem + (next_seg << 4));
-			last_block = (next_mcb->mz == 'Z' && next_mcb->paragraphs == 0);
 		}
-		if(!(new_process && !last_block)) {
-			if((malloc_strategy & 0x0f) >= 2 && found_seg) {
-				mcb = (mcb_t *)(mem + (found_seg << 4));
-				msdos_mem_split(found_seg + 1, mcb->paragraphs - paragraphs - 1);
-				int next_seg = found_seg + 1 + mcb->paragraphs;
-				((mcb_t *)(mem + (next_seg << 4)))->psp = current_psp;
-				return(next_seg + 1);
-			}
-			if(mcb->psp == 0 && mcb->paragraphs >= paragraphs) {
-				msdos_mem_split(mcb_seg + 1, paragraphs);
-				mcb->psp = current_psp;
-				return(mcb_seg + 1);
-			}
+		if((malloc_strategy & 0x0f) >= 2 && found_seg) {
+			mcb = (mcb_t *)(mem + (found_seg << 4));
+			msdos_mem_split(found_seg + 1, mcb->paragraphs - paragraphs - 1);
+			int next_seg = found_seg + 1 + mcb->paragraphs;
+			((mcb_t *)(mem + (next_seg << 4)))->psp = current_psp;
+			return(next_seg + 1);
+		}
+		if(mcb->psp == 0 && mcb->paragraphs >= paragraphs) {
+			msdos_mem_split(mcb_seg + 1, paragraphs);
+			mcb->psp = current_psp;
+			return(mcb_seg + 1);
 		}
 		if(mcb->mz == 'Z') {
 			break;
@@ -6602,26 +6598,21 @@ void msdos_mem_free(int seg)
 	msdos_mem_merge(seg);
 }
 
-int msdos_mem_get_free(int mcb_seg, int new_process)
+int msdos_mem_get_free(int mcb_seg)
 {
 	int max_paragraphs = 0;
 	
 	while(1) {
 		mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
-		bool last_block;
 		
 		msdos_mcb_check(mcb);
 		
-		if(!(last_block = (mcb->mz == 'Z'))) {
-			// check if the next is dummy mcb to link to umb
+		if(mcb->mz != 'Z') {
 			int next_seg = mcb_seg + 1 + mcb->paragraphs;
 			mcb_t *next_mcb = (mcb_t *)(mem + (next_seg << 4));
-			last_block = (next_mcb->mz == 'Z' && next_mcb->paragraphs == 0);
 		}
-		if(!(new_process && !last_block)) {
-			if(mcb->psp == 0 && mcb->paragraphs > max_paragraphs) {
-				max_paragraphs = mcb->paragraphs;
-			}
+		if(mcb->psp == 0 && mcb->paragraphs > max_paragraphs) {
+			max_paragraphs = mcb->paragraphs;
 		}
 		if(mcb->mz == 'Z') {
 			break;
@@ -7307,8 +7298,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	if((umb_linked = msdos_mem_get_umb_linked()) != 0) {
 		msdos_mem_unlink_umb();
 	}
-	if((env_seg = msdos_mem_alloc(first_mcb, ENV_SIZE >> 4, 1)) == -1) {
-		if((env_seg = msdos_mem_alloc(UMB_TOP >> 4, ENV_SIZE >> 4, 1)) == -1) {
+	if((env_seg = msdos_mem_alloc(first_mcb, ENV_SIZE >> 4)) == -1) {
+		if((env_seg = msdos_mem_alloc(UMB_TOP >> 4, ENV_SIZE >> 4)) == -1) {
 			if(umb_linked != 0) {
 				msdos_mem_link_umb();
 			}
@@ -7324,7 +7315,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	
 	// check exe header
 	exe_header_t *header = (exe_header_t *)file_buffer;
-	int paragraphs, free_paragraphs = msdos_mem_get_free(first_mcb, 1);
+	int paragraphs, free_paragraphs = msdos_mem_get_free(first_mcb);
 	UINT16 cs, ss, ip, sp;
 	int start_seg = 0;
 	
@@ -7345,10 +7336,10 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 			paragraphs = free_paragraphs;
 		}
 		if(!header->min_alloc && !header->max_alloc) {
-			psp_seg = msdos_mem_alloc(first_mcb, free_paragraphs, 1);
+			psp_seg = msdos_mem_alloc(first_mcb, free_paragraphs);
 			start_seg = psp_seg + free_paragraphs - (load_size >> 4);
-		} else if((psp_seg = msdos_mem_alloc(first_mcb, paragraphs, 1)) == -1) {
-			if((psp_seg = msdos_mem_alloc(UMB_TOP >> 4, paragraphs, 1)) == -1) {
+		} else if((psp_seg = msdos_mem_alloc(first_mcb, paragraphs)) == -1) {
+			if((psp_seg = msdos_mem_alloc(UMB_TOP >> 4, paragraphs)) == -1) {
 				if(umb_linked != 0) {
 					msdos_mem_link_umb();
 				}
@@ -7374,8 +7365,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	} else {
 		// memory allocation
 		paragraphs = free_paragraphs;
-		if((psp_seg = msdos_mem_alloc(first_mcb, paragraphs, 1)) == -1) {
-			if((psp_seg = msdos_mem_alloc(UMB_TOP >> 4, paragraphs, 1)) == -1) {
+		if((psp_seg = msdos_mem_alloc(first_mcb, paragraphs)) == -1) {
+			if((psp_seg = msdos_mem_alloc(UMB_TOP >> 4, paragraphs)) == -1) {
 				if(umb_linked != 0) {
 					msdos_mem_link_umb();
 				}
@@ -13066,32 +13057,32 @@ inline void msdos_int_21h_48h()
 		if((umb_linked = msdos_mem_get_umb_linked()) != 0) {
 			msdos_mem_unlink_umb();
 		}
-		if((seg = msdos_mem_alloc(first_mcb, CPU_BX, 0)) != -1) {
+		if((seg = msdos_mem_alloc(first_mcb, CPU_BX)) != -1) {
 			CPU_AX = seg;
 		} else {
 			CPU_AX = 0x08;
-			CPU_BX = msdos_mem_get_free(first_mcb, 0);
+			CPU_BX = msdos_mem_get_free(first_mcb);
 			CPU_SET_C_FLAG(1);
 		}
 		if(umb_linked != 0) {
 			msdos_mem_link_umb();
 		}
 	} else if((malloc_strategy & 0xf0) == 0x40) {
-		if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_BX, 0)) != -1) {
+		if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_BX)) != -1) {
 			CPU_AX = seg;
 		} else {
 			CPU_AX = 0x08;
-			CPU_BX = msdos_mem_get_free(UMB_TOP >> 4, 0);
+			CPU_BX = msdos_mem_get_free(UMB_TOP >> 4);
 			CPU_SET_C_FLAG(1);
 		}
 	} else if((malloc_strategy & 0xf0) == 0x80) {
-		if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_BX, 0)) != -1) {
+		if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_BX)) != -1) {
 			CPU_AX = seg;
-		} else if((seg = msdos_mem_alloc(first_mcb, CPU_BX, 0)) != -1) {
+		} else if((seg = msdos_mem_alloc(first_mcb, CPU_BX)) != -1) {
 			CPU_AX = seg;
 		} else {
 			CPU_AX = 0x08;
-			CPU_BX = max(msdos_mem_get_free(UMB_TOP >> 4, 0), msdos_mem_get_free(first_mcb, 0));
+			CPU_BX = max(msdos_mem_get_free(UMB_TOP >> 4), msdos_mem_get_free(first_mcb));
 			CPU_SET_C_FLAG(1);
 		}
 	}
@@ -17902,13 +17893,13 @@ inline void msdos_call_xms_10h()
 {
 	int seg;
 	
-	if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_DX, 0)) != -1) {
+	if((seg = msdos_mem_alloc(UMB_TOP >> 4, CPU_DX)) != -1) {
 		CPU_AX = 0x0001;
 		CPU_BX = seg;
 	} else {
 		CPU_AX = 0x0000;
 		CPU_BL = 0xb0;
-		CPU_DX = msdos_mem_get_free(UMB_TOP >> 4, 0);
+		CPU_DX = msdos_mem_get_free(UMB_TOP >> 4);
 	}
 }
 
