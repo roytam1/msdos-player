@@ -225,6 +225,47 @@ DWORD MyGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuff
 	return dwLength;
 }
 
+BOOL MySetConsoleTitleA(LPCSTR lpConsoleTitle)
+{
+#if 0
+	return SetConsoleTitleA(lpConsoleTitle);
+#else
+	return TRUE;
+#endif
+}
+
+HWND MyImmGetDefaultIMEWnd(HWND hWnd)
+{
+	HMODULE hLibrary = LoadLibraryA("Imm32.dll");
+	HWND hResult = 0;
+	if(hLibrary) {
+		typedef HWND (WINAPI* ImmGetDefaultIMEWndFunction)(HWND);
+		ImmGetDefaultIMEWndFunction lpfnImmGetDefaultIMEWnd = reinterpret_cast<ImmGetDefaultIMEWndFunction>(::GetProcAddress(hLibrary, "ImmGetDefaultIMEWnd"));
+		if(lpfnImmGetDefaultIMEWnd) {
+			hResult = lpfnImmGetDefaultIMEWnd(hWnd);
+		}
+		FreeLibrary(hLibrary);
+	}
+	return hResult;
+}
+
+void KeyOnOff(BYTE bVk)
+{
+	HMODULE hLibrary = LoadLibraryA("User32.dll");
+	if(hLibrary) {
+		typedef UINT (WINAPI* MapVirtualKeyFunction)(UINT, UINT);
+		typedef void (WINAPI* KeybdEventFunction)(BYTE, BYTE, DWORD, ULONG_PTR);
+		MapVirtualKeyFunction lpfnMapVirtualKey = reinterpret_cast<MapVirtualKeyFunction>(::GetProcAddress(hLibrary, "MapVirtualKeyA"));
+		KeybdEventFunction lpfnKeybdEvent = reinterpret_cast<KeybdEventFunction>(::GetProcAddress(hLibrary, "keybd_event"));
+		if(lpfnMapVirtualKey && lpfnKeybdEvent) {
+			BYTE bScan = lpfnMapVirtualKey(bVk, 0);
+			lpfnKeybdEvent(bVk, bScan, 0, 0);
+			lpfnKeybdEvent(bVk, bScan, KEYEVENTF_KEYUP, 0);
+		}
+		FreeLibrary(hLibrary);
+	}
+}
+
 #if defined(__MINGW32__)
 extern "C" int _CRT_glob = 0;
 #endif
@@ -664,15 +705,6 @@ BOOL MyWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, D
 #else
 #define MyWriteConsoleOutputCharacterA WriteConsoleOutputCharacterA
 #endif
-
-BOOL MySetConsoleTitleA(LPCSTR lpConsoleTitle)
-{
-#if 0
-	return SetConsoleTitleA(lpConsoleTitle);
-#else
-	return TRUE;
-#endif
-}
 
 void vram_flush_char()
 {
@@ -3861,7 +3893,7 @@ void change_console_size(int width, int height)
 			SetConsoleWindowInfo(hStdout, TRUE, &rect);
 		}
 	}
-
+	
 	// restore cursor position
 	if(is_win10_or_later) {
 		co.X = min(width - 1, csbi.dwCursorPosition.X - csbi.srWindow.Left);
@@ -7901,6 +7933,10 @@ inline void pcbios_int_10h_00h()
 		pcbios_set_console_size(scr_width, scr_height, !(CPU_AL & 0x80));
 		break;
 	case 0x73: // Extended CGA Text Mode
+	case 0x64: // J-3100 DCGA (mono)
+	case 0x65: // J-3100 DCGA
+	case 0x74: // J-3100 DCGA (mono)
+	case 0x75: // J-3100 DCGA
 	case 0x02: // CGA Text Mode (gray)
 	case 0x03: // CGA Text Mode
 	case 0x07: // MDA Text Mode (mono)
@@ -8604,16 +8640,85 @@ inline void pcbios_int_10h_4fh()
 	}
 }
 
+inline void pcbios_int_10h_50h()
+{
+	static int mode = -1;
+	
+	if(mode == -1) {
+		if(get_output_code_page() == 932) {
+			mode = 81;
+		} else {
+			mode = 1;
+		}
+	}
+	switch(CPU_AL) {
+	case 0x00:
+		if(CPU_BX == 1 || CPU_BX == 81) {
+			mode = CPU_BX;
+			CPU_AL = 0x00;
+		} else {
+			CPU_AL = 0x01;
+		}
+		break;
+	case 0x01:
+		CPU_BX = mode;
+		CPU_AL = 0x00;
+	default:
+		unimplemented_10h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x16, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
+		CPU_SET_C_FLAG(1);
+		break;
+	}
+}
+
+#if 0
+inline void pcbios_int_10h_52h()
+{
+	static UINT16 addr = 0;
+	int regen1 = scr_width * scr_height * 2;
+	int regen2 = min(regen1, 0x8000);
+	
+	switch(CPU_AL) {
+	case 0x00:
+		if(CPU_BX) {
+			shadow_buffer_top_address = CPU_BX << 4;
+			shadow_buffer_end_address = shadow_buffer_top_address + regen1;
+		} else {
+			shadow_buffer_top_address = pcbios_get_shadow_buffer_address(mem[0x462]);
+			shadow_buffer_end_address = shadow_buffer_top_address + regen2;
+		}
+		addr = CPU_BX;
+		break;
+	case 0x01:
+		CPU_BX = addr;
+	default:
+		unimplemented_10h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x16, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
+		CPU_SET_C_FLAG(1);
+		break;
+	}
+}
+#endif
+
 inline void pcbios_int_10h_82h()
 {
-	static UINT8 mode = 0;
+	static UINT8 scroll_mode = 0;
+	static UINT8 cursor_mode = 0;
 	
 	switch(CPU_AL) {
 	case 0x00:
 		if(CPU_BL != 0xff) {
-			mode = CPU_BL;
+			CPU_AL = scroll_mode;
+			scroll_mode = CPU_BL;
+		} else {
+			CPU_AL = scroll_mode;
 		}
-		CPU_AL = mode;
+		break;
+	case 0x04:
+		if(CPU_BL != 0xff) {
+			CPU_AL = cursor_mode;
+			cursor_mode = CPU_BL;
+		} else {
+			CPU_AL = cursor_mode;
+		}
 		break;
 	default:
 		unimplemented_10h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x10, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
@@ -8636,6 +8741,34 @@ inline void pcbios_int_10h_83h()
 		unimplemented_10h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x10, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
 		CPU_SET_C_FLAG(1);
 		break;
+	}
+}
+
+#define IS_SJIS(hi, lo) ((0x81 <= (hi) && (hi) <= 0x9f) || (0xe0 <= (hi) && (hi) <= 0xef)) && ((0x40 <= (lo) && (lo) <= 0x7e) || (0x80 <= (lo) && (lo) <= 0xfc))
+
+inline void pcbios_int_10h_85h()
+{
+	short co_X;
+	COORD co;
+	DWORD num;
+	
+	co_X = mem[0x450];
+	co.X = 0;
+	co.Y = mem[0x451];
+	
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	co.Y += scr_top;
+	if(use_vram_thread) {
+		vram_flush();
+	}
+	ReadConsoleOutputCharacterA(hStdout, scr_char, scr_width, co, &num);
+	
+	if(co_X > 0 && IS_SJIS(scr_char[co_X - 1], scr_char[co_X])) {
+		CPU_AL = 0x02;
+	} else if(IS_SJIS(scr_char[co_X], scr_char[co_X + 1])) {
+		CPU_AL = 0x01;
+	} else {
+		CPU_AL = 0x00;
 	}
 }
 
@@ -9669,6 +9802,30 @@ bool pcbios_is_key_buffer_empty()
 	return(*(UINT16 *)(mem + 0x41a) == *(UINT16 *)(mem + 0x41c));
 }
 
+bool pcbios_is_key_buffer_full()
+{
+	// check only key buffer in work area
+	UINT16 head = *(UINT16 *)(mem + 0x41a);
+	UINT16 tail = *(UINT16 *)(mem + 0x41c);
+	UINT16 next = tail + 2;
+	if(next >= *(UINT16 *)(mem + 0x482)) {
+		next = *(UINT16 *)(mem + 0x480);
+	}
+	return(next == head);
+}
+
+int pcbios_get_key_buffer_count()
+{
+	// check only key buffer in work area
+	int head = *(UINT16 *)(mem + 0x41a);
+	int tail = *(UINT16 *)(mem + 0x41c);
+	if((tail -= head) < 0) {
+		tail += *(UINT16 *)(mem + 0x482);
+		tail -= *(UINT16 *)(mem + 0x480);
+	}
+	return((int)(tail / 2));
+}
+
 void pcbios_clear_key_buffer()
 {
 	key_buf_char->clear();
@@ -9859,10 +10016,10 @@ inline void pcbios_int_16h_01h()
 
 inline void pcbios_int_16h_02h()
 {
-	CPU_AL  = (GetAsyncKeyState(VK_INSERT ) & 0x0001) ? 0x80 : 0;
-	CPU_AL |= (GetAsyncKeyState(VK_CAPITAL) & 0x0001) ? 0x40 : 0;
-	CPU_AL |= (GetAsyncKeyState(VK_NUMLOCK) & 0x0001) ? 0x20 : 0;
-	CPU_AL |= (GetAsyncKeyState(VK_SCROLL ) & 0x0001) ? 0x10 : 0;
+	CPU_AL  = (GetKeyState(VK_INSERT ) & 0x0001) ? 0x80 : 0;
+	CPU_AL |= (GetKeyState(VK_CAPITAL) & 0x0001) ? 0x40 : 0;
+	CPU_AL |= (GetKeyState(VK_NUMLOCK) & 0x0001) ? 0x20 : 0;
+	CPU_AL |= (GetKeyState(VK_SCROLL ) & 0x0001) ? 0x10 : 0;
 	CPU_AL |= (GetAsyncKeyState(VK_MENU   ) & 0x8000) ? 0x08 : 0;
 	CPU_AL |= (GetAsyncKeyState(VK_CONTROL) & 0x8000) ? 0x04 : 0;
 	CPU_AL |= (GetAsyncKeyState(VK_LSHIFT ) & 0x8000) ? 0x02 : 0;
@@ -9946,14 +10103,50 @@ inline void pcbios_int_16h_12h()
 
 inline void pcbios_int_16h_13h()
 {
-	static UINT16 status = 0;
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
 	
+	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
 	switch(CPU_AL) {
 	case 0x00:
-		status = CPU_DX;
+		if(CPU_DX & 0x0080) {
+			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+			UINT uConv = 0x0000;
+			if(CPU_DX & 0x0001) {
+				uConv |= IME_CMODE_FULLSHAPE;
+			}
+			if((CPU_DX & 0x06) == 0x02) {
+				uConv |= IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
+			} else if((CPU_DX & 0x06) == 0x04) {
+				uConv |= IME_CMODE_NATIVE;
+			}
+			if(CPU_DX & 0x0040) {
+				uConv |= IME_CMODE_ROMAN;
+			}
+			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, uConv);
+		} else {
+			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
+		}
 		break;
 	case 0x01:
-		CPU_DX = status;
+		CPU_DX = 0x0000;
+		if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+			KeyOnOff(0); // update conversion mode
+			DWORD dwConv = SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0);
+			if(dwConv & IME_CMODE_FULLSHAPE) {
+				CPU_DX |= 0x0001; // full-size rather than half-size
+			}
+			if(dwConv & IME_CMODE_NATIVE) {
+				if(dwConv & IME_CMODE_KATAKANA) {
+					CPU_DX |= 0x0002; // Katakana
+				} else {
+					CPU_DX |= 0x0004; // Hiragana
+				}
+			}
+			if(dwConv & IME_CMODE_ROMAN) {
+				CPU_DX |= 0x0040; // Romaji enabled
+			}
+			CPU_DX |= 0x0080; // Katakana to Kanji conversion enabled
+		}
 		break;
 	default:
 		unimplemented_16h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x16, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
@@ -9981,12 +10174,43 @@ inline void pcbios_int_16h_14h()
 	}
 }
 
+inline void pcbios_int_16h_50h()
+{
+	static int mode = -1;
+	
+	if(mode == -1) {
+		if(get_input_code_page() == 932) {
+			mode = 81;
+		} else {
+			mode = 1;
+		}
+	}
+	switch(CPU_AL) {
+	case 0x00:
+		if(CPU_BX == 1 || CPU_BX == 81) {
+			mode = CPU_BX;
+			CPU_AL = 0x00;
+		} else {
+			CPU_AL = 0x01;
+		}
+		break;
+	case 0x01:
+		CPU_BX = mode;
+		CPU_AL = 0x00;
+	default:
+		unimplemented_16h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x16, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
+		CPU_SET_C_FLAG(1);
+		break;
+	}
+}
+
 inline void pcbios_int_16h_51h()
 {
 	// http://radioc.web.fc2.com/column/ax/kb_bios.htm
 	pcbios_int_16h_02h();
 	
-	CPU_AH = (GetAsyncKeyState(VK_KANA) & 0x8000) ? 0x02 : 0;
+	// NOTE: toggle status of VK_KANA seems to be incorrect on Windows10
+	CPU_AH = (GetKeyState(VK_KANA) & 0x0001) ? 0x02 : 0;
 }
 
 inline void pcbios_int_16h_55h()
@@ -10018,6 +10242,67 @@ inline void pcbios_int_16h_6fh()
 		CPU_SET_C_FLAG(1);
 		break;
 	}
+}
+
+inline void pcbios_int_16h_f0h()
+{
+	HMODULE hLibrary = LoadLibraryA("Kernel32.dll");
+	if(hLibrary) {
+		typedef BOOL (WINAPI* BeepFunction)(DWORD, DWORD);
+		BeepFunction lpfnBeep = reinterpret_cast<BeepFunction>(::GetProcAddress(hLibrary, "Beep"));
+		if(lpfnBeep) {
+			lpfnBeep(750, 55 * CPU_BL); // frequency is unknown
+		}
+		FreeLibrary(hLibrary);
+	}
+}
+
+inline void pcbios_int_16h_f1h()
+{
+	// NOTE: toggle status of VK_KANA seems to be incorrect on Windows10
+	UINT8 kana = (GetKeyState(VK_KANA   ) & 0x0001) ? 0x10 : 0;
+	UINT8 num  = (GetKeyState(VK_NUMLOCK) & 0x0001) ? 0x20 : 0;
+	UINT8 caps = (GetKeyState(VK_CAPITAL) & 0x0001) ? 0x40 : 0;
+	
+	if((CPU_AL & 0x10) != kana) {
+		HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+		BOOL bImeOn = (SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0) != 0);
+		KeyOnOff(VK_KANA);
+		if(!bImeOn) {
+			Sleep(10);
+			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
+		}
+	}
+	if((CPU_AL & 0x20) != num) {
+		KeyOnOff(VK_NUMLOCK);
+	}
+	if((CPU_AL & 0x40) != caps) {
+		KeyOnOff(VK_CAPITAL);
+	}
+}
+
+inline void pcbios_int_16h_f5h()
+{
+	enter_key_buf_lock();
+	if(!pcbios_is_key_buffer_full()) {
+		pcbios_set_key_buffer(CPU_BL, CPU_BH);
+		CPU_AX = pcbios_get_key_buffer_count();
+	} else {
+		CPU_AX = 0xffff;
+	}
+	leave_key_buf_lock();
+}
+
+inline void pcbios_int_16h_f6h()
+{
+	enter_key_buf_lock();
+	if(!pcbios_is_key_buffer_full()) {
+		CPU_AX = pcbios_get_key_buffer_count();
+	} else {
+		CPU_AX = 0xffff;
+	}
+	leave_key_buf_lock();
+//	CPU_BX = 0x3130; // J-3100
 }
 
 UINT16 pcbios_printer_jis2sjis(UINT16 jis)
@@ -11682,22 +11967,6 @@ void set_country_info(country_info_t *ci, int size)
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SLIST, LCdata);
 	}
 }
-
-#ifndef SUBLANG_SWAHILI
-	#define SUBLANG_SWAHILI 0x01
-#endif
-#ifndef SUBLANG_TSWANA_BOTSWANA
-	#define SUBLANG_TSWANA_BOTSWANA 0x02
-#endif
-#ifndef SUBLANG_LITHUANIAN_LITHUANIA
-	#define SUBLANG_LITHUANIAN_LITHUANIA 0x01
-#endif
-#ifndef LANG_BANGLA
-	#define LANG_BANGLA 0x45
-#endif
-#ifndef SUBLANG_BANGLA_BANGLADESH
-	#define SUBLANG_BANGLA_BANGLADESH 0x02
-#endif
 
 static const struct {
 	int code;
@@ -17450,6 +17719,108 @@ inline void msdos_int_67h_deh()
 #endif
 }
 
+inline void atok_int_6fh_01h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+	}
+#if 0
+	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
+	else {
+		KeyOnOff(0); // update conversion mode
+	}
+	if(!(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0) & IME_CMODE_ROMAN)) {
+		KeyOnOff(VK_KANA);
+	}
+#endif
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
+}
+
+inline void atok_int_6fh_02h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+	}
+#if 0
+	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
+	else {
+		KeyOnOff(0); // update conversion mode
+	}
+	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0) & IME_CMODE_ROMAN) {
+		KeyOnOff(VK_KANA);
+	}
+#endif
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
+}
+
+inline void atok_int_6fh_03h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+	}
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_ALPHANUMERIC);
+}
+
+inline void atok_int_6fh_04h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+	}
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_SYMBOL);
+}
+
+inline void atok_int_6fh_05h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
+	}
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_CHARCODE);
+}
+
+inline void atok_int_6fh_0bh()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
+	}
+	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_ALPHANUMERIC);
+}
+
+inline void atok_int_6fh_66h()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+		// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
+		KeyOnOff(0); // update conversion mode
+		DWORD dwConv = SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0);
+		if(dwConv & IME_CMODE_CHARCODE) {
+			CPU_AL = 0x05;
+		} else if(dwConv & IME_CMODE_SYMBOL) {
+			CPU_AL = 0x04;
+		} else if(!(dwConv & IME_CMODE_FULLSHAPE)) {
+			CPU_AL = 0x03;
+		} else if(!(dwConv & IME_CMODE_ROMAN)) {
+			CPU_AL = 0x02;
+		} else {
+			CPU_AL = 0x01;
+		}
+	} else {
+		CPU_AL = 0x00;
+	}
+}
+
 #ifdef SUPPORT_XMS
 
 void msdos_xms_init()
@@ -18164,11 +18535,14 @@ void msdos_syscall(unsigned num)
 		case 0x1e: CPU_AL = 0x00; break; // flat-panel functions are not supported
 		case 0x1f: CPU_AL = 0x00; break; // xga functions are not supported
 		case 0x4f: pcbios_int_10h_4fh(); break;
+		case 0x50: pcbios_int_10h_50h(); break;
+//		case 0x52: pcbios_int_10h_52h(); break;
 		case 0x6f: break;
 		case 0x80: CPU_SET_C_FLAG(1); break; // unknown
 		case 0x81: CPU_SET_C_FLAG(1); break; // unknown
 		case 0x82: pcbios_int_10h_82h(); break;
 		case 0x83: pcbios_int_10h_83h(); break;
+		case 0x85: pcbios_int_10h_85h(); break;
 		case 0x8b: break;
 		case 0x8c: CPU_SET_C_FLAG(1); break; // unknown
 		case 0x8d: CPU_SET_C_FLAG(1); break; // unknown
@@ -18315,11 +18689,16 @@ void msdos_syscall(unsigned num)
 		case 0x12: pcbios_int_16h_12h(); break;
 		case 0x13: pcbios_int_16h_13h(); break;
 		case 0x14: pcbios_int_16h_14h(); break;
+		case 0x50: pcbios_int_16h_50h(); break;
 		case 0x51: pcbios_int_16h_51h(); break;
 		case 0x55: pcbios_int_16h_55h(); break;
 		case 0x6f: pcbios_int_16h_6fh(); break;
 		case 0xda: break; // unknown
 		case 0xdb: break; // unknown
+		case 0xf0: pcbios_int_16h_f0h(); break;
+		case 0xf1: pcbios_int_16h_f1h(); break;
+		case 0xf5: pcbios_int_16h_f5h(); break;
+		case 0xf6: pcbios_int_16h_f6h(); break;
 		case 0xff: break; // unknown
 		default:
 			unimplemented_16h("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", num, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
@@ -18789,9 +19168,47 @@ void msdos_syscall(unsigned num)
 			break;
 		}
 		break;
+	case 0x64:
+		// dummy interrupt for end of alter page map and call
+		{
+			UINT16 handles[4], pages[4];
+			
+			// pop old mapping data in new mapping
+			for(int i = 0; i < 4; i++) {
+				pages  [3 - i] = CPU_POP();
+				handles[3 - i] = CPU_POP();
+			}
+			
+			// restore old mapping
+			for(int i = 0; i < 4; i++) {
+				UINT16 handle = handles[i];
+				UINT16 page   = pages  [i];
+				
+				if(handle >= 1 && handle <= MAX_EMS_HANDLES && ems_handles[handle].allocated && page < ems_handles[handle].pages) {
+					ems_map_page(i, handle, page);
+				} else {
+					ems_unmap_page(i);
+				}
+			}
+			// do ret_far (pop cs/ip) in old mapping
+		}
+		break;
 	case 0x65:
-		// dummy interrupt for EMS (int 67h)
+		// dummy interrupt for ATOK5 (int 6fh) and EMS (int 67h)
 		switch(CPU_AH) {
+		// ATOK5
+		case 0x01: atok_int_6fh_01h(); break;
+		case 0x02: atok_int_6fh_02h(); break;
+		case 0x03: atok_int_6fh_03h(); break;
+		case 0x04: atok_int_6fh_04h(); break;
+		case 0x05: atok_int_6fh_05h(); break;
+		case 0x0b: atok_int_6fh_0bh(); break;
+		case 0x0f: break;
+		case 0x10: break;
+		case 0x11: break;
+		case 0x12: break;
+		case 0x66: atok_int_6fh_66h(); break;
+		// EMS
 		case 0x40: msdos_int_67h_40h(); break;
 		case 0x41: msdos_int_67h_41h(); break;
 		case 0x42: msdos_int_67h_42h(); break;
@@ -19015,31 +19432,12 @@ void msdos_syscall(unsigned num)
 			}
 		}
 		break;
+/*
 	case 0x6f:
-		// dummy interrupt for end of alter page map and call
-		{
-			UINT16 handles[4], pages[4];
-			
-			// pop old mapping data in new mapping
-			for(int i = 0; i < 4; i++) {
-				pages  [3 - i] = CPU_POP();
-				handles[3 - i] = CPU_POP();
-			}
-			
-			// restore old mapping
-			for(int i = 0; i < 4; i++) {
-				UINT16 handle = handles[i];
-				UINT16 page   = pages  [i];
-				
-				if(handle >= 1 && handle <= MAX_EMS_HANDLES && ems_handles[handle].allocated && page < ems_handles[handle].pages) {
-					ems_map_page(i, handle, page);
-				} else {
-					ems_unmap_page(i);
-				}
-			}
-			// do ret_far (pop cs/ip) in old mapping
-		}
+		// int 6fh handler is in ATOK5 device driver and it calls int 65h
+		// NOTE: some softwares get address of int 6fh handler and recognize the address is in ATOK5 device driver
 		break;
+*/
 	case 0x70:
 	case 0x71:
 	case 0x72:
@@ -19237,6 +19635,11 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		*(UINT16 *)(mem + IRET_TOP + IRET_SIZE + 5 * i + 1) = i;
 		*(UINT16 *)(mem + IRET_TOP + IRET_SIZE + 5 * i + 3) = IRET_TOP >> 4;
 	}
+	
+	// dummy ATOK5 device
+	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, ATOK_SIZE >> 4);
+	ATOK_TOP = seg << 4;
+	seg += ATOK_SIZE >> 4;
 	
 	// dummy xms/ems device
 	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, XMS_SIZE >> 4);
@@ -19526,6 +19929,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 4 * 0x22 + 2) = 0xffff;
 	*(UINT16 *)(mem + 4 * 0x67 + 0) = 0x0012;	// xxxx:0012 ems
 	*(UINT16 *)(mem + 4 * 0x67 + 2) = XMS_TOP >> 4;
+	*(UINT16 *)(mem + 4 * 0x6f + 0) = 0x0012;	// xxxx:0012 ATOK5
+	*(UINT16 *)(mem + 4 * 0x6f + 2) = ATOK_TOP >> 4;
 	*(UINT16 *)(mem + 4 * 0x74 + 0) = 0x0000;	// fffc:0000 irq12 (mouse)
 	*(UINT16 *)(mem + 4 * 0x74 + 2) = DUMMY_TOP >> 4;
 	for(int i = 0x50; i < 0x60; i++) {		// desqview wants 0x50-0x58 to point at the same address
@@ -19534,7 +19939,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 4 * 0xbf + 0) = 0x0000;	// 123R3 wants a null vector
 	*(UINT16 *)(mem + 4 * 0xbf + 2) = 0x0000;
 	
-	// dummy devices (NUL -> CON -> ... -> CONFIG$ -> EMMXXXX0)
+	// dummy devices (NUL -> CON -> ... -> $IBMADSP -> FP$ATOK6 -> EMMXXXX0)
 	static const struct {
 		UINT16 attributes;
 		const char *dev_name;
@@ -19572,13 +19977,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		last = device;
 	}
 	if(last != NULL) {
-		if(support_ems) {
-			last->next_driver.w.l = 0;
-			last->next_driver.w.h = XMS_TOP >> 4;
-		} else {
-			last->next_driver.w.l = 0xffff;
-			last->next_driver.w.h = 0xffff;
-		}
+		last->next_driver.w.l = 0x0000;
+		last->next_driver.w.h = ATOK_TOP >> 4;
 	}
 	memcpy(mem + DEVICE_TOP + DEVICE_SIZE - sizeof(dummy_device_routine), dummy_device_routine, sizeof(dummy_device_routine));
 	
@@ -19640,6 +20040,26 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 #endif
 	dos_info->ext_mem_size = (min(MAX_MEM, 0x4000000) - 0x100000) >> 10;
 	
+	// ATOK5 (int 6fh)
+	device_t *atok_device = (device_t *)(mem + ATOK_TOP);
+	if(support_ems) {
+		atok_device->next_driver.w.l = 0x0000;
+		atok_device->next_driver.w.h = XMS_TOP >> 4;
+	} else {
+		atok_device->next_driver.w.l = 0xffff;
+		atok_device->next_driver.w.h = 0xffff;
+	}
+	atok_device->attributes = 0xc000;
+	atok_device->strategy = ATOK_SIZE - sizeof(dummy_device_routine);
+	atok_device->interrupt = ATOK_SIZE - sizeof(dummy_device_routine) + 6;
+	memcpy(atok_device->dev_name, "FP$ATOK6", 8);
+	
+	mem[ATOK_TOP + 0x12] = 0xcd;	// int 65h (dummy)
+	mem[ATOK_TOP + 0x13] = 0x65;
+	mem[ATOK_TOP + 0x14] = 0xcf;	// iret
+	memcpy(mem + ATOK_TOP + 0x15, "ATOK", 4);
+	memcpy(mem + ATOK_TOP + ATOK_SIZE - sizeof(dummy_device_routine), dummy_device_routine, sizeof(dummy_device_routine));
+	
 	// ems (int 67h) and xms
 	if(support_ems) {
 		device_t *xms_device = (device_t *)(mem + XMS_TOP);
@@ -19649,7 +20069,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		xms_device->strategy = XMS_SIZE - sizeof(dummy_device_routine);
 		xms_device->interrupt = XMS_SIZE - sizeof(dummy_device_routine) + 6;
 		memcpy(xms_device->dev_name, "EMMXXXX0", 8);
-	
+		
 		mem[XMS_TOP + 0x12] = 0xcd;	// int 65h (dummy)
 		mem[XMS_TOP + 0x13] = 0x65;
 		mem[XMS_TOP + 0x14] = 0xcf;	// iret
@@ -19717,8 +20137,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[DUMMY_TOP + 0x21] = 0xff;
 	mem[DUMMY_TOP + 0x22] = 0xff;
 	mem[DUMMY_TOP + 0x23] = 0xff;
-	mem[DUMMY_TOP + 0x24] = 0xcd;	// int 6fh (dummy)
-	mem[DUMMY_TOP + 0x25] = 0x6f;
+	mem[DUMMY_TOP + 0x24] = 0xcd;	// int 64h (dummy)
+	mem[DUMMY_TOP + 0x25] = 0x64;
 	mem[DUMMY_TOP + 0x26] = 0xcb;	// retf
 	
 	// call int 29h routine
@@ -19727,7 +20147,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[DUMMY_TOP + 0x29] = 0xcb;	// retf
 	
 	// VCPI entry point
-	mem[DUMMY_TOP + 0x2a] = 0xcd;	// int 65h
+	mem[DUMMY_TOP + 0x2a] = 0xcd;	// int 65h (dummy)
 	mem[DUMMY_TOP + 0x2b] = 0x65;
 	mem[DUMMY_TOP + 0x2c] = 0xcb;	// retf
 	

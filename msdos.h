@@ -653,6 +653,14 @@ UINT32 UMB_TOP = EMS_TOP; // EMS is disabled
 
 UINT32 IRET_TOP = 0;
 //#define IRET_SIZE	0x100	// moved into common.h
+
+UINT32 ATOK_TOP = 0;
+// ATOK_TOP + 0x000	ATOK5 driver
+// ATOK_TOP + 0x012	ATOK5 dummy routine
+// ATOK_TOP + 0x015	"ATOK"
+// ATOK_TOP + 0x019	ATOK5 driver dummy routine (at ATOK_TOP + ATOK_TOP - 7)
+#define ATOK_SIZE	0x20	/* 18 + 3 + 4 + 7 */
+
 UINT32 XMS_TOP = 0;
 // XMS_TOP + 0x000	EMMXXXX0 driver
 // XMS_TOP + 0x012	EMS dummy routine

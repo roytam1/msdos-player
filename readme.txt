@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								6/23/2024
+								7/1/2024
 
 ----- What's This
 
@@ -485,8 +485,12 @@ INT 10H		PC BIOS - Video
 	1321H	Write Characters And Extended Attributes
 	1A00H	Get Display Combination Code
 	1BH	Perform Gray-Scale Summing
+	5000H	AX (Japanese AT) Video - Set Screen Country Code
+	5001H	AX (Japanese AT) Video - Get Screen Country Code
 	8200H	Get/Set Scroll Mode
+	8204H	J-3100 (Toshiba) Video - Get/Set Cursor Mode
 	8300H	Get Video RAM Address
+	85H	J-3100 (Toshiba) Video - Read Attribute At Cursor Position
 	90H	Get Physical Workstation Display Mode
 	91H	Get Physical Workstation Adapter Type
 	EFH	Get Video Adapter Type And Mode (*1)
@@ -567,7 +571,15 @@ INT 16H		PC BIOS - Keyboard
 	10H	Get Enhanced Keystroke
 	11H	Check For Enhanced Keystroke
 	12H	Get Extended Shift States
+	1300H	DOS/V Keyboard - Set Double-Byte Character Set Shift Control
+	1301H	DOS/V Keyboard - Get Double-Byte Character Set Shift Control
+	5000H	AX (Japanese AT) Keyboard - Set Keyboard Country Code
+	5001H	AX (Japanese AT) Keyboard - Get Keyboard Country Code
 	51H	AX (Japanese AT) Keyboard - Read Shift Key Status
+	F0H	J-3100 (Toshiba) Keyboard - Beep
+	F1H	J-3100 (Toshiba) Keyboard - Set Shift Key Status
+	F5H	J-3100 (Toshiba) Keyboard - Store Keystroke In Keyboard Buffer
+	F6H	J-3100 (Toshiba) Keyboard - Check Keyboard Buffer
 
 INT 17H		PC BIOS - Printer
 
@@ -904,7 +916,7 @@ INT 33H		Mouse
 	004DH	Return Pointer To Copyright String
 	006DH	Get Version String
 
-INT 65H-66H	(Used For Dummy LIM EMS/XMS Service Routines)
+INT 64H-66H	(Used For Dummy LIM EMS/XMS Service Routines)
 
 INT 67H		LIM EMS
 
@@ -965,8 +977,17 @@ INT 67H		LIM EMS
 	DE0BH	VCPI - Set 8259 Interrupt Vector Mapping
 	DE0CH	VCPI - Switch To Protected Mode
 
+INT 68H-6EH	(Used For Dummy BIOS/DOS/Driver Service Routines)
 
-INT 68H-6FH	(Used For Dummy BIOS/DOS/Driver Service Routines)
+INT 6FH		ATOK5
+
+	01H	ATOK5 - Switch To Roman Kanji Mode
+	02H	ATOK5 - Switch To Kana Kanji Mode
+	03H	ATOK5 - Switch To Alphabet Mode
+	04H	ATOK5 - Switch To Symbol Mode
+	05H	ATOK5 - Switch To Code Input Mode
+	0BH	ATOK5 - Disable ATOK
+	66H	ATOK5 - Get Current Mode
 
 CALL FAR XMS
 
