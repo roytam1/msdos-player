@@ -1148,6 +1148,7 @@ void
 RDTSC(void)
 {
 //#if defined(SUPPORT_IA32_HAXM)&&defined(_WIN32)
+#if defined(USE_TSC)
 #if 0
 	LARGE_INTEGER li = {0};
 	LARGE_INTEGER qpf;
@@ -1184,7 +1185,9 @@ RDTSC(void)
 		CPU_EAX = (tsc_cur & 0xffffffff);
 	}
 #endif
-//	ia32_panic("RDTSC: not implemented yet!");
+#else
+	ia32_panic("RDTSC: not supported in this build!");
+#endif
 }
 
 void

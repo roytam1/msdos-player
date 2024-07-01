@@ -129,8 +129,10 @@
 #define USE_SSE2
 #define USE_SSE3
 #define USE_TSC
+#define USE_PAGING
 #define USE_FASTPAGING
 #define USE_VME
+#define USE_CLOCK
 #define IA32_REBOOT_ON_PANIC
 
 enum {
@@ -327,6 +329,7 @@ typedef struct {
 	FPU_PTR		data; // ラストデータポインタレジスター
 } FPU_REGS_S;
 
+#if defined(USE_FPU)
 #if 0
 
 typedef struct {
@@ -433,6 +436,7 @@ typedef struct {
 #endif
 } FPU_STAT_S;
 
+#endif
 #endif
 
 typedef struct {
@@ -1088,7 +1092,11 @@ void CPUCALL set_eflags(UINT32 new_flags, UINT32 mask);
 #define	CPU_STAT_SS32		CPU_STATSAVE.cpu_stat.ss_32
 #define	CPU_STAT_RESETREQ	CPU_STATSAVE.cpu_stat.resetreq
 #define	CPU_STAT_PM		CPU_STATSAVE.cpu_stat.protected_mode
+#ifdef USE_PAGING
 #define	CPU_STAT_PAGING		CPU_STATSAVE.cpu_stat.paging
+#else
+#define CPU_STAT_PAGING		false
+#endif
 #define	CPU_STAT_VM86		CPU_STATSAVE.cpu_stat.vm86
 #define	CPU_STAT_WP		CPU_STATSAVE.cpu_stat.page_wp
 #define	CPU_STAT_CPL		CPU_CS_DESC.rpl

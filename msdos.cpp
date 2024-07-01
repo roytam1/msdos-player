@@ -665,6 +665,15 @@ BOOL MyWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, D
 #define MyWriteConsoleOutputCharacterA WriteConsoleOutputCharacterA
 #endif
 
+BOOL MySetConsoleTitleA(LPCSTR lpConsoleTitle)
+{
+#if 0
+	return SetConsoleTitleA(lpConsoleTitle);
+#else
+	return TRUE;
+#endif
+}
+
 void vram_flush_char()
 {
 	if(vram_length_char != 0) {
@@ -757,7 +766,7 @@ void write_text_vram_attr(UINT32 offset, UINT8 data)
 	}
 }
 
-void write_text_vram_byte(UINT32 offset, UINT8 data)
+inline void write_text_vram_byte(UINT32 offset, UINT8 data)
 {
 	enter_vram_lock();
 	if(offset & 1) {
@@ -768,6 +777,7 @@ void write_text_vram_byte(UINT32 offset, UINT8 data)
 	leave_vram_lock();
 }
 
+#if 0
 void write_text_vram_word(UINT32 offset, UINT16 data)
 {
 	enter_vram_lock();
@@ -797,6 +807,7 @@ void write_text_vram_dword(UINT32 offset, UINT32 data)
 	}
 	leave_vram_lock();
 }
+#endif
 
 void write_byte(UINT32 byteaddress, UINT8 data)
 #ifdef USE_DEBUGGER
@@ -893,10 +904,26 @@ void debugger_write_word(UINT32 byteaddress, UINT16 data)
 			if(!restore_console_size) {
 				change_console_size(scr_width, scr_height);
 			}
+#if 1
+			UINT32 offset = byteaddress - text_vram_top_address;
+			enter_vram_lock();
+			write_text_vram_char(offset    , (data     ) & 0xff);
+			write_text_vram_attr(offset + 1, (data >> 8) & 0xff);
+			leave_vram_lock();
+#else
 			write_text_vram_word(byteaddress - text_vram_top_address, data);
+#endif
 		} else if(byteaddress >= shadow_buffer_top_address && byteaddress < shadow_buffer_end_address) {
 			if(int_10h_feh_called && !int_10h_ffh_called) {
+#if 1
+				UINT32 offset = byteaddress - shadow_buffer_top_address;
+				enter_vram_lock();
+				write_text_vram_char(offset    , (data     ) & 0xff);
+				write_text_vram_attr(offset + 1, (data >> 8) & 0xff);
+				leave_vram_lock();
+#else
 				write_text_vram_word(byteaddress - shadow_buffer_top_address, data);
+#endif
 			}
 #ifdef SUPPORT_GRAPHIC_SCREEN
 		} else if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
@@ -951,10 +978,30 @@ void debugger_write_dword(UINT32 byteaddress, UINT32 data)
 			if(!restore_console_size) {
 				change_console_size(scr_width, scr_height);
 			}
+#if 1
+			UINT32 offset = byteaddress - text_vram_top_address;
+			enter_vram_lock();
+			write_text_vram_char(offset    , (data      ) & 0xff);
+			write_text_vram_attr(offset + 1, (data >>  8) & 0xff);
+			write_text_vram_char(offset + 2, (data >> 16) & 0xff);
+			write_text_vram_attr(offset + 3, (data >> 24) & 0xff);
+			leave_vram_lock();
+#else
 			write_text_vram_dword(byteaddress - text_vram_top_address, data);
+#endif
 		} else if(byteaddress >= shadow_buffer_top_address && byteaddress < shadow_buffer_end_address) {
 			if(int_10h_feh_called && !int_10h_ffh_called) {
+#if 1
+				UINT32 offset = byteaddress - shadow_buffer_top_address;
+				enter_vram_lock();
+				write_text_vram_char(offset    , (data      ) & 0xff);
+				write_text_vram_attr(offset + 1, (data >>  8) & 0xff);
+				write_text_vram_char(offset + 2, (data >> 16) & 0xff);
+				write_text_vram_attr(offset + 3, (data >> 24) & 0xff);
+				leave_vram_lock();
+#else
 				write_text_vram_dword(byteaddress - shadow_buffer_top_address, data);
+#endif
 			}
 #ifdef SUPPORT_GRAPHIC_SCREEN
 		} else if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
@@ -7496,6 +7543,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 		
 		*(UINT16 *)(mem + (ss << 4) + sp) = 0;
 		CPU_JMP_FAR(cs, ip);
+		MySetConsoleTitleA(process->module_path);
 	} else if(al == 0x01) {
 		// copy ss:sp and cs:ip to param block
 		param->sp = sp;
@@ -13264,6 +13312,10 @@ inline void msdos_int_21h_50h()
 
 inline void msdos_int_21h_51h()
 {
+	process_t *process = msdos_process_info_get(current_psp, false);
+	if (process) {
+		MySetConsoleTitleA(process->module_path);
+	}
 	CPU_BX = current_psp;
 }
 
@@ -19008,8 +19060,13 @@ void msdos_syscall(unsigned num)
 
 int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 {
+	// NOTE: global variables will be automatically initialized to zero in usual C++
+	// so I comment-out some memset(), but don't remove them to clarify the intention of initialization
+	
 	// init file handler
+#if 0
 	memset(file_handler, 0, sizeof(file_handler));
+#endif
 	msdos_file_handler_open(0, "STDIN", _isatty(0), 0, 0x80d3, 0);
 	msdos_file_handler_open(1, "STDOUT", _isatty(1), 1, 0x80d3, 0);
 	msdos_file_handler_open(2, "STDERR", _isatty(2), 1, 0x80d3, 0);
@@ -19031,7 +19088,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	_dup2(4, DUP_STDPRN);
 	
 	// init mouse
+#if 0
 	memset(&mouse, 0, sizeof(mouse));
+#endif
 	mouse.enabled = true;	// from DOSBox
 	mouse.hidden = 1;	// hidden in default ???
 	mouse.old_hidden = 1;	// from DOSBox
@@ -19045,14 +19104,18 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	msdos_xms_init();
 #endif
 	
+#if 0
 	// init process
 	memset(process, 0, sizeof(process));
+#endif
 	
 	// init dtainfo
 	msdos_dta_info_init();
 	
+#if 0
 	// init memory
 	memset(mem, 0, sizeof(mem));
+#endif
 	
 	// bios data area
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
