@@ -146,7 +146,7 @@ public:
 			#elif defined(HAS_PENTIUM4)
 				#define CPU_MODEL pentium4
 			#endif
-			#define SUPPORT_RDTSC
+//			#define SUPPORT_RDTSC
 		#endif
 		#define SUPPORT_FPU
 //	#endif

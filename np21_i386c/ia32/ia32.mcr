@@ -82,10 +82,14 @@ do { \
 #define	CPU_WORKCLOCK(clock)
 #endif
 
+#ifdef USE_CLOCK
 #define	CPU_HALT() \
 do { \
 	CPU_REMCLOCK = -1; \
 } while (/*CONSTCOND*/ 0)
+#else
+#define	CPU_HALT()
+#endif
 
 #ifdef USE_CLOCK
 #define	IRQCHECKTERM() \

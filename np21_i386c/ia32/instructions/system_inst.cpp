@@ -1149,6 +1149,7 @@ RDTSC(void)
 {
 //#if defined(SUPPORT_IA32_HAXM)&&defined(_WIN32)
 #if defined(USE_TSC)
+#if !defined(USE_CLOCK)
 #if 0
 	LARGE_INTEGER li = {0};
 	LARGE_INTEGER qpf;
@@ -1158,6 +1159,11 @@ RDTSC(void)
 	}
 	CPU_EDX = li.HighPart;
 	CPU_EAX = li.LowPart;
+#else
+	UINT64 tsc_tmp = __rdtsc();
+	CPU_EDX = ((tsc_tmp >> 32) & 0xffffffff);
+	CPU_EAX = (tsc_tmp & 0xffffffff);
+#endif
 #else
 	if(/*np2cfg.consttsc*/0){
 		// CPUクロックに依存しないカウンタ値にする

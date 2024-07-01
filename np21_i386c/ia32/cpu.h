@@ -132,7 +132,7 @@
 #define USE_PAGING
 #define USE_FASTPAGING
 #define USE_VME
-#define USE_CLOCK
+//#define USE_CLOCK
 #define IA32_REBOOT_ON_PANIC
 
 enum {
@@ -453,11 +453,15 @@ typedef struct {
 
 	/* protected by cpu shut */
 	UINT8		cpu_type;
+#if 0
 	UINT8		itfbank;
 	UINT16		ram_d0;
+#endif
+#if defined(USE_CLOCK)
 	SINT32		remainclock;
 	SINT32		baseclock;
 	UINT32		clock;
+#endif
 	
 #if defined(USE_TSC)
 	UINT64		cpu_tsc;
@@ -527,11 +531,15 @@ extern I386MSR		i386msr;
 #define	CPU_ADRSMASK	i386core.s.cpu_stat.adrsmask
 #define	CPU_RESETREQ	i386core.s.cpu_stat.resetreq
 
+#ifdef USE_CLOCK
 #define	CPU_REMCLOCK	i386core.s.remainclock
 #define	CPU_BASECLOCK	i386core.s.baseclock
 #define	CPU_CLOCK	i386core.s.clock
+#endif
+#if 0
 #define	CPU_ITFBANK	i386core.s.itfbank
 #define	CPU_RAM_D000	i386core.s.ram_d0
+#endif
 
 #define CPU_TYPE	i386core.s.cpu_type
 #define CPUTYPE_V30	0x01

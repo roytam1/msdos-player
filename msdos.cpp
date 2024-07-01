@@ -5044,6 +5044,9 @@ const char *msdos_get_multiple_short_path(const char *src)
 	// "LONGPATH\";"LONGPATH\";"LONGPATH\" to SHORTPATH;SHORTPATH;SHORTPATH
 	static char env_path[ENV_SIZE];
 	char tmp[ENV_SIZE], *token;
+#ifdef _WIN64
+	char tmp_syswow64[ENV_SIZE];
+#endif
 	
 	memset(env_path, 0, sizeof(env_path));
 	strcpy(tmp, src);
@@ -5058,11 +5061,18 @@ const char *msdos_get_multiple_short_path(const char *src)
 					strcat(env_path, ";");
 				}
 				if(GetShortPathNameA(path, short_path, MAX_PATH) == 0) {
-					strcat(env_path, msdos_remove_end_separator(path));
+					path = msdos_remove_end_separator(path);
 				} else {
 					my_strupr(short_path);
-					strcat(env_path, msdos_remove_end_separator(short_path));
+					path = msdos_remove_end_separator(short_path);
 				}
+#ifdef _WIN64
+				if(_strnicmp(path + 1, ":\\Windows\\System32", 18) == 0) {
+					sprintf(tmp_syswow64, "%c:\\WINDOWS\\SYSWOW64%s", path[0], path + 19);
+					path = tmp_syswow64;
+				}
+#endif
+				strcat(env_path, path);
 			}
 		}
 		token = my_strtok(NULL, ";");
