@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								2/18/2024
+								6/23/2024
 
 ----- What's This
 
@@ -19,7 +19,7 @@ This emulator aims to support character user interface utilities, for example
 file converters, compilers, assemblers, debuggers, and text editors.
 
 NOTE: This emulator DOES NOT support graphic/sound hardwares and DOES NOT
-aim to support game softwares. I recommend DOSBOx for this purpose.
+aim to support game software. I recommend DOSBOx for this purpose.
 
 
 ----- How To Use
@@ -119,7 +119,7 @@ the table on the virtual machine (hereinafter, referred to as "virtual table"),
 and in this time, APPEND/MSDOS_PATH/PATH/TEMP/TMP values are converted to
 short path.
 
-Some softwares (for example DoDiary Version 1.55) expect that the environment
+Some software (for example DoDiary Version 1.55) expect that the environment
 variable table should be less than 1024 bytes.
 On the Windows OS, there are too many variables and the environment variable
 table size will be more than 1024 bytes and it causes an error.
@@ -286,7 +286,7 @@ https://science.ksc.nasa.gov/software/winvn/userguide/3_1_4.htm
 +01:00  W. Central Africa Standard Time     WAT     WAS     NG Lagos
 
 NOTE: MSDOS_(APPEND/COMSPEC/LASTDRIVE/TEMP/TZ) are not copied to the virtual
-table, but MSDOS_PATH is copied to, because some softwares may refer it.
+table, but MSDOS_PATH is copied to, because some software may refer it.
 
 
 ----- Recommended Configurations
@@ -1073,7 +1073,7 @@ Imported many fixes from Mr.cracyc's fork hosted at:
 https://github.com/cracyc/msdos-player
 
 Patched by Mr.Sagawa, Mr.sava (lukewarm), Mr.Kimura (emk), Mr.Jason Hood,
-Mr.N2583ZYOB6, Mr.Fujita, Mr.Mark Ogden, Mr.cacyc, and Mr.roytam
+Mr.N2583ZYOB6, Mr.Fujita, Mr.Mark Ogden, Mr.cacyc, Mr.roytam, and Mr.Nmlgc
 
 ----------------------------------------
 TAKEDA, toshiya

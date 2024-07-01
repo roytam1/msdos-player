@@ -8,10 +8,12 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#if 0
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x400	// Windows NT 4.0
-//#define _WIN32_WINNT 0x500	// Windows 2000
+//#define _WIN32_WINNT 0x400	// Windows NT 4.0
+#define _WIN32_WINNT 0x500	// Windows 2000
 //#define _WIN32_WINNT 0x501	// Windows XP
+#endif
 #endif
 #include <windows.h>
 #include <winioctl.h>
