@@ -105,6 +105,19 @@ typedef union {
 } PAIR32;
 #pragma pack()
 
+#pragma pack(1)
+typedef union {
+	UINT16 w;
+	struct {
+#ifdef __BIG_ENDIAN__
+		UINT8 h, l;
+#else
+		UINT8 l, h;
+#endif
+	} b;
+} PAIR16;
+#pragma pack()
+
 /* ----------------------------------------------------------------------------
 	FIFO buffer
 ---------------------------------------------------------------------------- */
@@ -217,7 +230,7 @@ public:
 			#elif defined(HAS_PENTIUM4)
 				#define CPU_MODEL pentium4
 			#endif
-			#define SUPPORT_RDTSC
+//			#define SUPPORT_RDTSC
 		#endif
 		#define SUPPORT_FPU
 //	#endif
@@ -304,7 +317,7 @@ void hardware_update();
 
 // drive
 
-typedef struct {
+typedef struct drive_param_s {
 	int initialized;
 	int valid;
 	DISK_GEOMETRY geometry;
@@ -436,16 +449,7 @@ void ems_unmap_page(int physical);
 
 typedef struct {
 	struct {
-		union {
-			UINT16 w;
-			struct {
-#ifdef __BIG_ENDIAN__
-				UINT8 h, l;
-#else
-				UINT8 l, h;
-#endif
-			} b;
-		} areg, creg, bareg, bcreg;
+		PAIR16 areg, creg, bareg, bcreg;
 		UINT8 mode;
 		UINT8 pagereg;
 		UINT32 port;
@@ -561,16 +565,7 @@ typedef struct {
 	FIFO *send_buffer;
 	FIFO *recv_buffer;
 	
-	union {
-		UINT16 w;
-		struct {
-#ifdef __BIG_ENDIAN__
-			UINT8 h, l;
-#else
-			UINT8 l, h;
-#endif
-		} b;
-	} divisor;
+	PAIR16 divisor;
 	UINT16 prev_divisor;
 	UINT8 line_ctrl, prev_line_ctrl;
 	UINT8 selector;
@@ -742,6 +737,14 @@ UINT32 UMB_TOP = EMS_TOP; // EMS is disabled
 
 UINT32 IRET_TOP = 0;
 //#define IRET_SIZE	0x100	// moved into common.h
+
+UINT32 ATOK_TOP = 0;
+// ATOK_TOP + 0x000	ATOK5 driver
+// ATOK_TOP + 0x012	ATOK5 dummy routine
+// ATOK_TOP + 0x015	"ATOK"
+// ATOK_TOP + 0x019	ATOK5 driver dummy routine (at ATOK_TOP + ATOK_TOP - 7)
+#define ATOK_SIZE	0x20	/* 18 + 3 + 4 + 7 */
+
 UINT32 XMS_TOP = 0;
 // XMS_TOP + 0x000	EMMXXXX0 driver
 // XMS_TOP + 0x012	EMS dummy routine
@@ -1277,7 +1280,7 @@ bool int_10h_ffh_called = false;
 
 #define MAX_MOUSE_BUTTONS	2
 
-typedef struct {
+typedef struct mouse_s {
 	bool enabled;	// from DOSBox
 	bool enabled_ps2;
 	int hidden;
@@ -1327,6 +1330,8 @@ UINT16 mouse_push_cx;
 UINT16 mouse_push_dx;
 UINT16 mouse_push_si;
 UINT16 mouse_push_di;
+UINT16 mouse_push_ds;
+UINT16 mouse_push_es;
 
 // hma
 
