@@ -211,7 +211,7 @@ DWORD MyGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuff
 				my_strlcpy(szLongPath, szTempPath, sizeof(szLongPath));
 			}
 			szTempShortPath[nPos] = '\0';
-			FindFirstFile(szTempShortPath ,&ffd);
+			FindFirstFileA(szTempShortPath ,&ffd);
 		} else {
 			_snprintf(szTempPath, sizeof(szTempPath), "%s\\%s", szTempShortPath, szLongPath);
 			my_strlcpy(szLongPath, szTempPath, sizeof(szLongPath));
@@ -3063,6 +3063,62 @@ bool is_cursor_blink_off()
 	return(result != 0);
 }
 
+void hit_key(BYTE bVirtualKey)
+{
+	HMODULE hLibrary = LoadLibraryA("User32.dll");
+	if(hLibrary) {
+		typedef UINT (WINAPI* MapVirtualKeyFunction)(UINT, UINT);
+		typedef void (WINAPI* KeybdEventFunction)(BYTE, BYTE, DWORD, ULONG_PTR);
+		MapVirtualKeyFunction lpfnMapVirtualKey = reinterpret_cast<MapVirtualKeyFunction>(::GetProcAddress(hLibrary, "MapVirtualKeyA"));
+		KeybdEventFunction lpfnKeybdEvent = reinterpret_cast<KeybdEventFunction>(::GetProcAddress(hLibrary, "keybd_event"));
+		if(lpfnMapVirtualKey && lpfnKeybdEvent) {
+			BYTE bScanCode = lpfnMapVirtualKey(bVirtualKey, 0);
+			lpfnKeybdEvent(bVirtualKey, bScanCode, 0, 0);
+			lpfnKeybdEvent(bVirtualKey, bScanCode, KEYEVENTF_KEYUP, 0);
+		}
+		FreeLibrary(hLibrary);
+	}
+}
+
+BOOL get_ime_open_status()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(hWnd != NULL) {
+		return (SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0) != 0);
+	}
+	return FALSE;
+}
+
+void set_ime_open_status(BOOL value)
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(hWnd != NULL) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, value);
+	}
+}
+
+DWORD get_ime_conversion_mode()
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(hWnd != NULL) {
+		hit_key(0); // update conversion mode
+		return SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0);
+	}
+	return 0;
+}
+
+void set_ime_conversion_mode(DWORD value)
+{
+	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
+	
+	if(hWnd != NULL) {
+		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, value);
+	}
+}
+
 void get_sio_port_numbers()
 {
 	SP_DEVINFO_DATA DeviceInfoData = {sizeof(SP_DEVINFO_DATA)};
@@ -3836,14 +3892,14 @@ void change_console_size(int width, int height)
 	int cur_window_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	int cur_buffer_width  = csbi.dwSize.X;
 	int cur_buffer_height = csbi.dwSize.Y;
-
+	
 	// workaround win10 conhost v2 bug that crash when cursor is out of range
 	if(is_win10_or_later) {
 		co.X = 0;
 		co.Y = 0;
 		SetConsoleCursorPosition(hStdout, co);
 	}
-
+	
 	if(csbi.srWindow.Top != 0 || csbi.dwCursorPosition.Y > height - 1) {
 		if(cur_window_width == width && cur_window_height == height) {
 			ReadConsoleOutputA(hStdout, scr_buf, scr_buf_size, scr_buf_pos, &csbi.srWindow);
@@ -3988,7 +4044,7 @@ bool update_console_input()
 						};
 						bool prev_status = mouse.buttons[j].status;
 						mouse.buttons[j].status = ((ir[i].Event.MouseEvent.dwButtonState & bits[j]) != 0);
-
+						
 						if(!prev_status && mouse.buttons[j].status) {
 							mouse.buttons[j].pressed_times++;
 							mouse.buttons[j].pressed_position.x = mouse.position.x;
@@ -10103,35 +10159,32 @@ inline void pcbios_int_16h_12h()
 
 inline void pcbios_int_16h_13h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
 	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
 	switch(CPU_AL) {
 	case 0x00:
 		if(CPU_DX & 0x0080) {
-			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-			UINT uConv = 0x0000;
+			DWORD dwConv = 0x0000;
 			if(CPU_DX & 0x0001) {
-				uConv |= IME_CMODE_FULLSHAPE;
+				dwConv |= IME_CMODE_FULLSHAPE;
 			}
 			if((CPU_DX & 0x06) == 0x02) {
-				uConv |= IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
+				dwConv |= IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
 			} else if((CPU_DX & 0x06) == 0x04) {
-				uConv |= IME_CMODE_NATIVE;
+				dwConv |= IME_CMODE_NATIVE;
 			}
 			if(CPU_DX & 0x0040) {
-				uConv |= IME_CMODE_ROMAN;
+				dwConv |= IME_CMODE_ROMAN;
 			}
-			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, uConv);
+			set_ime_open_status(TRUE);
+			set_ime_conversion_mode(dwConv);
 		} else {
-			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
+			set_ime_open_status(FALSE);
 		}
 		break;
 	case 0x01:
 		CPU_DX = 0x0000;
-		if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-			KeyOnOff(0); // update conversion mode
-			DWORD dwConv = SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0);
+		if(get_ime_open_status()) {
+			DWORD dwConv = get_ime_conversion_mode();
 			if(dwConv & IME_CMODE_FULLSHAPE) {
 				CPU_DX |= 0x0001; // full-size rather than half-size
 			}
@@ -10265,19 +10318,19 @@ inline void pcbios_int_16h_f1h()
 	UINT8 caps = (GetKeyState(VK_CAPITAL) & 0x0001) ? 0x40 : 0;
 	
 	if((CPU_AL & 0x10) != kana) {
-		HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-		BOOL bImeOn = (SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0) != 0);
-		KeyOnOff(VK_KANA);
+		// Hitting KANA key will make IME opened, so it needs to be closed
+		BOOL bImeOn = get_ime_open_status();
+		hit_key(VK_KANA);
 		if(!bImeOn) {
 			Sleep(10);
-			SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
+			set_ime_open_status(FALSE);
 		}
 	}
 	if((CPU_AL & 0x20) != num) {
-		KeyOnOff(VK_NUMLOCK);
+		hit_key(VK_NUMLOCK);
 	}
 	if((CPU_AL & 0x40) != caps) {
-		KeyOnOff(VK_CAPITAL);
+		hit_key(VK_CAPITAL);
 	}
 }
 
@@ -17721,90 +17774,69 @@ inline void msdos_int_67h_deh()
 
 inline void atok_int_6fh_01h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-	}
+//	if(!get_ime_open_status()) {
+		set_ime_open_status(TRUE);
+//	}
 #if 0
 	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
-	else {
-		KeyOnOff(0); // update conversion mode
-	}
-	if(!(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0) & IME_CMODE_ROMAN)) {
-		KeyOnOff(VK_KANA);
+	if(!(get_ime_conversion_mode() & IME_CMODE_ROMAN)) {
+		hit_key(VK_KANA);
 	}
 #endif
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
+	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 }
 
 inline void atok_int_6fh_02h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-	}
+//	if(!get_ime_open_status()) {
+		set_ime_open_status(TRUE);
+//	}
 #if 0
 	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
-	else {
-		KeyOnOff(0); // update conversion mode
-	}
-	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0) & IME_CMODE_ROMAN) {
-		KeyOnOff(VK_KANA);
+	if(get_ime_conversion_mode() & IME_CMODE_ROMAN) {
+		hit_key(VK_KANA);
 	}
 #endif
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
+	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
 }
 
 inline void atok_int_6fh_03h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-	}
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_ALPHANUMERIC);
+//	if(!get_ime_open_status()) {
+		set_ime_open_status(TRUE);
+//	}
+	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
 }
 
 inline void atok_int_6fh_04h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-	}
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_SYMBOL);
+//	if(!get_ime_open_status()) {
+		set_ime_open_status(TRUE);
+//	}
+	set_ime_conversion_mode(IME_CMODE_SYMBOL);
 }
 
 inline void atok_int_6fh_05h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(!SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, TRUE);
-	}
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_CHARCODE);
+//	if(!get_ime_open_status()) {
+		set_ime_open_status(TRUE);
+//	}
+	set_ime_conversion_mode(IME_CMODE_CHARCODE);
 }
 
 inline void atok_int_6fh_0bh()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
-		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETOPENSTATUS, FALSE);
-	}
-	SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, IME_CMODE_ALPHANUMERIC);
+//	if(get_ime_open_status()) {
+		set_ime_open_status(FALSE);
+//	}
+	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
 }
 
 inline void atok_int_6fh_66h()
 {
-	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
-	
-	if(SendMessage(hWnd, WM_IME_CONTROL, IMC_GETOPENSTATUS, 0)) {
+	if(get_ime_open_status()) {
 		// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
-		KeyOnOff(0); // update conversion mode
-		DWORD dwConv = SendMessage(hWnd, WM_IME_CONTROL, IMC_GETCONVERSIONMODE, 0);
+		DWORD dwConv = get_ime_conversion_mode();
 		if(dwConv & IME_CMODE_CHARCODE) {
 			CPU_AL = 0x05;
 		} else if(dwConv & IME_CMODE_SYMBOL) {
