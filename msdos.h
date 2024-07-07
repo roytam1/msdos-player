@@ -522,6 +522,8 @@ void pcbios_printer_out(int c, UINT8 data);
 // pit
 
 #define PIT_ALWAYS_RUNNING
+#define PIT_FREQ 1193182ULL
+#define PIT_COUNT_VALUE(n) ((pit[n].count_reg == 0) ? 0x10000 : (pit[n].mode == 3 && pit[n].count_reg == 1) ? 0x10001 : pit[n].count_reg)
 
 typedef struct {
 	INT32 count;

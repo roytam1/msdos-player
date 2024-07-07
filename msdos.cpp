@@ -10304,7 +10304,14 @@ inline void pcbios_int_16h_f0h()
 		typedef BOOL (WINAPI* BeepFunction)(DWORD, DWORD);
 		BeepFunction lpfnBeep = reinterpret_cast<BeepFunction>(::GetProcAddress(hLibrary, "Beep"));
 		if(lpfnBeep) {
-			lpfnBeep(750, 55 * CPU_BL); // frequency is unknown
+			DWORD freq = 0;
+			if(pit[2].mode == 3 && !pit[2].low_write && !pit[2].high_write) {
+				freq = (DWORD)((double)PIT_FREQ / PIT_COUNT_VALUE(2) + 0.5);
+			}
+			if(freq < 37 || freq > 32767) {
+				freq = 904;
+			}
+			lpfnBeep(freq, (DWORD)(54.9254 * CPU_BL + 0.5));
 		}
 		FreeLibrary(hLibrary);
 	}
@@ -18459,12 +18466,16 @@ void msdos_syscall(unsigned num)
 		// dummy interrupt for call 0005h (call near)
 		fprintf(fp_debug_log, "call 0005h (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
 	} else if(num == 0x65) {
-		// dummy interrupt for EMS (int 67h)
-		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x67, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
+		// dummy interrupt for ATOK5 (int 6fh) and EMS (int 67h)
+		if((CPU_AH >= 0x01 && CPU_AH <= 0x12) || CPU_AH == 0x66) {
+			fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x6f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
+		} else {
+			fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x67, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
+		}
 	} else if(num == 0x66) {
 		// dummy interrupt for XMS (call far)
 		fprintf(fp_debug_log, "call XMS (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-	} else if(num >= 0x68 && num <= 0x6f) {
+	} else if(num == 0x64 || (num >= 0x68 && num <= 0x6e)) {
 		// dummy interrupt
 	} else {
 		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", num, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
@@ -21289,9 +21300,6 @@ void printer_out(int c, UINT8 data)
 }
 
 // pit
-
-#define PIT_FREQ 1193182ULL
-#define PIT_COUNT_VALUE(n) ((pit[n].count_reg == 0) ? 0x10000 : (pit[n].mode == 3 && pit[n].count_reg == 1) ? 0x10001 : pit[n].count_reg)
 
 void pit_init()
 {
