@@ -2852,7 +2852,7 @@ USHORT get_message_lang()
 		return LANG_JAPANESE;
 	} else if(active_code_page == 949) {
 		return LANG_KOREAN;
-	} else if(active_code_page == 850) {
+	} else if(active_code_page == 850 || active_code_page == 860) {
 		switch(PRIMARYLANGID(GetUserDefaultLangID())) {
 		case LANG_FRENCH:
 			return LANG_FRENCH;
@@ -2860,6 +2860,8 @@ USHORT get_message_lang()
 			return LANG_GERMAN;
 		case LANG_SPANISH:
 			return LANG_SPANISH;
+		case LANG_PORTUGUESE:
+			return LANG_PORTUGUESE;
 		}
 	}
 	return LANG_ENGLISH;
@@ -14594,6 +14596,8 @@ inline void msdos_int_24h()
 				message = (const char *)critical_error_table[i].message_german;
 			} else if(lang == LANG_SPANISH) {
 				message = (const char *)critical_error_table[i].message_spanish;
+			} else if(lang == LANG_PORTUGUESE) {
+				message = (const char *)critical_error_table[i].message_brazilian;
 			} else if(lang == LANG_JAPANESE) {
 				message = (const char *)critical_error_table[i].message_japanese;
 			} else if(lang == LANG_KOREAN) {
@@ -14619,6 +14623,8 @@ inline void msdos_int_24h()
 				fprintf(stderr, " %s %c", (const char*)writing_drive_german, 'A' + CPU_AL);
 			} else if(lang == LANG_SPANISH) {
 				fprintf(stderr, " %s %c", (const char*)writing_drive_spanish, 'A' + CPU_AL);
+			} else if(lang == LANG_PORTUGUESE) {
+				fprintf(stderr, " %s %c", (const char*)writing_drive_brazilian, 'A' + CPU_AL);
 			} else if(lang == LANG_JAPANESE) {
 				fprintf(stderr, " %s %c", (const char*)writing_drive_japanese, 'A' + CPU_AL);
 			} else if(lang == LANG_KOREAN) {
@@ -14633,6 +14639,8 @@ inline void msdos_int_24h()
 				fprintf(stderr, " %s %c", (const char*)reading_drive_german, 'A' + CPU_AL);
 			} else if(lang == LANG_SPANISH) {
 				fprintf(stderr, " %s %c", (const char*)reading_drive_spanish, 'A' + CPU_AL);
+			} else if(lang == LANG_PORTUGUESE) {
+				fprintf(stderr, " %s %c", (const char*)reading_drive_brazilian, 'A' + CPU_AL);
 			} else if(lang == LANG_JAPANESE) {
 				fprintf(stderr, " %s %c", (const char*)reading_drive_japanese, 'A' + CPU_AL);
 			} else if(lang == LANG_KOREAN) {
@@ -14651,6 +14659,8 @@ inline void msdos_int_24h()
 			fprintf(stderr, "%s", (const char*)abort_german);
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, "%s", (const char*)abort_spanish);
+		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, "%s", (const char*)abort_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, "%s", (const char*)abort_japanese);
 		} else if(lang == LANG_KOREAN) {
@@ -14666,6 +14676,8 @@ inline void msdos_int_24h()
 			fprintf(stderr, ", %s", (const char*)retry_german);
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)retry_spanish);
+		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)retry_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)retry_japanese);
 		} else if(lang == LANG_KOREAN) {
@@ -14681,6 +14693,8 @@ inline void msdos_int_24h()
 			fprintf(stderr, ", %s", (const char*)ignore_german);
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)ignore_spanish);
+		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)ignore_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)ignore_japanese);
 		} else if(lang == LANG_KOREAN) {
@@ -14696,6 +14710,8 @@ inline void msdos_int_24h()
 			fprintf(stderr, ", %s", (const char*)fail_german);
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)fail_spanish);
+		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)fail_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)fail_japanese);
 		} else if(lang == LANG_KOREAN) {
@@ -14946,6 +14962,8 @@ inline void msdos_int_2fh_05h()
 					message = (const char *)standard_error_table[i].message_german;
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)standard_error_table[i].message_spanish;
+				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)standard_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)standard_error_table[i].message_japanese;
 				} else if(lang == LANG_KOREAN) {
@@ -14980,6 +14998,8 @@ inline void msdos_int_2fh_05h()
 					message = (const char *)standard_error_table[i].message_german;
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)standard_error_table[i].message_spanish;
+				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)standard_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)standard_error_table[i].message_japanese;
 				} else if(lang == LANG_KOREAN) {
@@ -15007,6 +15027,8 @@ inline void msdos_int_2fh_05h()
 					message = (const char *)param_error_table[i].message_german;
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)param_error_table[i].message_spanish;
+				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)param_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)param_error_table[i].message_japanese;
 				} else if(lang == LANG_KOREAN) {
@@ -19209,6 +19231,8 @@ void msdos_syscall(unsigned num)
 						message = (const char *)param_error_table[i].message_german;
 					} else if(lang == LANG_SPANISH) {
 						message = (const char *)param_error_table[i].message_spanish;
+					} else if(lang == LANG_PORTUGUESE) {
+						message = (const char *)param_error_table[i].message_brazilian;
 					} else if(lang == LANG_JAPANESE) {
 						message = (const char *)param_error_table[i].message_japanese;
 					} else if(lang == LANG_KOREAN) {
