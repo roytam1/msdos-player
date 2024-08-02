@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								7/15/2024
+								7/31/2024
 
 ----- What's This
 
@@ -370,11 +370,10 @@ If you try CP/M-80 emulator using 8080 emulation mode, use these binaries.
 IA32 binaries include Neko Project 21/W i386c core and support FPU/MMX/SSE/2/3.
 These binaries will emulate the protected mode more correctly.
 
-The VC++ project file "msdos.vcproj/vcxproj" also contains the configurations
+VC++ project files msdos.dsp/vcproj/vcxproj also contains the configurations
 for 80186, Pentium/PRO/MMX/2/3, and Cyrix MediaGX.
-You can build all binaries for several cpu models by running build9_all.bat
-or build15_all.bat.
-(You need VC++ 2008 with Service Pack 1 or VC++ 2017)
+You can build all binaries for several cpu models by running build6/9/15.bat.
+(VC++ 6.0 with SP6. VC++ 2008 with SP1, or VC++ 2017 are required)
 
 
 ----- Internal Debugger

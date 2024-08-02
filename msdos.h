@@ -270,9 +270,11 @@ typedef struct drive_param_s {
 			case F3_128Mb_512:
 			case F3_230Mb_512:
 			case F8_256_128:
+#ifndef _MSC_VC6
 			case F3_200Mb_512:
 			case F3_240M_512:
 			case F3_32M_512:
+#endif
 				return(1);
 			}
 		}
@@ -302,9 +304,11 @@ typedef struct drive_param_s {
 			case F3_128Mb_512:
 			case F3_230Mb_512:
 //			case F8_256_128:
+#ifndef _MSC_VC6
 			case F3_200Mb_512:
 			case F3_240M_512:
 			case F3_32M_512:
+#endif
 				return(2);
 			default:
 				return(1);
@@ -329,7 +333,7 @@ drive_param_t drive_params[26] = {0};
 	#define MAX_MEM 0x100000	/* 1MB */
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER > 1200)
 __declspec(align(4096))
 #endif
 UINT8 mem[MAX_MEM + 16]
@@ -446,7 +450,7 @@ void pcbios_printer_out(int c, UINT8 data);
 // pit
 
 #define PIT_ALWAYS_RUNNING
-#define PIT_FREQ 1193182ULL
+#define PIT_FREQ (UINT64)1193182
 #define PIT_COUNT_VALUE(n) ((pit[n].count_reg == 0) ? 0x10000 : (pit[n].mode == 3 && pit[n].count_reg == 1) ? 0x10001 : pit[n].count_reg)
 
 typedef struct {
@@ -1738,12 +1742,12 @@ static const struct {
 	{0x040, LANG_ENGLISH, SUBLANG_ENGLISH_NZ},				// New Zealand
 	{0x041, LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE},			// Singapore
 //	{0x041, LANG_ENGLISH, SUBLANG_ENGLISH_SINGAPORE},			// Singapore
-	{0x042, LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL},		// Taiwan???
+	{0x042, LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL},			// Taiwan???
 	{0x051, LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN},				// Japan (DR DOS 5.0, MS-DOS 5.0+)
 	{0x052, LANG_KOREAN, SUBLANG_KOREAN},					// South Korea (DR DOS 5.0)
 	{0x054, LANG_VIETNAMESE, SUBLANG_VIETNAMESE_VIETNAM},			// Vietnam
-	{0x056, LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED},		// China (MS-DOS 5.0+)
-	{0x058, LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL},		// Taiwan (MS-DOS 5.0+)
+	{0x056, LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED},			// China (MS-DOS 5.0+)
+	{0x058, LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL},			// Taiwan (MS-DOS 5.0+)
 	{0x05A, LANG_TURKISH, SUBLANG_TURKISH_TURKEY},				// Turkey (MS-DOS 5.0+)
 	{0x05B, LANG_HINDI, SUBLANG_HINDI_INDIA},				// India
 	{0x05C, LANG_URDU, SUBLANG_URDU_PAKISTAN},				// Pakistan
@@ -1765,7 +1769,7 @@ static const struct {
 //	{0x0EA, LANG_IGBO, SUBLANG_IGBO_NIGERIA},				// Nigeria
 	{0x0FB, LANG_AMHARIC, SUBLANG_AMHARIC_ETHIOPIA},			// Ethiopia
 //	{0x0FB, LANG_TIGRINYA, SUBLANG_TIGRINYA_ETHIOPIA},			// Ethiopia
-	{0x0FE, LANG_SWAHILI, SUBLANG_SWAHILI},					// Kenya
+	{0x0FE, LANG_SWAHILI, SUBLANG_SWAHILI_KENYA},				// Kenya
 	{0x107, LANG_ENGLISH, SUBLANG_ENGLISH_ZIMBABWE},			// Zimbabwe
 	{0x10B, LANG_TSWANA, SUBLANG_TSWANA_BOTSWANA},				// Botswana
 	{0x12A, LANG_FAEROESE, SUBLANG_FAEROESE_FAROE_ISLANDS},			// Faroe Islands
@@ -1784,7 +1788,7 @@ static const struct {
 //	{0x166, LANG_SAMI, SUBLANG_SAMI_SKOLT_FINLAND},				// Finland
 //	{0x166, LANG_SAMI, SUBLANG_SAMI_INARI_FINLAND},				// Finland
 	{0x167, LANG_BULGARIAN, SUBLANG_BULGARIAN_BULGARIA},			// Bulgaria
-	{0x172, LANG_LITHUANIAN, SUBLANG_LITHUANIAN_LITHUANIA},			// Lithuania
+	{0x172, LANG_LITHUANIAN, SUBLANG_LITHUANIAN},				// Lithuania
 	{0x173, LANG_LATVIAN, SUBLANG_LATVIAN_LATVIA},				// Latvia
 	{0x174, LANG_ESTONIAN, SUBLANG_ESTONIAN_ESTONIA},			// Estonia
 	{0x17D, LANG_SERBIAN, SUBLANG_SERBIAN_LATIN},				// Serbia / Montenegro
@@ -1816,8 +1820,8 @@ static const struct {
 	{0x354, LANG_CHINESE, SUBLANG_CHINESE_HONGKONG},			// Hong Kong
 	{0x355, LANG_CHINESE, SUBLANG_CHINESE_MACAU},				// Macao
 	{0x357, LANG_KHMER, SUBLANG_KHMER_CAMBODIA},				// Cambodia
-	{0x370, LANG_BANGLA, SUBLANG_BANGLA_BANGLADESH},			// Bangladesh
-	{0x376, LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL},		// Taiwan (DOS 6.22+)
+	{0x370, LANG_BENGALI, SUBLANG_BENGALI_BANGLADESH},			// Bangladesh
+	{0x376, LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL},			// Taiwan (DOS 6.22+)
 	{0x3C0, LANG_DIVEHI, SUBLANG_DIVEHI_MALDIVES},				// Maldives
 	{0x3C1, LANG_ARABIC, SUBLANG_ARABIC_LEBANON},				// Lebanon
 	{0x3C2, LANG_ARABIC, SUBLANG_ARABIC_JORDAN},				// Jordan

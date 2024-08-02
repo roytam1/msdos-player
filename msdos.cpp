@@ -10,6 +10,28 @@
 
 void exit_handler();
 
+#ifdef _MSC_VC6
+void fatalerror(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+	exit_handler();
+	exit(1);
+}
+void error(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	fprintf(stderr, "error: ");
+	vfprintf(stderr, format, ap);
+	va_end(ap);
+}
+void nolog(const char *format, ...)
+{
+}
+#else
 #define fatalerror(...) { \
 	fprintf(stderr, __VA_ARGS__); \
 	exit_handler(); \
@@ -17,6 +39,7 @@ void exit_handler();
 }
 #define error(...) fprintf(stderr, "error: " __VA_ARGS__)
 #define nolog(...)
+#endif
 
 //#define ENABLE_DEBUG_LOG
 #ifdef ENABLE_DEBUG_LOG
@@ -157,6 +180,14 @@ inline char *my_strtok(char *tok, const char *del)
 {
 	return (char *)_mbstok((unsigned char *)(tok), (const unsigned char *)(del));
 }
+inline char* my_strtok_s(char *tok, const char *del, char** context)
+{
+#ifdef _MSC_VC6
+	return strtok(tok, del);
+#else
+	return strtok_s(tok, del, context);
+#endif
+}
 inline char *my_strupr(char *str)
 {
 	return (char *)_mbsupr((unsigned char *)(str));
@@ -165,6 +196,7 @@ inline char *my_strupr(char *str)
 #define my_strchr(str, chr) strchr((str), (chr))
 #define my_strrchr(str, chr) strrchr((str), (chr))
 #define my_strtok(tok, del) strtok((tok), (del))
+#define my_strtok_s(tok, del, context) strtok_s((tok), (del), (context))
 #define my_strupr(str) _strupr((str))
 #endif
 #define array_length(array) (sizeof(array) / sizeof(array[0]))
@@ -198,7 +230,7 @@ DWORD MyGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuff
 	
 	my_strlcpy(szTempShortPath, lpszShortPath, sizeof(szTempShortPath));
 	
-	if(FindFirstFileA(szTempShortPath, &ffd ) == INVALID_HANDLE_VALUE) {
+	if(FindFirstFileA(szTempShortPath, &ffd) == INVALID_HANDLE_VALUE) {
 		return 0;
 	}
 	do {
@@ -331,6 +363,36 @@ bool box_line = false;
 UINT32 update_ops = 0;
 UINT32 idle_ops = 0;
 
+#ifdef _MSC_VC6
+inline void __cpuid(int cpu_info[4], int function_id)
+{
+	unsigned int _eax = 0, _ebx = 0, _ecx = 0, _edx = 0;
+	_asm {
+		mov eax, function_id;
+		cpuid;
+		mov _eax, eax;
+		mov _ebx, ebx;
+		mov _ecx, ecx;
+		mov _edx, edx;
+	}
+	cpu_info[0] = _eax;
+	cpu_info[1] = _ebx;
+	cpu_info[2] = _ecx;
+	cpu_info[3] = _edx;
+}
+inline unsigned __int64 __rdtsc()
+{
+	unsigned __int64 val = 0;
+	_asm {
+		rdtsc;
+		mov DWORD PTR val, eax;
+		mov DWORD PTR [val + 4], edx;
+	}
+	return val;
+}
+#define _mm_pause() { __asm {_emit 0xf3}; __asm {_emit 0x90} }
+#endif
+
 inline BOOL is_sse2_ready()
 {
 	static int result = -1;
@@ -447,6 +509,10 @@ void add_cpu_trace(UINT32 pc, UINT16 cs, UINT32 eip, BOOL op32)
 		cpu_trace_ptr = (cpu_trace_ptr + 1) & (MAX_CPU_TRACE - 1);
 	}
 }
+#endif
+
+#ifdef LITTLEENDIAN
+#undef LITTLEENDIAN
 #endif
 
 #if defined(HAS_IA32)
@@ -1832,7 +1898,7 @@ void debugger_main()
 			} else if(stricmp(params[0], "N") == 0) {
 				if(num >= 2 && params[1][0] == '\"') {
 					my_strcpy_s(buffer, sizeof(buffer), prev_command);
-					if((token = strtok_s(buffer, "\"", &context)) != NULL && (token = strtok_s(NULL, "\"", &context)) != NULL) {
+					if((token = my_strtok_s(buffer, "\"", &context)) != NULL && (token = my_strtok_s(NULL, "\"", &context)) != NULL) {
 						my_strcpy_s(file_path, MAX_PATH, token);
 					} else {
 						telnet_printf("invalid parameter\n");
@@ -3164,6 +3230,20 @@ void get_sio_port_numbers()
 	SP_DEVINFO_DATA DeviceInfoData = {sizeof(SP_DEVINFO_DATA)};
 	HDEVINFO hDevInfo = 0;
 	HKEY hKey = 0;
+#ifdef _MSC_VC6
+	GUID GUID_DEVINTERFACE_COMPORT;
+	GUID_DEVINTERFACE_COMPORT.Data1 = 0x86e0d1e0L;
+	GUID_DEVINTERFACE_COMPORT.Data2 = 0x8089;
+	GUID_DEVINTERFACE_COMPORT.Data3 = 0x11d0;
+	GUID_DEVINTERFACE_COMPORT.Data4[0] = 0x9c;
+	GUID_DEVINTERFACE_COMPORT.Data4[1] = 0xe4;
+	GUID_DEVINTERFACE_COMPORT.Data4[2] = 0x08;
+	GUID_DEVINTERFACE_COMPORT.Data4[3] = 0x00;
+	GUID_DEVINTERFACE_COMPORT.Data4[4] = 0x3e;
+	GUID_DEVINTERFACE_COMPORT.Data4[5] = 0x30;
+	GUID_DEVINTERFACE_COMPORT.Data4[6] = 0x1f;
+	GUID_DEVINTERFACE_COMPORT.Data4[7] = 0x73;
+#endif
 	if((hDevInfo = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_COMPORT, NULL, NULL, (DIGCF_PRESENT | DIGCF_DEVICEINTERFACE))) != 0) {
 		for(int i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &DeviceInfoData); i++) {
 			if((hKey = SetupDiOpenDevRegKey(hDevInfo, &DeviceInfoData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_QUERY_VALUE)) != INVALID_HANDLE_VALUE) {
@@ -10067,22 +10147,14 @@ inline void pcbios_int_16h_6fh()
 
 inline void pcbios_int_16h_f0h()
 {
-	HMODULE hLibrary = LoadLibraryA("Kernel32.dll");
-	if(hLibrary) {
-		typedef BOOL (WINAPI* BeepFunction)(DWORD, DWORD);
-		BeepFunction lpfnBeep = reinterpret_cast<BeepFunction>(::GetProcAddress(hLibrary, "Beep"));
-		if(lpfnBeep) {
-			DWORD freq = 0;
-			if(pit[2].mode == 3 && !pit[2].low_write && !pit[2].high_write) {
-				freq = (DWORD)((double)PIT_FREQ / PIT_COUNT_VALUE(2) + 0.5);
-			}
-			if(freq < 37 || freq > 32767) {
-				freq = 904;
-			}
-			lpfnBeep(freq, (DWORD)(54.9254 * CPU_BL + 0.5));
-		}
-		FreeLibrary(hLibrary);
+	DWORD freq = 0;
+	if(pit[2].mode == 3 && !pit[2].low_write && !pit[2].high_write) {
+		freq = (DWORD)((double)PIT_FREQ / PIT_COUNT_VALUE(2) + 0.5);
 	}
+	if(freq < 37 || freq > 32767) {
+		freq = 904;
+	}
+	Beep(freq, (DWORD)(54.9254 * CPU_BL + 0.5));
 }
 
 inline void pcbios_int_16h_f1h()
@@ -12194,7 +12266,7 @@ inline void msdos_int_21h_43h(int lfn)
 			DWORD error = 0;
 			WIN32_FILE_ATTRIBUTE_DATA tFileInfo;
 			HMODULE hLibrary = NULL;
-			typedef DWORD (WINAPI* GetCompressedFileSizeFunction)(_In_ LPCSTR, _Out_opt_ LPDWORD);
+			typedef DWORD (WINAPI* GetCompressedFileSizeFunction)(LPCSTR, LPDWORD);
 			GetCompressedFileSizeFunction lpfnGetCompressedFileSizeA = NULL;
 			
 			HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -14248,13 +14320,17 @@ inline void msdos_int_21h_714eh()
 {
 	process_t *process = msdos_process_info_get(current_psp);
 	find_lfn_t *find = (find_lfn_t *)(mem + CPU_ES_BASE + CPU_DI);
-	char *path = (char *)(mem + CPU_DS_BASE + CPU_DX);
+	const char *path = (char *)(mem + CPU_DS_BASE + CPU_DX);
+	const char *tmp = "*";
 	WIN32_FIND_DATAA fd;
 	
 	dtainfo_t *dtainfo = msdos_dta_info_get(current_psp, LFN_DTA_LADDR);
 	if(dtainfo->find_handle != INVALID_HANDLE_VALUE) {
 		FindClose(dtainfo->find_handle);
 		dtainfo->find_handle = INVALID_HANDLE_VALUE;
+	}
+	if(strlen(path) == 0) {
+		path = tmp;
 	}
 	strcpy(process->volume_label, msdos_volume_label(path));
 	dtainfo->allowable_mask = CPU_CL;
@@ -14400,11 +14476,19 @@ inline void msdos_int_21h_71a6h()
 	int fd = msdos_psp_get_file_table(CPU_BX, current_psp);
 	
 	UINT8 *buffer = (UINT8 *)(mem + CPU_DS_BASE + CPU_DX);
+#ifdef _MSC_VC6
+	struct _stat status;
+#else
 	struct _stat64 status;
+#endif
 	DWORD serial_number = 0;
 	
 	if(fd < process->max_files && file_handler[fd].valid) {
+#ifdef _MSC_VC6
+		if(_fstat(fd, &status) == 0) {
+#else
 		if(_fstat64(fd, &status) == 0) {
+#endif
 			if(file_handler[fd].path[1] == ':') {
 				// NOTE: we need to consider the network file path "\\host\share\"
 				char volume[] = "A:\\";
@@ -20214,9 +20298,12 @@ void hardware_run()
 #ifdef USE_DEBUGGER
 	msdos_int_num = -1;
 #endif
+//	DWORD t = timeGetTime();
 	while(!msdos_exit) {
 		hardware_run_cpu();
 	}
+//	t = timeGetTime() - t;
+//	fprintf(stderr,"time=%d\n",t);
 #ifdef EXPORT_DEBUG_TO_FILE
 	if(fp_debug_log != NULL) {
 		fclose(fp_debug_log);
@@ -21293,7 +21380,7 @@ void pit_latch_count(int ch)
 
 int pit_get_expired_time(int ch)
 {
-	pit[ch].accum += 1024ULL * 1000ULL * (UINT64)pit[ch].count / PIT_FREQ;
+	pit[ch].accum += (UINT64)1024 * (UINT64)1000 * (UINT64)pit[ch].count / PIT_FREQ;
 	UINT64 val = pit[ch].accum >> 10;
 	pit[ch].accum -= val << 10;
 	return((val != 0) ? val : 1);
