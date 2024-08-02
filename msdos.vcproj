@@ -2512,6 +2512,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -2608,6 +2610,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -2703,6 +2707,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -2799,6 +2805,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -2894,6 +2902,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -2990,6 +3000,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -3085,6 +3097,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -3181,6 +3195,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -3276,6 +3292,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -3372,6 +3390,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -3467,6 +3487,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -3563,6 +3585,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -3658,6 +3682,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -3754,6 +3780,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -3849,6 +3877,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -3945,6 +3975,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4040,6 +4072,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -4136,6 +4170,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4231,6 +4267,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -4327,6 +4365,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4422,6 +4462,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -4518,6 +4560,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4613,6 +4657,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -4709,6 +4755,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4804,6 +4852,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="1"
 			/>
@@ -4900,6 +4950,8 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)\msdos.pdb"
 				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
@@ -4962,6 +5014,10 @@
 			</File>
 			<File
 				RelativePath=".\lang_sp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_pt.h"
 				>
 			</File>
 			<File
