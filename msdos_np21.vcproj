@@ -1234,6 +1234,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\lang_pt.h"
+				>
+			</File>
+			<File
 				RelativePath=".\lang_br.h"
 				>
 			</File>

@@ -2846,6 +2846,11 @@ HDC get_console_window_device_context()
 	return GetDC(get_console_window_handle());
 }
 
+#ifdef LANG_BRAZILIAN
+#undef LANG_BRAZILIAN
+#endif
+#define LANG_BRAZILIAN MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN)
+
 USHORT get_message_lang()
 {
 	if(active_code_page == 932) {
@@ -2853,7 +2858,8 @@ USHORT get_message_lang()
 	} else if(active_code_page == 949) {
 		return LANG_KOREAN;
 	} else if(active_code_page == 850 || active_code_page == 860) {
-		switch(PRIMARYLANGID(GetUserDefaultLangID())) {
+		LANGID langID = GetUserDefaultLangID();
+		switch(PRIMARYLANGID(langID)) {
 		case LANG_FRENCH:
 			return LANG_FRENCH;
 		case LANG_GERMAN:
@@ -2861,6 +2867,9 @@ USHORT get_message_lang()
 		case LANG_SPANISH:
 			return LANG_SPANISH;
 		case LANG_PORTUGUESE:
+			if(SUBLANGID(langID) == SUBLANG_PORTUGUESE_BRAZILIAN) {
+				return LANG_BRAZILIAN;
+			}
 			return LANG_PORTUGUESE;
 		}
 	}
@@ -14597,6 +14606,8 @@ inline void msdos_int_24h()
 			} else if(lang == LANG_SPANISH) {
 				message = (const char *)critical_error_table[i].message_spanish;
 			} else if(lang == LANG_PORTUGUESE) {
+				message = (const char *)critical_error_table[i].message_portuguese;
+			} else if(lang == LANG_BRAZILIAN) {
 				message = (const char *)critical_error_table[i].message_brazilian;
 			} else if(lang == LANG_JAPANESE) {
 				message = (const char *)critical_error_table[i].message_japanese;
@@ -14624,6 +14635,8 @@ inline void msdos_int_24h()
 			} else if(lang == LANG_SPANISH) {
 				fprintf(stderr, " %s %c", (const char*)writing_drive_spanish, 'A' + CPU_AL);
 			} else if(lang == LANG_PORTUGUESE) {
+				fprintf(stderr, " %s %c", (const char*)writing_drive_portuguese, 'A' + CPU_AL);
+			} else if(lang == LANG_BRAZILIAN) {
 				fprintf(stderr, " %s %c", (const char*)writing_drive_brazilian, 'A' + CPU_AL);
 			} else if(lang == LANG_JAPANESE) {
 				fprintf(stderr, " %s %c", (const char*)writing_drive_japanese, 'A' + CPU_AL);
@@ -14640,6 +14653,8 @@ inline void msdos_int_24h()
 			} else if(lang == LANG_SPANISH) {
 				fprintf(stderr, " %s %c", (const char*)reading_drive_spanish, 'A' + CPU_AL);
 			} else if(lang == LANG_PORTUGUESE) {
+				fprintf(stderr, " %s %c", (const char*)reading_drive_portuguese, 'A' + CPU_AL);
+			} else if(lang == LANG_BRAZILIAN) {
 				fprintf(stderr, " %s %c", (const char*)reading_drive_brazilian, 'A' + CPU_AL);
 			} else if(lang == LANG_JAPANESE) {
 				fprintf(stderr, " %s %c", (const char*)reading_drive_japanese, 'A' + CPU_AL);
@@ -14660,6 +14675,8 @@ inline void msdos_int_24h()
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, "%s", (const char*)abort_spanish);
 		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, "%s", (const char*)abort_portuguese);
+		} else if(lang == LANG_BRAZILIAN) {
 			fprintf(stderr, "%s", (const char*)abort_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, "%s", (const char*)abort_japanese);
@@ -14677,6 +14694,8 @@ inline void msdos_int_24h()
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)retry_spanish);
 		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)retry_portuguese);
+		} else if(lang == LANG_BRAZILIAN) {
 			fprintf(stderr, ", %s", (const char*)retry_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)retry_japanese);
@@ -14694,6 +14713,8 @@ inline void msdos_int_24h()
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)ignore_spanish);
 		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)ignore_portuguese);
+		} else if(lang == LANG_BRAZILIAN) {
 			fprintf(stderr, ", %s", (const char*)ignore_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)ignore_japanese);
@@ -14711,6 +14732,8 @@ inline void msdos_int_24h()
 		} else if(lang == LANG_SPANISH) {
 			fprintf(stderr, ", %s", (const char*)fail_spanish);
 		} else if(lang == LANG_PORTUGUESE) {
+			fprintf(stderr, ", %s", (const char*)fail_portuguese);
+		} else if(lang == LANG_BRAZILIAN) {
 			fprintf(stderr, ", %s", (const char*)fail_brazilian);
 		} else if(lang == LANG_JAPANESE) {
 			fprintf(stderr, ", %s", (const char*)fail_japanese);
@@ -14963,6 +14986,8 @@ inline void msdos_int_2fh_05h()
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)standard_error_table[i].message_spanish;
 				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)standard_error_table[i].message_portuguese;
+				} else if(lang == LANG_BRAZILIAN) {
 					message = (const char *)standard_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)standard_error_table[i].message_japanese;
@@ -14999,6 +15024,8 @@ inline void msdos_int_2fh_05h()
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)standard_error_table[i].message_spanish;
 				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)standard_error_table[i].message_portuguese;
+				} else if(lang == LANG_BRAZILIAN) {
 					message = (const char *)standard_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)standard_error_table[i].message_japanese;
@@ -15028,6 +15055,8 @@ inline void msdos_int_2fh_05h()
 				} else if(lang == LANG_SPANISH) {
 					message = (const char *)param_error_table[i].message_spanish;
 				} else if(lang == LANG_PORTUGUESE) {
+					message = (const char *)param_error_table[i].message_portuguese;
+				} else if(lang == LANG_BRAZILIAN) {
 					message = (const char *)param_error_table[i].message_brazilian;
 				} else if(lang == LANG_JAPANESE) {
 					message = (const char *)param_error_table[i].message_japanese;
@@ -19232,6 +19261,8 @@ void msdos_syscall(unsigned num)
 					} else if(lang == LANG_SPANISH) {
 						message = (const char *)param_error_table[i].message_spanish;
 					} else if(lang == LANG_PORTUGUESE) {
+						message = (const char *)param_error_table[i].message_portuguese;
+					} else if(lang == LANG_BRAZILIAN) {
 						message = (const char *)param_error_table[i].message_brazilian;
 					} else if(lang == LANG_JAPANESE) {
 						message = (const char *)param_error_table[i].message_japanese;
