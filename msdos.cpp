@@ -347,6 +347,9 @@ static UINT32 vram_length_char = 0, vram_length_attr = 0;
 static UINT32 vram_last_length_char = 0, vram_last_length_attr = 0;
 static COORD vram_coord_char, vram_coord_attr;
 
+static int is_kanji = 0;
+static int is_esc = 0;
+
 char temp_file_path[MAX_PATH];
 bool temp_file_created = false;
 
@@ -6047,6 +6050,7 @@ void msdos_putch(UINT8 data, unsigned int_num, UINT8 reg_ah)
 	
 	process_t *process = msdos_process_info_get(current_psp);
 	int fd = msdos_psp_get_file_table(1, current_psp);
+	bool skip_int29h = false;
 	
 	if(fd < process->max_files && file_handler[fd].valid && !file_handler[fd].atty) {
 		// stdout is redirected to file
@@ -6058,14 +6062,33 @@ void msdos_putch(UINT8 data, unsigned int_num, UINT8 reg_ah)
 	if(*(UINT16 *)(mem + 4 * 0x29 + 0) == (IRET_SIZE + 5 * 0x29) &&
 	   *(UINT16 *)(mem + 4 * 0x29 + 2) == (IRET_TOP >> 4)) {
 		// int 29h is not hooked, no need to call int 29h
-		msdos_putch_fast(data, int_num, reg_ah);
+		skip_int29h = true;
 	} else if(use_service_thread && in_service && main_thread_id != GetCurrentThreadId()) {
 		// XXX: in usually we should not reach here
 		// this is called from service thread to echo the input
 		// we can not call int 29h because it causes a critial issue to control cpu running in main thread :-(
-		msdos_putch_fast(data, int_num, reg_ah);
+		skip_int29h = true;
 	} else if(in_service_29h) {
 		// disallow reentering call int 29h routine to prevent an infinite loop :-(
+		skip_int29h = true;
+	} else if(ansi_sys) {
+		// ANSI.SYS does not seem to call int 29h for bell code
+		if(is_kanji) {
+			// kanji character
+		} else if(is_esc) {
+			// escape sequense
+		} else {
+			if(msdos_lead_byte_check(data)) {
+				// lead byte of kanji character
+			} else if(data == 0x1b) {
+				// start escape sequence
+			} else if(data == 0x07) {
+				// bell
+				skip_int29h = true;
+			}
+		}
+	}
+	if(skip_int29h) {
 		msdos_putch_fast(data, int_num, reg_ah);
 	} else {
 		// this is called from main thread, so we can call int 29h :-)
@@ -6108,8 +6131,8 @@ void msdos_putch_tmp(UINT8 data, unsigned int_num, UINT8 reg_ah)
 	SMALL_RECT rect;
 	COORD co;
 	static int p = 0;
-	static int is_kanji = 0;
-	static int is_esc = 0;
+//	static int is_kanji = 0;
+//	static int is_esc = 0;
 	static int stored_x;
 	static int stored_y;
 	static WORD stored_a;
@@ -7043,7 +7066,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	
 	psp_t *parent_psp = (psp_t *)(mem + (current_psp << 4));
 	
-	if(strlen(cmd) >= 5 && _stricmp(&cmd[strlen(cmd) - 4], ".BAT") == 0) {
+	if(check_file_extension(cmd, ".BAT")) {
 		// this is a batch file, run command.com
 		char tmp[MAX_PATH];
 		if(opt_len != 0) {
@@ -7403,7 +7426,16 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	psp_t *psp = msdos_psp_create(psp_seg, start_seg - (PSP_SIZE >> 4) + paragraphs, current_psp, env_seg);
 	memcpy(psp->fcb1, mem + (param->fcb1.w.h << 4) + param->fcb1.w.l, sizeof(psp->fcb1));
 	memcpy(psp->fcb2, mem + (param->fcb2.w.h << 4) + param->fcb2.w.l, sizeof(psp->fcb2));
+#if 0
 	memcpy(psp->buffer, mem + (param->cmd_line.w.h << 4) + param->cmd_line.w.l, sizeof(psp->buffer));
+#else
+	opt_ofs = (param->cmd_line.w.h << 4) + param->cmd_line.w.l;
+	opt_len = mem[opt_ofs];
+	memset(psp->buffer, 0, sizeof(psp->buffer));
+	psp->buffer[0] = opt_len;
+	memcpy(&psp->buffer[1], mem + opt_ofs + 1, opt_len);
+	psp->buffer[opt_len + 1] = 0x0d;
+#endif
 	
 	mcb_t *mcb_env = (mcb_t *)(mem + ((env_seg - 1) << 4));
 	mcb_t *mcb_psp = (mcb_t *)(mem + ((psp_seg - 1) << 4));
