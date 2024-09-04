@@ -308,6 +308,14 @@ void KeyOnOff(UINT vk)
 	}
 }
 
+bool check_file_extension(const char *file_path, const char *ext)
+{
+	int nam_len = (int)strlen(file_path);
+	int ext_len = (int)strlen(ext);
+	
+	return (nam_len >= ext_len && _strnicmp(&file_path[nam_len - ext_len], ext, ext_len) == 0);
+}
+
 #if defined(__MINGW32__)
 extern "C" int _CRT_glob = 0;
 #endif
@@ -1152,14 +1160,6 @@ void debugger_init()
 	memset(&int_break_point, 0, sizeof(int_break_point_t));
 }
 
-bool check_file_extension(const char *file_path, const char *ext)
-{
-	int nam_len = (int)strlen(file_path);
-	int ext_len = (int)strlen(ext);
-	
-	return (nam_len >= ext_len && strnicmp(&file_path[nam_len - ext_len], ext, ext_len) == 0);
-}
-
 void telnet_send(const char *string)
 {
 	char buffer[8192], *ptr;
@@ -1557,7 +1557,7 @@ void debugger_main()
 					params[num++] = token;
 				}
 			}
-			if(stricmp(params[0], "D") == 0) {
+			if(_stricmp(params[0], "D") == 0) {
 				if(num <= 3) {
 					bool pmode = CPU_STAT_PM && !CPU_STAT_VM86;
 					if(num >= 2) {
@@ -1618,7 +1618,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "E") == 0 || stricmp(params[0], "EB") == 0) {
+			} else if(_stricmp(params[0], "E") == 0 || _stricmp(params[0], "EB") == 0) {
 				if(num >= 3) {
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
@@ -1628,7 +1628,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "EW") == 0) {
+			} else if(_stricmp(params[0], "EW") == 0) {
 				if(num >= 3) {
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
@@ -1638,7 +1638,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "ED") == 0) {
+			} else if(_stricmp(params[0], "ED") == 0) {
 				if(num >= 3) {
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
@@ -1648,7 +1648,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "EA") == 0) {
+			} else if(_stricmp(params[0], "EA") == 0) {
 				if(num >= 3) {
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
@@ -1664,83 +1664,83 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "I") == 0 || stricmp(params[0], "IB") == 0) {
+			} else if(_stricmp(params[0], "I") == 0 || _stricmp(params[0], "IB") == 0) {
 				if(num == 2) {
 					telnet_printf("%02X\n", debugger_read_io_byte(debugger_get_val(params[1])) & 0xff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "IW") == 0) {
+			} else if(_stricmp(params[0], "IW") == 0) {
 				if(num == 2) {
 					telnet_printf("%04X\n", debugger_read_io_word(debugger_get_val(params[1])) & 0xffff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "ID") == 0) {
+			} else if(_stricmp(params[0], "ID") == 0) {
 				if(num == 2) {
 					telnet_printf("%08X\n", debugger_read_io_dword(debugger_get_val(params[1])));
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "O") == 0 || stricmp(params[0], "OB") == 0) {
+			} else if(_stricmp(params[0], "O") == 0 || _stricmp(params[0], "OB") == 0) {
 				if(num == 3) {
 					debugger_write_io_byte(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "OW") == 0) {
+			} else if(_stricmp(params[0], "OW") == 0) {
 				if(num == 3) {
 					debugger_write_io_word(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xffff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "OD") == 0) {
+			} else if(_stricmp(params[0], "OD") == 0) {
 				if(num == 3) {
 					debugger_write_io_dword(debugger_get_val(params[1]), debugger_get_val(params[2]));
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "R") == 0) {
+			} else if(_stricmp(params[0], "R") == 0) {
 				if(num == 1) {
 					debugger_regs_info(buffer);
 					telnet_printf("%s", buffer);
 				} else if(num == 3) {
 #if defined(HAS_I386)
-					if(stricmp(params[1], "EAX") == 0) {
+					if(_stricmp(params[1], "EAX") == 0) {
 						CPU_EAX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "EBX") == 0) {
+					} else if(_stricmp(params[1], "EBX") == 0) {
 						CPU_EBX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "ECX") == 0) {
+					} else if(_stricmp(params[1], "ECX") == 0) {
 						CPU_ECX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "EDX") == 0) {
+					} else if(_stricmp(params[1], "EDX") == 0) {
 						CPU_EDX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "ESP") == 0) {
+					} else if(_stricmp(params[1], "ESP") == 0) {
 						CPU_ESP = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "EBP") == 0) {
+					} else if(_stricmp(params[1], "EBP") == 0) {
 						CPU_EBP = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "ESI") == 0) {
+					} else if(_stricmp(params[1], "ESI") == 0) {
 						CPU_ESI = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "EDI") == 0) {
+					} else if(_stricmp(params[1], "EDI") == 0) {
 						CPU_EDI = debugger_get_val(params[2]);
 					} else
 #endif
-					if(stricmp(params[1], "AX") == 0) {
+					if(_stricmp(params[1], "AX") == 0) {
 						CPU_AX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "BX") == 0) {
+					} else if(_stricmp(params[1], "BX") == 0) {
 						CPU_BX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "CX") == 0) {
+					} else if(_stricmp(params[1], "CX") == 0) {
 						CPU_CX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "DX") == 0) {
+					} else if(_stricmp(params[1], "DX") == 0) {
 						CPU_DX = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "SP") == 0) {
+					} else if(_stricmp(params[1], "SP") == 0) {
 						CPU_SP = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "BP") == 0) {
+					} else if(_stricmp(params[1], "BP") == 0) {
 						CPU_BP = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "SI") == 0) {
+					} else if(_stricmp(params[1], "SI") == 0) {
 						CPU_SI = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "DI") == 0) {
+					} else if(_stricmp(params[1], "DI") == 0) {
 						CPU_DI = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "IP") == 0 || stricmp(params[1], "EIP") == 0) {
+					} else if(_stricmp(params[1], "IP") == 0 || _stricmp(params[1], "EIP") == 0) {
 #if defined(HAS_I386)
 						if(CPU_INST_OP32) {
 							CPU_SET_EIP(debugger_get_val(params[2]));
@@ -1750,39 +1750,39 @@ void debugger_main()
 #else
 						CPU_SET_PC((CPU_CS_BASE + (debugger_get_val(params[2]) & 0xffff)) & ADDR_MASK);
 #endif
-					} else if(stricmp(params[1], "AL") == 0) {
+					} else if(_stricmp(params[1], "AL") == 0) {
 						CPU_AL = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "AH") == 0) {
+					} else if(_stricmp(params[1], "AH") == 0) {
 						CPU_AH = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "BL") == 0) {
+					} else if(_stricmp(params[1], "BL") == 0) {
 						CPU_BL = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "BH") == 0) {
+					} else if(_stricmp(params[1], "BH") == 0) {
 						CPU_BH = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "CL") == 0) {
+					} else if(_stricmp(params[1], "CL") == 0) {
 						CPU_CL = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "CH") == 0) {
+					} else if(_stricmp(params[1], "CH") == 0) {
 						CPU_CH = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "DL") == 0) {
+					} else if(_stricmp(params[1], "DL") == 0) {
 						CPU_DL = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "DH") == 0) {
+					} else if(_stricmp(params[1], "DH") == 0) {
 						CPU_DH = debugger_get_val(params[2]);
-					} else if(stricmp(params[1], "CF") == 0) {
+					} else if(_stricmp(params[1], "CF") == 0) {
 						CPU_SET_C_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "PF") == 0) {
+					} else if(_stricmp(params[1], "PF") == 0) {
 						CPU_SET_P_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "AF") == 0) {
+					} else if(_stricmp(params[1], "AF") == 0) {
 						CPU_SET_A_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "ZF") == 0) {
+					} else if(_stricmp(params[1], "ZF") == 0) {
 						CPU_SET_Z_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "SF") == 0) {
+					} else if(_stricmp(params[1], "SF") == 0) {
 						CPU_SET_S_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "TF") == 0) {
+					} else if(_stricmp(params[1], "TF") == 0) {
 						CPU_SET_T_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "IF") == 0) {
+					} else if(_stricmp(params[1], "IF") == 0) {
 						CPU_SET_I_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "DF") == 0) {
+					} else if(_stricmp(params[1], "DF") == 0) {
 						CPU_SET_D_FLAG(debugger_get_val(params[2]) != 0);
-					} else if(stricmp(params[1], "OF") == 0) {
+					} else if(_stricmp(params[1], "OF") == 0) {
 						CPU_SET_O_FLAG(debugger_get_val(params[2]) != 0);
 					} else {
 						telnet_printf("unknown register %s\n", params[1]);
@@ -1790,7 +1790,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "S") == 0) {
+			} else if(_stricmp(params[0], "S") == 0) {
 				if(num >= 4) {
 					UINT32 cur_seg = debugger_get_seg(params[1], data_seg);
 					UINT32 cur_ofs = debugger_get_ofs(params[1]);
@@ -1820,7 +1820,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "U") == 0) {
+			} else if(_stricmp(params[0], "U") == 0) {
 				if(num <= 3) {
 					if(num >= 2) {
 						dasm_seg = debugger_get_seg(params[1], dasm_seg);
@@ -1864,7 +1864,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "UT") == 0) {
+			} else if(_stricmp(params[0], "UT") == 0) {
 				if(num <= 3) {
 					int steps = 128;
 					if(num >= 2) {
@@ -1887,7 +1887,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "H") == 0) {
+			} else if(_stricmp(params[0], "H") == 0) {
 				if(num == 3) {
 					UINT32 l = debugger_get_val(params[1]);
 					UINT32 r = debugger_get_val(params[2]);
@@ -1895,7 +1895,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "N") == 0) {
+			} else if(_stricmp(params[0], "N") == 0) {
 				if(num >= 2 && params[1][0] == '\"') {
 					my_strcpy_s(buffer, sizeof(buffer), prev_command);
 					if((token = my_strtok_s(buffer, "\"", &context)) != NULL && (token = my_strtok_s(NULL, "\"", &context)) != NULL) {
@@ -1908,7 +1908,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "L") == 0) {
+			} else if(_stricmp(params[0], "L") == 0) {
 				if(check_file_extension(file_path, ".hex")) {
 					if((fp = fopen(file_path, "r")) != NULL) {
 						UINT32 start_seg = data_seg;
@@ -1971,7 +1971,7 @@ void debugger_main()
 						telnet_printf("can't open %s\n", file_path);
 					}
 				}
-			} else if(stricmp(params[0], "W") == 0) {
+			} else if(_stricmp(params[0], "W") == 0) {
 				if(num == 3) {
 					UINT32 start_seg = debugger_get_seg(params[1], data_seg);
 					UINT32 start_ofs = debugger_get_ofs(params[1]);
@@ -2011,7 +2011,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "BP") == 0 || stricmp(params[0], "RBP") == 0 || stricmp(params[0], "WBP") == 0) {
+			} else if(_stricmp(params[0], "BP") == 0 || _stricmp(params[0], "RBP") == 0 || _stricmp(params[0], "WBP") == 0) {
 				break_point_t *break_point_ptr;
 				#define GET_BREAK_POINT_PTR() { \
 					if(params[0][0] == 'R' || params[0][0] == 'r') { \
@@ -2051,7 +2051,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "IBP") == 0 || stricmp(params[0], "OBP") == 0) {
+			} else if(_stricmp(params[0], "IBP") == 0 || _stricmp(params[0], "OBP") == 0) {
 				break_point_t *break_point_ptr;
 				GET_BREAK_POINT_PTR();
 				if(num == 2) {
@@ -2070,10 +2070,10 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "BC") == 0 || stricmp(params[0], "RBC") == 0 || stricmp(params[0], "WBC") == 0 || stricmp(params[0], "IBC") == 0 || stricmp(params[0], "OBC") == 0) {
+			} else if(_stricmp(params[0], "BC") == 0 || _stricmp(params[0], "RBC") == 0 || _stricmp(params[0], "WBC") == 0 || _stricmp(params[0], "IBC") == 0 || _stricmp(params[0], "OBC") == 0) {
 				break_point_t *break_point_ptr;
 				GET_BREAK_POINT_PTR();
-				if(num == 2 && (stricmp(params[1], "*") == 0 || stricmp(params[1], "ALL") == 0)) {
+				if(num == 2 && (_stricmp(params[1], "*") == 0 || _stricmp(params[1], "ALL") == 0)) {
 					memset(break_point_ptr, 0, sizeof(break_point_t));
 				} else if(num >= 2) {
 					for(int i = 1; i < num; i++) {
@@ -2090,12 +2090,12 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "BD") == 0 || stricmp(params[0], "RBD") == 0 || stricmp(params[0], "WBD") == 0 || stricmp(params[0], "IBD") == 0 || stricmp(params[0], "OBD") == 0 ||
-			          stricmp(params[0], "BE") == 0 || stricmp(params[0], "RBE") == 0 || stricmp(params[0], "WBE") == 0 || stricmp(params[0], "IBE") == 0 || stricmp(params[0], "OBE") == 0) {
+			} else if(_stricmp(params[0], "BD") == 0 || _stricmp(params[0], "RBD") == 0 || _stricmp(params[0], "WBD") == 0 || _stricmp(params[0], "IBD") == 0 || _stricmp(params[0], "OBD") == 0 ||
+			          _stricmp(params[0], "BE") == 0 || _stricmp(params[0], "RBE") == 0 || _stricmp(params[0], "WBE") == 0 || _stricmp(params[0], "IBE") == 0 || _stricmp(params[0], "OBE") == 0) {
 				break_point_t *break_point_ptr;
 				GET_BREAK_POINT_PTR();
 				bool enabled = (params[0][strlen(params[0]) - 1] == 'E' || params[0][strlen(params[0]) - 1] == 'e');
-				if(num == 2 && (stricmp(params[1], "*") == 0 || stricmp(params[1], "ALL") == 0)) {
+				if(num == 2 && (_stricmp(params[1], "*") == 0 || _stricmp(params[1], "ALL") == 0)) {
 					for(int i = 0; i < MAX_BREAK_POINTS; i++) {
 						if(break_point_ptr->table[i].status != 0) {
 							break_point_ptr->table[i].status = enabled ? 1 : -1;
@@ -2115,7 +2115,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "BL") == 0 || stricmp(params[0], "RBL") == 0 || stricmp(params[0], "WBL") == 0) {
+			} else if(_stricmp(params[0], "BL") == 0 || _stricmp(params[0], "RBL") == 0 || _stricmp(params[0], "WBL") == 0) {
 				break_point_t *break_point_ptr;
 				GET_BREAK_POINT_PTR();
 				if(num == 1) {
@@ -2132,7 +2132,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "IBL") == 0 || stricmp(params[0], "OBL") == 0) {
+			} else if(_stricmp(params[0], "IBL") == 0 || _stricmp(params[0], "OBL") == 0) {
 				break_point_t *break_point_ptr;
 				GET_BREAK_POINT_PTR();
 				if(num == 1) {
@@ -2144,7 +2144,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "INTBP") == 0) {
+			} else if(_stricmp(params[0], "INTBP") == 0) {
 				if(num >= 2 && num <= 4) {
 					int int_num = debugger_get_val(params[1]);
 					UINT8 ah = 0, ah_registered = 0;
@@ -2178,8 +2178,8 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "INTBC") == 0) {
-				if(num == 2 && (stricmp(params[1], "*") == 0 || stricmp(params[1], "ALL") == 0)) {
+			} else if(_stricmp(params[0], "INTBC") == 0) {
+				if(num == 2 && (_stricmp(params[1], "*") == 0 || _stricmp(params[1], "ALL") == 0)) {
 					memset(&int_break_point, 0, sizeof(int_break_point_t));
 				} else if(num >= 2) {
 					for(int i = 1; i < num; i++) {
@@ -2198,9 +2198,9 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "INTBD") == 0 || stricmp(params[0], "INTBE") == 0) {
+			} else if(_stricmp(params[0], "INTBD") == 0 || _stricmp(params[0], "INTBE") == 0) {
 				bool enabled = (params[0][strlen(params[0]) - 1] == 'E' || params[0][strlen(params[0]) - 1] == 'e');
-				if(num == 2 && (stricmp(params[1], "*") == 0 || stricmp(params[1], "ALL") == 0)) {
+				if(num == 2 && (_stricmp(params[1], "*") == 0 || _stricmp(params[1], "ALL") == 0)) {
 					for(int i = 0; i < MAX_BREAK_POINTS; i++) {
 						if(int_break_point.table[i].status != 0) {
 							int_break_point.table[i].status = enabled ? 1 : -1;
@@ -2220,7 +2220,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "INTBL") == 0) {
+			} else if(_stricmp(params[0], "INTBL") == 0) {
 				if(num == 1) {
 					for(int i = 0; i < MAX_BREAK_POINTS; i++) {
 						if(int_break_point.table[i].status) {
@@ -2237,12 +2237,12 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "G") == 0 || stricmp(params[0], "P") == 0) {
+			} else if(_stricmp(params[0], "G") == 0 || _stricmp(params[0], "P") == 0) {
 				if(num == 1 || num == 2) {
 					break_point_t break_point_stored;
 					bool break_points_stored = false;
 					
-					if(stricmp(params[0], "P") == 0) {
+					if(_stricmp(params[0], "P") == 0) {
 						memcpy(&break_point_stored, &break_point, sizeof(break_point_t));
 						memset(&break_point, 0, sizeof(break_point_t));
 						break_points_stored = true;
@@ -2301,7 +2301,7 @@ void debugger_main()
 					telnet_printf("%s", buffer);
 					
 					if(break_point.hit) {
-						if(stricmp(params[0], "G") == 0 && num == 1) {
+						if(_stricmp(params[0], "G") == 0 && num == 1) {
 							telnet_set_color(TELNET_RED | TELNET_INTENSITY);
 							telnet_printf("breaked at %08X(%04X:%04X): break point is hit\n", CPU_GET_NEXT_PC(), CPU_CS, CPU_EIP);
 						}
@@ -2349,7 +2349,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "T") == 0) {
+			} else if(_stricmp(params[0], "T") == 0) {
 				if(num == 1 || num == 2) {
 					int steps = 1;
 					if(num >= 2) {
@@ -2443,12 +2443,12 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "Q") == 0) {
+			} else if(_stricmp(params[0], "Q") == 0) {
 				break;
-			} else if(stricmp(params[0], "X") == 0) {
+			} else if(_stricmp(params[0], "X") == 0) {
 				debugger_process_info(buffer);
 				telnet_printf("%s", buffer);
-			} else if(stricmp(params[0], ">") == 0) {
+			} else if(_stricmp(params[0], ">") == 0) {
 				if(num == 2) {
 					if(fp_debugger != NULL) {
 						fclose(fp_debugger);
@@ -2458,7 +2458,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "<") == 0) {
+			} else if(_stricmp(params[0], "<") == 0) {
 				if(num == 2) {
 					if(fi_debugger != NULL) {
 						fclose(fi_debugger);
@@ -2468,7 +2468,7 @@ void debugger_main()
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
-			} else if(stricmp(params[0], "?") == 0) {
+			} else if(_stricmp(params[0], "?") == 0) {
 				telnet_printf("D [<start> [<end>]] - dump memory\n");
 				telnet_printf("E[{B,W,D}] <address> <list> - edit memory (byte,word,dword)\n");
 				telnet_printf("EA <address> \"<value>\" - edit memory (ascii)\n");
@@ -3324,7 +3324,7 @@ int main(int argc, char *argv[], char *envp[])
 	GetModuleFileNameA(NULL, path, MAX_PATH);
 	GetFullPathNameA(path, MAX_PATH, full, &name);
 	
-	if(name != NULL && stricmp(name, "msdos.exe") != 0) {
+	if(name != NULL && _stricmp(name, "msdos.exe") != 0) {
 		// check if command file is embedded to this execution file
 		// if this execution file name is msdos.exe, don't check
 		FILE* fp = fopen(full, "rb");
@@ -3583,11 +3583,11 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	if(convert_cmd_file) {
 		retval = EXIT_FAILURE;
-		if(name != NULL/* && stricmp(name, "msdos.exe") == 0*/) {
+		if(name != NULL/* && _stricmp(name, "msdos.exe") == 0*/) {
 			FILE *fp = NULL, *fs = NULL, *fo = NULL;
-			int len = (int)strlen(argv[arg_offset + 1]), data;
+			int data;
 			
-			if(!(len > 4 && (stricmp(argv[arg_offset + 1] + len - 4, ".COM") == 0 || stricmp(argv[arg_offset + 1] + len - 4, ".EXE") == 0))) {
+			if(!(check_file_extension(argv[arg_offset + 1], ".COM") || check_file_extension(argv[arg_offset + 1], ".EXE"))) {
 				fprintf(stderr, "Specify command file with extenstion (.COM or .EXE)\n");
 			} else if((fp = fopen(full, "rb")) == NULL) {
 				fprintf(stderr, "Can't open '%s'\n", name);
@@ -6938,7 +6938,7 @@ const char *msdos_comspec_value(int env_seg)
 	static char tmp[MAX_PATH];
 	const char *env = msdos_env_get(env_seg, "COMSPEC");
 	
-	if(env != NULL && stricmp(env, "C:\\COMMAND.COM") != 0) {
+	if(env != NULL && _stricmp(env, "C:\\COMMAND.COM") != 0) {
 		strcpy(tmp, env);
 	} else {
 		strcpy(tmp, "C:\\COMMAND.COM");
@@ -6951,7 +6951,7 @@ const char *msdos_comspec_path(int env_seg)
 	static char tmp[MAX_PATH];
 	const char *env = msdos_env_get(env_seg, "COMSPEC");
 	
-	if(env != NULL && stricmp(env, "C:\\COMMAND.COM") != 0) {
+	if(env != NULL && _stricmp(env, "C:\\COMMAND.COM") != 0) {
 		strcpy(tmp, env);
 	} else {
 		strcpy(tmp, comspec_path);
@@ -7177,29 +7177,34 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	}
 	
 	// load command file
-	strcpy(path, command);
-	if((fd = _open(path, _O_RDONLY | _O_BINARY)) == -1) {
-		sprintf(path, "%s.COM", command);
-		if((fd = _open(path, _O_RDONLY | _O_BINARY)) == -1) {
-			sprintf(path, "%s.EXE", command);
-			if((fd = _open(path, _O_RDONLY | _O_BINARY)) == -1) {
-				sprintf(path, "%s.BAT", command);
-				if(_access(path, 0) == 0) {
-					// this is a batch file, run command.com
-					char tmp[MAX_PATH];
-					if(opt_len != 0) {
-						sprintf(tmp, "/C %s %s", path, opt);
-					} else {
-						sprintf(tmp, "/C %s", path);
+	if(check_file_extension(command, ".COM") || check_file_extension(command, ".EXE") || check_file_extension(command, ".BAT")) {
+		strcpy(path, command);
+		if(_access(path, 0) != 0) {
+			// search path in parent environments
+			const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
+			if(env != NULL) {
+				char env_path[4096];
+				strcpy(env_path, env);
+				char *token = my_strtok(env_path, ";");
+				
+				while(token != NULL) {
+					if(strlen(token) != 0) {
+						strcpy(path, msdos_combine_path(token, command));
+						if(_access(path, 0) == 0) {
+							break;
+						}
 					}
-					strcpy(opt, tmp);
-					opt_len = (int)strlen(opt);
-					mem[opt_ofs] = opt_len;
-					sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
-					strcpy(path, msdos_comspec_path(parent_psp->env_seg));
-					strcpy(name_tmp, "COMMAND.COM");
-					fd = _open(path, _O_RDONLY | _O_BINARY);
-				} else {
+					token = my_strtok(NULL, ";");
+				}
+			}
+		}
+	} else {
+		sprintf(path, "%s.COM", command);
+		if(_access(path, 0) != 0) {
+			sprintf(path, "%s.EXE", command);
+			if(_access(path, 0) != 0) {
+				sprintf(path, "%s.BAT", command);
+				if(_access(path, 0) != 0) {
 					// search path in parent environments
 					const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
 					if(env != NULL) {
@@ -7209,34 +7214,16 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 						
 						while(token != NULL) {
 							if(strlen(token) != 0) {
-								sprintf(path, "%s", msdos_combine_path(token, command));
-								if((fd = _open(path, _O_RDONLY | _O_BINARY)) != -1) {
-									break;
-								}
 								sprintf(path, "%s.COM", msdos_combine_path(token, command));
-								if((fd = _open(path, _O_RDONLY | _O_BINARY)) != -1) {
+								if(_access(path, 0) == 0) {
 									break;
 								}
 								sprintf(path, "%s.EXE", msdos_combine_path(token, command));
-								if((fd = _open(path, _O_RDONLY | _O_BINARY)) != -1) {
+								if(_access(path, 0) == 0) {
 									break;
 								}
 								sprintf(path, "%s.BAT", msdos_combine_path(token, command));
 								if(_access(path, 0) == 0) {
-									// this is a batch file, run command.com
-									char tmp[MAX_PATH];
-									if(opt_len != 0) {
-										sprintf(tmp, "/C %s %s", path, opt);
-									} else {
-										sprintf(tmp, "/C %s", path);
-									}
-									strcpy(opt, tmp);
-									opt_len = (int)strlen(opt);
-									mem[opt_ofs] = opt_len;
-									sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
-									strcpy(path, msdos_comspec_path(parent_psp->env_seg));
-									strcpy(name_tmp, "COMMAND.COM");
-									fd = _open(path, _O_RDONLY | _O_BINARY);
 									break;
 								}
 							}
@@ -7246,6 +7233,24 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				}
 			}
 		}
+	}
+	if(_access(path, 0) == 0) {
+		if(check_file_extension(path, ".BAT")) {
+			// this is a batch file, run command.com
+			char tmp[MAX_PATH];
+			if(opt_len != 0) {
+				sprintf(tmp, "/C %s %s", path, opt);
+			} else {
+				sprintf(tmp, "/C %s", path);
+			}
+			strcpy(opt, tmp);
+			opt_len = (int)strlen(opt);
+			mem[opt_ofs] = opt_len;
+			sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
+			strcpy(path, msdos_comspec_path(parent_psp->env_seg));
+			strcpy(name_tmp, "COMMAND.COM");
+		}
+		fd = _open(path, _O_RDONLY | _O_BINARY);
 	}
 #ifdef ENABLE_DEBUG_OPEN_FILE
 	if(fp_debug_log != NULL) {
