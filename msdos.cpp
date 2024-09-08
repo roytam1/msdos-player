@@ -7130,7 +7130,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 						strcpy(opt, "");
 						for(int i = 0; i < strlen(tmp); i++) {
 							if(tmp[i] != ' ') {
-								strcpy(opt, tmp + i);
+								sprintf(opt, " %s", tmp + i);
 								break;
 							}
 						}
@@ -7426,16 +7426,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	psp_t *psp = msdos_psp_create(psp_seg, start_seg - (PSP_SIZE >> 4) + paragraphs, current_psp, env_seg);
 	memcpy(psp->fcb1, mem + (param->fcb1.w.h << 4) + param->fcb1.w.l, sizeof(psp->fcb1));
 	memcpy(psp->fcb2, mem + (param->fcb2.w.h << 4) + param->fcb2.w.l, sizeof(psp->fcb2));
-#if 0
 	memcpy(psp->buffer, mem + (param->cmd_line.w.h << 4) + param->cmd_line.w.l, sizeof(psp->buffer));
-#else
-	opt_ofs = (param->cmd_line.w.h << 4) + param->cmd_line.w.l;
-	opt_len = mem[opt_ofs];
-	memset(psp->buffer, 0, sizeof(psp->buffer));
-	psp->buffer[0] = opt_len;
-	memcpy(&psp->buffer[1], mem + opt_ofs + 1, opt_len);
-	psp->buffer[opt_len + 1] = 0x0d;
-#endif
 	
 	mcb_t *mcb_env = (mcb_t *)(mem + ((env_seg - 1) << 4));
 	mcb_t *mcb_psp = (mcb_t *)(mem + ((psp_seg - 1) << 4));
@@ -13146,6 +13137,7 @@ inline void msdos_int_21h_49h()
 	
 	if(mcb->mz == 'M' || mcb->mz == 'Z') {
 		msdos_mem_free(CPU_ES);
+		CPU_AX = CPU_ES - 1; // undocumented
 	} else {
 		CPU_AX = 0x09; // illegal memory block address
 		CPU_SET_C_FLAG(1);
