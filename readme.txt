@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								7/31/2024
+								9/7/2024
 
 ----- What's This
 
@@ -31,6 +31,12 @@ For example, compile a sample.c with LSI C-86 and execute the compiled binary:
 
 	> msdos lcc sample.c
 	> msdos sample.exe
+
+COMMAND.COM is needed to execute a batch file.
+
+	> msdos vz.bat readme.doc
+
+In this case, "COMMAND.COM /C vz.bat readme.doc" will be executed.
 
 
 ----- Options
@@ -1063,7 +1069,33 @@ While waiting until the child process is terminated, the virtual CPU is
 suspended and outputs of "type foo.txt" never be sent to the child process.
 
 
---- License
+----- Starting COMMAND.COM / C As Child Process
+
+Parent process may try to start "COMMAND.COM /C (program)" as child process,
+but COMMAND.COM may be missing.
+
+If the program is COM or EXE execution file and COMMAND.COM is missing,
+specified program is started directly.
+
+If the program is DOS internal command A-Z:/CHDIR/PATH/SET, it will be
+executed by MS-DOS Player internal routine.
+This is because changing current drive/directory or environment variables
+in the child process does not affect to the parent process.
+
+If the program is DOS internal command TYPE and COMMAND.COM is missing,
+it will be executed by MS-DOS Player internal routine.
+This is because we want to display contents of text files thru INT 29h.
+
+If the program is other DOS internal command and COMMAND.COM is missing,
+it will be executed by Win32 system() API.
+In this case, outputting characters to console is not thru INT 29h.
+
+Otherwise, COMMAND.COM will be started as child process.
+
+NOTE: In the case COMMAND.COM is not started, pipe connection does not work.
+
+
+----- License
 
 The copyright belongs to the author, but you can use the source codes under
 the GNU GENERAL PUBLIC LICENSE Version 2.
