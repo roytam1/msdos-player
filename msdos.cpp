@@ -349,6 +349,7 @@ static COORD vram_coord_char, vram_coord_attr;
 
 static int is_kanji = 0;
 static int is_esc = 0;
+static unsigned int src_int_num = 0;
 
 char temp_file_path[MAX_PATH];
 bool temp_file_created = false;
@@ -5206,6 +5207,35 @@ const char *msdos_local_file_path(const char *path, int lfn)
 	return(trimmed);
 }
 
+const char *msdos_file_name(const char *path)
+{
+	static char tmp[MAX_PATH];
+	const char *sep = strrchr(path, '\\');
+	
+	if(sep) {
+		strcpy(tmp, sep + 1);
+	} else {
+		strcpy(tmp, path);
+	}
+	return(tmp);
+}
+
+bool msdos_is_internal_command(const char *command)
+{
+	const char *table[] = {
+		"DIR", "CALL", "CHCP", "RENAME", "REN", "ERASE", "DEL", "TYPE", "REM", "COPY", "PAUSE", "DATE", "TIME", "VER", "VOL", "CD", "CHDIR", "MD", "MKDIR", "RD", "RMDIR", "BREAK", "VERIFY", "SET", "PROMPT", "PATH", "EXIT", "CTTY", "ECHO", "LOCK", "UNLOCK", "GOTO", "SHIFT", "IF", "FOR", "CLS", "TRUENAME", "LOADHIGH", "LH", "LFNFOR"
+	};
+	for(int i = 0; i < array_length(table); i++) {
+		if(_stricmp(command, table[i]) == 0) {
+			return(true);
+		}
+	}
+	if(((command[0] >= 'a' && command[0] <= 'z') || (command[0] >= 'A' && command[0] <= 'Z')) && command[1] == ':' && command[2] == '\0') {
+		return(true);
+	}
+	return false;
+}
+
 bool msdos_is_device_path(const char *path)
 {
 	char full[MAX_PATH], *name;
@@ -5873,6 +5903,7 @@ int msdos_read(int fd, void *buffer, unsigned int count)
 int msdos_kbhit()
 {
 	msdos_stdio_reopen();
+	int val = 0;
 	
 	process_t *process = msdos_process_info_get(current_psp);
 	int fd = msdos_psp_get_file_table(0, current_psp);
@@ -5892,7 +5923,11 @@ int msdos_kbhit()
 		leave_key_buf_lock();
 		if(!empty) return(1);
 	}
-	return(_kbhit());
+	try {
+		val = _kbhit();
+	} catch(...) {
+	}
+	return(val);
 }
 
 int msdos_getch_ex(int echo, unsigned int_num, UINT8 reg_ah)
@@ -6102,6 +6137,7 @@ void msdos_putch(UINT8 data, unsigned int_num, UINT8 reg_ah)
 			// call int 29h routine is at fffc:0027
 			CPU_CALL_FAR(DUMMY_TOP >> 4, 0x0027);
 			CPU_AL = data;
+			src_int_num = int_num;
 			
 			// run cpu until call int 29h routine is done
 			while(!msdos_exit && !(tmp_cs == CPU_CS && tmp_eip == CPU_EIP)) {
@@ -6450,6 +6486,23 @@ void msdos_putch_tmp(UINT8 data, unsigned int_num, UINT8 reg_ah)
 		scr_top = csbi.srWindow.Top;
 	}
 	cursor_moved = true;
+}
+
+void msdos_printf(FILE *fp, const char *format, ...)
+{
+	char buffer[ENV_SIZE];
+	va_list ap;
+	va_start(ap, format);
+	vsprintf(buffer, format, ap);
+	va_end(ap);
+	
+	for(int i = 0; i < (int)strlen(buffer); i++) {
+		if(fp != NULL) {
+			fputc(buffer[i], fp);
+		} else {
+			msdos_putch(buffer[i], 0x21, 0x09);
+		}
+	}
 }
 
 int msdos_aux_in()
@@ -6929,13 +6982,19 @@ void msdos_env_set(int env_seg, const char *name, const char *value)
 		char tmp[1024];
 		
 		if(_stricmp(name, n) == 0) {
-			sprintf(tmp, "%s=%s", n, value);
+			if(value[0] != '\0') {
+				sprintf(tmp, "%s=%s", n, value);
+			} else {
+				tmp[0] = '\0'; // delete
+			}
 			done = 1;
 		} else {
 			sprintf(tmp, "%s=%s", n, v);
 		}
-		memcpy(dst, tmp, strlen(tmp));
-		dst += strlen(tmp) + 1;
+		if(tmp[0] != '\0') {
+			memcpy(dst, tmp, strlen(tmp));
+			dst += strlen(tmp) + 1;
+		}
 		src += len + 1;
 	}
 	if(!done) {
@@ -6980,6 +7039,162 @@ const char *msdos_comspec_path(int env_seg)
 		strcpy(tmp, comspec_path);
 	}
 	return(tmp);
+}
+
+bool msdos_search_command_file(const char *command, int env_seg, char *dest_path)
+{
+	char path[MAX_PATH];
+	char env_path[ENV_SIZE];
+	
+	if(check_file_extension(command, ".COM") || check_file_extension(command, ".EXE") || check_file_extension(command, ".BAT")) {
+		strcpy(path, command);
+		if(_access(path, 0) != 0 && strchr(command, ':') == NULL && strchr(command, '\\') == NULL) {
+			// search path in parent environments
+			const char *env = msdos_env_get(env_seg, "PATH");
+			if(env != NULL) {
+				strcpy(env_path, env);
+				char *token = my_strtok(env_path, ";");
+				
+				while(token != NULL) {
+					if(strlen(token) != 0) {
+						strcpy(path, msdos_combine_path(token, command));
+						if(_access(path, 0) == 0) {
+							break;
+						}
+					}
+					token = my_strtok(NULL, ";");
+				}
+			}
+		}
+	} else if(strchr(command, '.') == NULL) {
+		sprintf(path, "%s.COM", command);
+		if(_access(path, 0) != 0) {
+			sprintf(path, "%s.EXE", command);
+			if(_access(path, 0) != 0) {
+				sprintf(path, "%s.BAT", command);
+				if(_access(path, 0) != 0 && strchr(command, ':') == NULL && strchr(command, '\\') == NULL) {
+					// search path in parent environments
+					const char *env = msdos_env_get(env_seg, "PATH");
+					if(env != NULL) {
+						strcpy(env_path, env);
+						char *token = my_strtok(env_path, ";");
+						
+						while(token != NULL) {
+							if(strlen(token) != 0) {
+								sprintf(path, "%s.COM", msdos_combine_path(token, command));
+								if(_access(path, 0) == 0) {
+									break;
+								}
+								sprintf(path, "%s.EXE", msdos_combine_path(token, command));
+								if(_access(path, 0) == 0) {
+									break;
+								}
+								sprintf(path, "%s.BAT", msdos_combine_path(token, command));
+								if(_access(path, 0) == 0) {
+									break;
+								}
+							}
+							token = my_strtok(NULL, ";");
+						}
+					}
+				}
+			}
+		}
+	}
+	if(_access(path, 0) == 0) {
+		strcpy(dest_path, path);
+		return(true);
+	}
+	return(false);
+}
+
+// error message
+
+const char *msdos_standard_error_message(UINT16 code)
+{
+	USHORT lang = get_message_lang();
+	
+	for(int i = 0; i < array_length(standard_error_table); i++) {
+		if(standard_error_table[i].code == code || standard_error_table[i].code == (UINT16)-1) {
+			const char *message = NULL;
+			if(lang == LANG_FRENCH) {
+				return (const char *)standard_error_table[i].message_french;
+			} else if(lang == LANG_GERMAN) {
+				return (const char *)standard_error_table[i].message_german;
+			} else if(lang == LANG_SPANISH) {
+				return (const char *)standard_error_table[i].message_spanish;
+			} else if(lang == LANG_PORTUGUESE) {
+				return (const char *)standard_error_table[i].message_portuguese;
+			} else if(lang == LANG_BRAZILIAN) {
+				return (const char *)standard_error_table[i].message_brazilian;
+			} else if(lang == LANG_JAPANESE) {
+				return (const char *)standard_error_table[i].message_japanese;
+			} else if(lang == LANG_KOREAN) {
+				return (const char *)standard_error_table[i].message_korean;
+			}
+			return standard_error_table[i].message_english;
+		}
+	}
+	// we should not reach here :-(
+	return NULL;
+}
+
+const char *msdos_critical_error_message(UINT16 code)
+{
+	USHORT lang = get_message_lang();
+	
+	for(int i = 0; i < array_length(critical_error_table); i++) {
+		if(critical_error_table[i].code == code || critical_error_table[i].code == (UINT16)-1) {
+			const char *message = NULL;
+			if(lang == LANG_FRENCH) {
+				return (const char *)critical_error_table[i].message_french;
+			} else if(lang == LANG_GERMAN) {
+				return (const char *)critical_error_table[i].message_german;
+			} else if(lang == LANG_SPANISH) {
+				return (const char *)critical_error_table[i].message_spanish;
+			} else if(lang == LANG_PORTUGUESE) {
+				return (const char *)critical_error_table[i].message_portuguese;
+			} else if(lang == LANG_BRAZILIAN) {
+				return (const char *)critical_error_table[i].message_brazilian;
+			} else if(lang == LANG_JAPANESE) {
+				return (const char *)critical_error_table[i].message_japanese;
+			} else if(lang == LANG_KOREAN) {
+				return (const char *)critical_error_table[i].message_korean;
+			}
+			return critical_error_table[i].message_english;
+		}
+	}
+	// we should not reach here :-(
+	return NULL;
+}
+
+const char *msdos_param_error_message(UINT16 code)
+{
+	USHORT lang = get_message_lang();
+	
+	for(int i = 0; i < array_length(param_error_table); i++) {
+		if(param_error_table[i].code == code || param_error_table[i].code == (UINT16)-1) {
+			const char *message = NULL;
+			if(lang == LANG_FRENCH) {
+				return (const char *)param_error_table[i].message_french;
+			} else if(lang == LANG_GERMAN) {
+				return (const char *)param_error_table[i].message_german;
+			} else if(lang == LANG_SPANISH) {
+				return (const char *)param_error_table[i].message_spanish;
+			} else if(lang == LANG_PORTUGUESE) {
+				return (const char *)param_error_table[i].message_portuguese;
+			} else if(lang == LANG_BRAZILIAN) {
+				return (const char *)param_error_table[i].message_brazilian;
+			} else if(lang == LANG_JAPANESE) {
+				return (const char *)param_error_table[i].message_japanese;
+			} else if(lang == LANG_KOREAN) {
+				return (const char *)param_error_table[i].message_korean;
+			}
+			return param_error_table[i].message_english;
+		}
+	}
+	// we should not reach here :-(
+	return NULL;
 }
 
 // process
@@ -7053,8 +7268,9 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	int fd = -1;
 	int sio_port = 0;
 	int lpt_port = 0;
-	int dos_command = 0;
-	char command[MAX_PATH], path[MAX_PATH], opt[MAX_PATH], *name = NULL, name_tmp[MAX_PATH];
+	char path[MAX_PATH], opt[MAX_PATH];
+	char tmp[MAX_PATH];
+	bool changed = false;
 	char pipe_stdin_path[MAX_PATH] = {0};
 	char pipe_stdout_path[MAX_PATH] = {0};
 	char pipe_stderr_path[MAX_PATH] = {0};
@@ -7066,242 +7282,532 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	
 	psp_t *parent_psp = (psp_t *)(mem + (current_psp << 4));
 	
-	if(check_file_extension(cmd, ".BAT")) {
-		// this is a batch file, run command.com
-		char tmp[MAX_PATH];
-		if(opt_len != 0) {
-			sprintf(tmp, "/C %s %s", cmd, opt);
+	// search command file
+	if(_stricmp(cmd, msdos_comspec_value(parent_psp->env_seg)) == 0) {
+		// redirect C:\COMMAND.COM to comspec_path
+		strcpy(path, msdos_comspec_path(parent_psp->env_seg));
+	} else if(!msdos_search_command_file(cmd, parent_psp->env_seg, path)) {
+		if(_stricmp(cmd, "COMMAND.COM") == 0 || _stricmp(cmd, "COMMAND") == 0) {
+			// COMMAND.COM not found in the path, so open comspec_path
+			strcpy(path, msdos_comspec_path(parent_psp->env_seg));
 		} else {
-			sprintf(tmp, "/C %s", cmd);
-		}
-		strcpy(opt, tmp);
-		opt_len = (int)strlen(opt);
-		mem[opt_ofs] = opt_len;
-		sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
-		strcpy(command, msdos_comspec_path(parent_psp->env_seg));
-		strcpy(name_tmp, "COMMAND.COM");
-	} else {
-		if(_stricmp(cmd, msdos_comspec_value(parent_psp->env_seg)) == 0) {
-			// redirect C:\COMMAND.COM to comspec_path
-			strcpy(command, msdos_comspec_path(parent_psp->env_seg));
-		} else {
-			strcpy(command, cmd);
-		}
-		if(GetFullPathNameA(command, MAX_PATH, path, &name) == 0) {
 			return(-1);
 		}
-		memset(name_tmp, 0, sizeof(name_tmp));
-		strcpy(name_tmp, name);
-		
-		// check command.com
-		if((_stricmp(name, "COMMAND.COM") == 0 || _stricmp(name, "COMMAND") == 0) && _access(msdos_comspec_path(parent_psp->env_seg), 0) != 0) {
-			// we can not load command.com, so run program directly if "command /c (program)" is specified
-			if(opt_len == 0) {
-//				process_t *current_process = msdos_process_info_get(current_psp);
-				process_t *current_process = NULL;
-				for(int i = 0; i < MAX_PROCESS; i++) {
-					if(process[i].psp == current_psp) {
-						current_process = &process[i];
-						break;
-					}
-				}
-				if(current_process != NULL) {
-					param->cmd_line.dw = current_process->dta.dw;
-					opt_ofs = (param->cmd_line.w.h << 4) + param->cmd_line.w.l;
-					opt_len = mem[opt_ofs];
-					memset(opt, 0, sizeof(opt));
-					memcpy(opt, mem + opt_ofs + 1, opt_len);
-				}
-			}
-			for(int i = 0; i < opt_len; i++) {
-				if(opt[i] == ' ') {
-					continue;
-				}
-				if(opt[i] == '/' && (opt[i + 1] == 'c' || opt[i + 1] == 'C') && opt[i + 2] == ' ') {
-					for(int j = i + 3; j < opt_len; j++) {
-						if(opt[j] == ' ') {
-							continue;
-						}
-						char *token = my_strtok(opt + j, " ");
-						
-						strcpy(command, token);
-						char tmp[MAX_PATH];
-						strcpy(tmp, token + strlen(token) + 1);
-						strcpy(opt, "");
-						for(int i = 0; i < strlen(tmp); i++) {
-							if(tmp[i] != ' ') {
-								strcpy(opt, tmp + i);
-								break;
-							}
-						}
-						strcpy(tmp, opt);
-						
-						if(al == 0x00) {
-							#define GET_FILE_PATH() { \
-								if(token[0] != '>' && token[0] != '<') { \
-									token++; \
-								} \
-								token++; \
-								while(*token == ' ') { \
-									token++; \
-								} \
-								char *ptr = token; \
-								while(*ptr != ' ' && *ptr != '\r' && *ptr != '\0') { \
-									ptr++; \
-								} \
-								*ptr = '\0'; \
-							}
-							if((token = strstr(opt, "0<")) != NULL || (token = strstr(opt, "<")) != NULL) {
-								GET_FILE_PATH();
-								strcpy(pipe_stdin_path, token);
-								strcpy(opt, tmp);
-							}
-							if((token = strstr(opt, "1>")) != NULL || (token = strstr(opt, ">")) != NULL) {
-								GET_FILE_PATH();
-								strcpy(pipe_stdout_path, token);
-								strcpy(opt, tmp);
-							}
-							if((token = strstr(opt, "2>")) != NULL) {
-								GET_FILE_PATH();
-								strcpy(pipe_stderr_path, token);
-								strcpy(opt, tmp);
-							}
-							#undef GET_FILE_PATH
-							
-							if((token = strstr(opt, "0<")) != NULL) {
-								*token = '\0';
-							}
-							if((token = strstr(opt, "1>")) != NULL) {
-								*token = '\0';
-							}
-							if((token = strstr(opt, "2>")) != NULL) {
-								*token = '\0';
-							}
-							if((token = strstr(opt, "<")) != NULL) {
-								*token = '\0';
-							}
-							if((token = strstr(opt, ">")) != NULL) {
-								*token = '\0';
-							}
-						}
-						for(int i = (int)strlen(opt) - 1; i >= 0 && opt[i] == ' '; i--) {
-							opt[i] = '\0';
-						}
-						opt_len = (int)strlen(opt);
-						mem[opt_ofs] = opt_len;
-						sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
-						dos_command = 1;
-						break;
-					}
-				}
-				break;
-			}
-		}
 	}
-	
-	// load command file
-	if(check_file_extension(command, ".COM") || check_file_extension(command, ".EXE") || check_file_extension(command, ".BAT")) {
-		strcpy(path, command);
-		if(_access(path, 0) != 0) {
-			// search path in parent environments
-			const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
-			if(env != NULL) {
-				char env_path[4096];
-				strcpy(env_path, env);
-				char *token = my_strtok(env_path, ";");
-				
-				while(token != NULL) {
-					if(strlen(token) != 0) {
-						strcpy(path, msdos_combine_path(token, command));
-						if(_access(path, 0) == 0) {
-							break;
-						}
-					}
-					token = my_strtok(NULL, ";");
-				}
-			}
+	if(check_file_extension(path, ".BAT")) {
+		// this is a batch file, so run COMMAND.COM
+		if(opt[0] != '\0') {
+			sprintf(tmp, "/C %s %s", path, opt);
+		} else {
+			sprintf(tmp, "/C %s", path);
 		}
-	} else {
-		sprintf(path, "%s.COM", command);
-		if(_access(path, 0) != 0) {
-			sprintf(path, "%s.EXE", command);
-			if(_access(path, 0) != 0) {
-				sprintf(path, "%s.BAT", command);
-				if(_access(path, 0) != 0) {
-					// search path in parent environments
-					const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
-					if(env != NULL) {
-						char env_path[4096];
-						strcpy(env_path, env);
-						char *token = my_strtok(env_path, ";");
-						
-						while(token != NULL) {
-							if(strlen(token) != 0) {
-								sprintf(path, "%s.COM", msdos_combine_path(token, command));
-								if(_access(path, 0) == 0) {
-									break;
-								}
-								sprintf(path, "%s.EXE", msdos_combine_path(token, command));
-								if(_access(path, 0) == 0) {
-									break;
-								}
-								sprintf(path, "%s.BAT", msdos_combine_path(token, command));
-								if(_access(path, 0) == 0) {
-									break;
-								}
-							}
-							token = my_strtok(NULL, ";");
-						}
-					}
-				}
+		// size of command line buffer in PSP is 128 bytes, and it contains 2 bytes for string length and terminator
+		if(strlen(tmp) > 126) {
+			if(check_file_extension(cmd, ".BAT")) {
+				strcpy(path, cmd);
+			} else {
+				sprintf(path, "%s.BAT", cmd);
 			}
-		}
-	}
-	if(_access(path, 0) == 0) {
-		if(check_file_extension(path, ".BAT")) {
-			// this is a batch file, run command.com
-			char tmp[MAX_PATH];
-			if(opt_len != 0) {
+			if(opt[0] != '\0') {
 				sprintf(tmp, "/C %s %s", path, opt);
 			} else {
 				sprintf(tmp, "/C %s", path);
 			}
-			strcpy(opt, tmp);
-			opt_len = (int)strlen(opt);
-			mem[opt_ofs] = opt_len;
-			sprintf((char *)(mem + opt_ofs + 1), "%s\x0d", opt);
-			strcpy(path, msdos_comspec_path(parent_psp->env_seg));
-			strcpy(name_tmp, "COMMAND.COM");
 		}
+		strcpy(opt, tmp);
+		strcpy(path, msdos_comspec_path(parent_psp->env_seg));
+		changed = true;
+	} else if(_stricmp(msdos_file_name(path), "COMMAND.COM") == 0 && al == 0) {
+#if 0
+		// NOTE:
+		// This was added to support starting a program from FILMTN and FM in 10/17/2015,
+		// but I am not sure if this is correct and still needed :-(
+		if(opt[0] == '\0') {
+			// if command line is empty, use command line in parent's DTA
+//			process_t *current_process = msdos_process_info_get(current_psp);
+			process_t *current_process = NULL;
+			for(int i = 0; i < MAX_PROCESS; i++) {
+				if(process[i].psp == current_psp) {
+					current_process = &process[i];
+					break;
+				}
+			}
+			if(current_process != NULL) {
+				opt_ofs = (current_process->dta.w.h << 4) + current_process->dta.w.l;
+				opt_len = mem[opt_ofs];
+				if(opt_len > 0 && opt_len <= 126) {
+					if(mem[opt_ofs + 1 + opt_len] == 0x0d || mem[opt_ofs + 1 + opt_len] == 0x0a) {
+						memset(opt, 0, sizeof(opt));
+						memcpy(opt, mem + opt_ofs + 1, opt_len);
+					}
+				}
+			}
+		}
+#endif
+		char path_tmp[MAX_PATH], opt_tmp[MAX_PATH];
+		bool restore = true;
+		char command_line[MAX_PATH] = {0};
+		char command[MAX_PATH] = {0};
+		
+		strcpy(path_tmp, path);
+		strcpy(opt_tmp, opt);
+		
+		// search /C option, and get program and remaining command line
+		if((opt_len = strlen(opt)) > 0 && (strstr(opt, "/C ") != NULL || strstr(opt, "/c ") != NULL)) {
+			for(int i = 0; i < opt_len - 3; i++) {
+				if(_strnicmp(opt + i, "/C ", 3) != 0) {
+					continue;
+				}
+				for(int j = i + 3; j < opt_len; j++) {
+					if(opt[j] == ' ') {
+						continue;
+					}
+					strcpy(command_line, opt + j);
+					
+					// split to command and options
+					tmp[0] = '\0';
+					for(int k = j; k < opt_len; k++) {
+						if(opt[k] == ' ' || opt[k] == '/' || opt[k] == '<' || opt[k] == '>' || opt[k] == '|') {
+							strcpy(tmp, opt + k);
+							break;
+						}
+						// for example CD.. and DIR\ should be splitted to command and option
+						if((opt[k] == '.' || opt[k] == '\\') && (opt[k + 1] == '.' || opt[k + 1] == '\\' || opt[k + 1] == ' ' || opt[k + 1] == '\0')) {
+							strcpy(tmp, opt + k);
+							break;
+						}
+						sprintf(command + (k - j), "%c", opt[k]);
+					}
+					opt[0] = '\0';
+					for(int k = 0; k < strlen(tmp); k++) {
+						if(tmp[k] != ' ') {
+							// need space at the beginning of option string
+							sprintf(opt, " %s", tmp + k);
+							break;
+						}
+					}
+					strcpy(tmp, opt);
+					
+					#define GET_FILE_PATH() { \
+						if(token[0] != '>' && token[0] != '<') { \
+							token++; \
+						} \
+						token++; \
+						while(*token == ' ') { \
+							token++; \
+						} \
+						char *ptr = token; \
+						while(*ptr != ' ' && *ptr != '\r' && *ptr != '\0') { \
+							ptr++; \
+						} \
+						*ptr = '\0'; \
+					}
+					char *token;
+					
+					if((token = strstr(opt, "0<")) != NULL || (token = strstr(opt, "<")) != NULL) {
+						GET_FILE_PATH();
+						strcpy(pipe_stdin_path, token);
+						strcpy(opt, tmp);
+					}
+					if((token = strstr(opt, "1>")) != NULL || (token = strstr(opt, ">")) != NULL) {
+						GET_FILE_PATH();
+						strcpy(pipe_stdout_path, token);
+						strcpy(opt, tmp);
+					}
+					if((token = strstr(opt, "2>")) != NULL) {
+						GET_FILE_PATH();
+						strcpy(pipe_stderr_path, token);
+						strcpy(opt, tmp);
+					}
+					#undef GET_FILE_PATH
+					
+					if((token = strstr(opt, "0<")) != NULL) {
+						*token = '\0';
+					}
+					if((token = strstr(opt, "1>")) != NULL) {
+						*token = '\0';
+					}
+					if((token = strstr(opt, "2>")) != NULL) {
+						*token = '\0';
+					}
+					if((token = strstr(opt, "<")) != NULL) {
+						*token = '\0';
+					}
+					if((token = strstr(opt, ">")) != NULL) {
+						*token = '\0';
+					}
+					if((token = strstr(opt, "|")) != NULL) {
+						*token = '\0';
+					}
+					for(int i = (int)strlen(opt) - 1; i >= 0 && opt[i] == ' '; i--) {
+						opt[i] = '\0';
+					}
+					break;
+				}
+				break;
+			}
+		}
+		if(command[0] != '\0') {
+			if(msdos_search_command_file(command, parent_psp->env_seg, path)) {
+				if(check_file_extension(path, ".COM") || check_file_extension(path, ".EXE")) {
+					// found target program that is not batch file
+					if(_access(path_tmp, 0) != 0) {
+						changed = true;
+					}
+				}
+			} else if(msdos_is_internal_command(command) && !first_process) {
+				// this is DOS internal command
+				#define OPEN_STDOUT() { \
+					if(fstdout == NULL) { \
+						if(pipe_stdout_path[0] != '\0' && !msdos_is_device_path(pipe_stdout_path)) { \
+							fstdout = fopen(pipe_stdout_path, "w"); \
+						} \
+					} \
+				}
+				#define CLOSE_STDOUT() { \
+					if(fstdout != NULL) { \
+						fclose(fstdout); \
+						fstdout = NULL; \
+					} \
+				}
+				#define OPEN_STDERR() { \
+					if(fstderr == NULL) { \
+						if(pipe_stderr_path[0] != '\0' && !msdos_is_device_path(pipe_stderr_path)) { \
+							fstderr = fopen(pipe_stderr_path, "w"); \
+						} \
+					} \
+				}
+				#define CLOSE_STDERR() { \
+					if(fstderr != NULL) { \
+						fclose(fstderr); \
+						fstderr = NULL; \
+					} \
+				}
+				FILE *fstdout = NULL;
+				FILE *fstderr = NULL;
+				
+				// remove space at the beginning of option string
+				while(opt[0] == ' ') {
+					strcpy(tmp, opt + 1);
+					strcpy(opt, tmp);
+				}
+				
+				// changing drive and current directory in child process seems not to affect to DOS environment
+				if(((command[0] >= 'a' && command[0] <= 'z') || (command[0] >= 'A' && command[0] <= 'Z')) && command[1] == ':' && command[2] == '\0') {
+					int drv = command[0] - ((command[0] >= 'a' && command[0] <= 'z') ? 'a' : 'A');
+					if(_chdrive(drv + 1) == 0) {
+						msdos_cds_update(drv);
+						msdos_sda_update(current_psp);
+						retval = 0x00;
+					} else {
+						retval = 0x0f;
+						OPEN_STDERR();
+						msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+						CLOSE_STDERR();
+					}
+					return(0);
+				}
+				if(_stricmp(command, "CHDIR") == 0 || _stricmp(command, "CD") == 0) {
+					if(_stricmp(opt, "/?") == 0) {
+						USHORT lang = get_message_lang();
+						OPEN_STDOUT();
+						if(lang == LANG_FRENCH) {
+							msdos_printf(fstdout, (const char*)help_chdir_french);
+						} else if(lang == LANG_GERMAN) {
+							msdos_printf(fstdout, (const char*)help_chdir_german);
+						} else if(lang == LANG_SPANISH) {
+							msdos_printf(fstdout, (const char*)help_chdir_spanish);
+						} else if(lang == LANG_PORTUGUESE) {
+							msdos_printf(fstdout, (const char*)help_chdir_portuguese);
+						} else if(lang == LANG_BRAZILIAN) {
+							msdos_printf(fstdout, (const char*)help_chdir_brazilian);
+						} else if(lang == LANG_JAPANESE) {
+							msdos_printf(fstdout, (const char*)help_chdir_japanese);
+						} else if(lang == LANG_KOREAN) {
+							msdos_printf(fstdout, (const char*)help_chdir_korean);
+						} else {
+							msdos_printf(fstdout,
+							"Displays the name of or changes the current directory.\r\n"
+							"\r\n"
+							"CHDIR [drive:][path]\r\n"
+							"CHDIR[..]\r\n"
+							"CD [drive:][path]\r\n"
+							"CD[..]\r\n"
+							"\r\n"
+							"  ..   Specifies that you want to change to the parent directory.\r\n"
+							"\r\n"
+							"Type CD drive: to display the current directory in the specified drive.\r\n"
+							"Type CD without parameters to display the current drive and directory.\r\n"
+							);
+						}
+						CLOSE_STDOUT();
+						retval = 0x00;
+					} else if(opt[0] == '\0') {
+						if(_getcwd(path, MAX_PATH) != NULL) {
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "%s\n", path);
+							CLOSE_STDOUT();
+							retval = 0x00;
+						} else {
+							retval = 0x0f;
+							OPEN_STDERR();
+							msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+							CLOSE_STDERR();
+						}
+					} else if(((opt[0] >= 'a' && opt[0] <= 'z') || (opt[0] >= 'A' && opt[0] <= 'Z')) && opt[1] == ':' && opt[2] == '\0') {
+						int drv = opt[0] - ((opt[0] >= 'a' && opt[0] <= 'z') ? 'a' : 'A');
+						if(_getdcwd(drv + 1, path, MAX_PATH) != NULL) {
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "%s\n", path);
+							CLOSE_STDOUT();
+							retval = 0x00;
+						} else {
+							retval = 0x0f;
+							OPEN_STDERR();
+							msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+							CLOSE_STDERR();
+						}
+					} else {
+						if(_chdir(opt) == 0) {
+							int drv = _getdrive() - 1;
+							if(opt[1] == ':') {
+								if(opt[0] >= 'A' && opt[0] <= 'Z') {
+									drv = opt[0] - 'A';
+								} else if(opt[0] >= 'a' && opt[0] <= 'z') {
+									drv = opt[0] - 'a';
+								}
+							}
+							msdos_cds_update(drv);
+							retval = 0x00;
+						} else {
+							retval = 0x03;
+							OPEN_STDERR();
+							msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+							CLOSE_STDERR();
+						}
+					}
+					return(0);
+				}
+				// want to refer the environments in parent process
+				if(_stricmp(command, "PATH") == 0) {
+					if(_stricmp(opt, "/?") == 0) {
+						USHORT lang = get_message_lang();
+						OPEN_STDOUT();
+						if(lang == LANG_FRENCH) {
+							msdos_printf(fstdout, (const char*)help_path_french);
+						} else if(lang == LANG_GERMAN) {
+							msdos_printf(fstdout, (const char*)help_path_german);
+						} else if(lang == LANG_SPANISH) {
+							msdos_printf(fstdout, (const char*)help_path_spanish);
+						} else if(lang == LANG_PORTUGUESE) {
+							msdos_printf(fstdout, (const char*)help_path_portuguese);
+						} else if(lang == LANG_BRAZILIAN) {
+							msdos_printf(fstdout, (const char*)help_path_brazilian);
+						} else if(lang == LANG_JAPANESE) {
+							msdos_printf(fstdout, (const char*)help_path_japanese);
+						} else if(lang == LANG_KOREAN) {
+							msdos_printf(fstdout, (const char*)help_path_korean);
+						} else {
+							msdos_printf(fstdout,
+							"Displays or sets a search path for executable files.\r\n"
+							"\r\n"
+							"PATH [[drive:]path[;...]]\r\n"
+							"PATH ;\r\n"
+							"\r\n"
+							"Type PATH ; to clear all search-path settings and direct MS-DOS to search\r\n"
+							"only in the current directory.\r\n"
+							"Type PATH without parameters to display the current path.\r\n"
+							);
+						}
+						CLOSE_STDOUT();
+					} else if(opt[0] == '\0') {
+						const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
+						if(env != NULL) {
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "PATH=%s\n", env);
+							CLOSE_STDOUT();
+						}
+					} else if(_stricmp(opt, ";") == 0) {
+						msdos_env_set(parent_psp->env_seg, "PATH", "");
+					} else {
+						char val[ENV_SIZE];
+						int s = 0, d = 0;
+						while(s < strlen(opt)) {
+							if(_strnicmp(&opt[s], "%PATH%", 6) == 0) {
+								const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
+								if(env != NULL) {
+									strcpy(&val[d], env);
+									d += strlen(env);
+								}
+								s += 6;
+							} else if(d > 0 && val[d - 1] == ';' && opt[s] == ';') {
+								s++; // skip ;;
+							} else {
+								val[d++] = opt[s++];
+							}
+							val[d] = '\0';
+						}
+						const char *short_path = msdos_get_multiple_short_path(val);
+						if(short_path != NULL) {
+							msdos_env_set(parent_psp->env_seg, "PATH", short_path);
+						}
+					}
+					retval = 0x00;
+					return(0);
+				}
+				if(_stricmp(command, "SET") == 0) {
+					if(_stricmp(opt, "/?") == 0) {
+						USHORT lang = get_message_lang();
+						OPEN_STDOUT();
+						if(lang == LANG_FRENCH) {
+							msdos_printf(fstdout, (const char*)help_set_french);
+						} else if(lang == LANG_GERMAN) {
+							msdos_printf(fstdout, (const char*)help_set_german);
+						} else if(lang == LANG_SPANISH) {
+							msdos_printf(fstdout, (const char*)help_set_spanish);
+						} else if(lang == LANG_PORTUGUESE) {
+							msdos_printf(fstdout, (const char*)help_set_portuguese);
+						} else if(lang == LANG_BRAZILIAN) {
+							msdos_printf(fstdout, (const char*)help_set_brazilian);
+						} else if(lang == LANG_JAPANESE) {
+							msdos_printf(fstdout, (const char*)help_set_japanese);
+						} else if(lang == LANG_KOREAN) {
+							msdos_printf(fstdout, (const char*)help_set_korean);
+						} else {
+							msdos_printf(fstdout,
+							"Displays, sets, or removes MS-DOS environment variables.\r\n"
+							"\r\n"
+							"SET [variable=[string]]\r\n"
+							"\r\n"
+							"  variable  Specifies the environment-variable name.\r\n"
+							"  string    Specifies a series of characters to assign to the variable.\r\n"
+							"\r\n"
+							"Type SET without parameters to display the current environment variables.\r\n"
+							);
+						}
+						CLOSE_STDOUT();
+					} else if(opt[0] == '\0') {
+						char env[ENV_SIZE];
+						char *src = env;
+						memcpy(src, mem + (parent_psp->env_seg << 4), ENV_SIZE);
+						src[ENV_SIZE - 1] = '\0';
+						OPEN_STDOUT();
+						while(1) {
+							if(src[0] == 0 || strchr(src, '=') == NULL) {
+								break;
+							}
+							int len = (int)strlen(src);
+							char *nam = my_strtok(src, "=");
+							char *val = src + strlen(nam) + 1;
+							msdos_printf(fstdout, "%s=%s\n", nam, val);
+							src += len + 1;
+						}
+						CLOSE_STDOUT();
+					} else if(strchr(opt, '=') == NULL) {
+						// NOTE: this is Windows NT specific
+						const char *env = msdos_env_get(parent_psp->env_seg, opt);
+						if(env != NULL) {
+							my_strupr(opt);
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "%s=%s\n", opt, env);
+							CLOSE_STDOUT();
+						}
+					} else {
+						char *nam = my_strtok(opt, "=");
+						char *val = opt + strlen(nam) + 1;
+						my_strupr(nam);
+						msdos_env_set(parent_psp->env_seg, nam, val);
+					}
+					retval = 0x00;
+					return(0);
+				}
+				if(_access(path_tmp, 0) != 0) {
+					// want to display a text file via INT 29h
+					if(_stricmp(command, "TYPE") == 0) {
+						if(_stricmp(opt, "/?") == 0) {
+							USHORT lang = get_message_lang();
+							OPEN_STDOUT();
+							if(lang == LANG_FRENCH) {
+								msdos_printf(fstdout, (const char*)help_type_french);
+							} else if(lang == LANG_GERMAN) {
+								msdos_printf(fstdout, (const char*)help_type_german);
+							} else if(lang == LANG_SPANISH) {
+								msdos_printf(fstdout, (const char*)help_type_spanish);
+							} else if(lang == LANG_PORTUGUESE) {
+								msdos_printf(fstdout, (const char*)help_type_portuguese);
+							} else if(lang == LANG_BRAZILIAN) {
+								msdos_printf(fstdout, (const char*)help_type_brazilian);
+							} else if(lang == LANG_JAPANESE) {
+								msdos_printf(fstdout, (const char*)help_type_japanese);
+							} else if(lang == LANG_KOREAN) {
+								msdos_printf(fstdout, (const char*)help_type_korean);
+							} else {
+								msdos_printf(fstdout,
+								"Displays the contents of text files.\r\n"
+								"\r\n"
+								"TYPE [drive:][path]filename\r\n"
+								);
+							}
+							CLOSE_STDOUT();
+							retval = 0x00;
+						} else if(opt[0] == '\0') {
+							retval = 0x01;
+							OPEN_STDERR();
+							msdos_printf(fstderr, "%s\n", msdos_param_error_message(0x02));
+							CLOSE_STDERR();
+						} else {
+							FILE *fp = fopen(opt, "rb");
+							int val;
+							if(fp != NULL) {
+								OPEN_STDOUT();
+								while((val = fgetc(fp)) != EOF) {
+									msdos_printf(fstdout, "%c", val);
+								}
+								CLOSE_STDOUT();
+								fclose(fp);
+								retval = 0x00;
+							} else {
+								retval = 0x02;
+								OPEN_STDERR();
+								msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+								CLOSE_STDERR();
+							}
+						}
+						return(0);
+					}
+					// execute as 32bit command
+					retval = system(command_line);
+					return(0);
+				}
+				#undef OPEN_STDOUT
+				#undef CLOSE_STDOUT
+				#undef OPEN_STDERR
+				#undef CLOSE_STDERR
+			}
+		}
+		// restore to run COMMAND.COM normally
+		if(!changed) {
+			strcpy(path, path_tmp);
+			strcpy(opt, opt_tmp);
+			pipe_stdin_path[0] = pipe_stdout_path[0] = pipe_stderr_path[0] = '\0';
+		}
+	}
+	if(strlen(opt) > 126) {
+		// too long command line that cannot be set to PSP
+		return(-1);
+	}
+	
+	// load command file
+	if(_access(path, 0) == 0) {
 		fd = _open(path, _O_RDONLY | _O_BINARY);
 	}
 #ifdef ENABLE_DEBUG_OPEN_FILE
 	if(fp_debug_log != NULL) {
-		fprintf(fp_debug_log, "process_exec\tfd=%d\tr\t%s\n", fd, cmd);
+		fprintf(fp_debug_log, "process_exec\tfd=%d\tr\t%s\n", fd, path);
 	}
 #endif
 	if(fd == -1) {
-		// we can not find command.com in the path, so open comspec_path
-		if(_stricmp(command, "COMMAND.COM") == 0 || _stricmp(command, "COMMAND") == 0) {
-			strcpy(command, msdos_comspec_path(parent_psp->env_seg));
-			strcpy(path, command);
-			fd = _open(path, _O_RDONLY | _O_BINARY);
-		}
-	}
-	if(fd == -1) {
-		if(!first_process && al == 0 && dos_command) {
-			// may be dos command
-			char tmp[MAX_PATH];
-			if(opt_len != 0) {
-				sprintf(tmp, "%s %s", command, opt);
-			} else {
-				sprintf(tmp, "%s", command);
-			}
-			retval = system(tmp);
-			return(0);
-		} else {
-			return(-1);
-		}
+		return(-1);
 	}
 	memset(file_buffer, 0, sizeof(file_buffer));
 	_read(fd, file_buffer, sizeof(file_buffer));
@@ -7316,7 +7822,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 			UINT16 machine = *(UINT16 *)(file_buffer + e_lfanew + 0x04);
 			if(sign_nt == IMAGE_NT_SIGNATURE && (machine == IMAGE_FILE_MACHINE_I386 || machine == IMAGE_FILE_MACHINE_AMD64)) {
 				char tmp[MAX_PATH];
-				if(opt_len != 0) {
+				if(opt[0] != '\0') {
 					sprintf(tmp, "\"%s\" %s", path, opt);
 				} else {
 					sprintf(tmp, "\"%s\"", path);
@@ -7424,35 +7930,58 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	*(UINT16 *)(mem + 4 * 0x22 + 0) = CPU_EIP;
 	*(UINT16 *)(mem + 4 * 0x22 + 2) = CPU_CS;
 	psp_t *psp = msdos_psp_create(psp_seg, start_seg - (PSP_SIZE >> 4) + paragraphs, current_psp, env_seg);
-	memcpy(psp->fcb1, mem + (param->fcb1.w.h << 4) + param->fcb1.w.l, sizeof(psp->fcb1));
-	memcpy(psp->fcb2, mem + (param->fcb2.w.h << 4) + param->fcb2.w.l, sizeof(psp->fcb2));
-#if 0
-	memcpy(psp->buffer, mem + (param->cmd_line.w.h << 4) + param->cmd_line.w.l, sizeof(psp->buffer));
-#else
-	opt_ofs = (param->cmd_line.w.h << 4) + param->cmd_line.w.l;
-	opt_len = mem[opt_ofs];
-	memset(psp->buffer, 0, sizeof(psp->buffer));
-	psp->buffer[0] = opt_len;
-	memcpy(&psp->buffer[1], mem + opt_ofs + 1, opt_len);
-	psp->buffer[opt_len + 1] = 0x0d;
-#endif
+	
+	if(changed) {
+		opt_len = strlen(opt);
+		memset(psp->buffer, 0, sizeof(psp->buffer));
+		psp->buffer[0] = opt_len;
+		memcpy(&psp->buffer[1], opt, opt_len);
+		psp->buffer[opt_len + 1] = 0x0d;
+		
+		char argv[2][MAX_PATH];
+		int argc = 0;
+		fcb_t fcb[2];
+		char *token = my_strtok(opt, " ");
+		for(; token && argc < 2;) {
+			if(strlen(token) != 0) {
+				strcpy(argv[argc++], token);
+			}
+			token = my_strtok(NULL, " ");
+		}
+		for(int i = 0; i < 2; i++) {
+			if(i < argc) {
+				msdos_init_fcb_in_psp(&fcb[i], argv[i]);
+			} else {
+				msdos_init_fcb_in_psp(&fcb[i], NULL);
+			}
+		}
+		memcpy(psp->fcb1, &fcb[0], sizeof(psp->fcb1));
+		memcpy(psp->fcb2, &fcb[1], sizeof(psp->fcb2));
+	} else {
+		memcpy(psp->fcb1, mem + (param->fcb1.w.h << 4) + param->fcb1.w.l, sizeof(psp->fcb1));
+		memcpy(psp->fcb2, mem + (param->fcb2.w.h << 4) + param->fcb2.w.l, sizeof(psp->fcb2));
+		memcpy(psp->buffer, mem + (param->cmd_line.w.h << 4) + param->cmd_line.w.l, sizeof(psp->buffer));
+	}
 	
 	mcb_t *mcb_env = (mcb_t *)(mem + ((env_seg - 1) << 4));
 	mcb_t *mcb_psp = (mcb_t *)(mem + ((psp_seg - 1) << 4));
 	mcb_psp->psp = mcb_env->psp = psp_seg;
 	
+	memset(tmp, 0, sizeof(tmp));
+	strcpy(tmp, msdos_file_name(path));
+	
 	for(int i = 0; i < 8; i++) {
-		if(name_tmp[i] == '.') {
+		if(tmp[i] == '.') {
 			mcb_psp->prog_name[i] = '\0';
 			break;
-		} else if(i < 7 && msdos_lead_byte_check(name_tmp[i])) {
-			mcb_psp->prog_name[i] = name_tmp[i];
+		} else if(i < 7 && msdos_lead_byte_check(tmp[i])) {
+			mcb_psp->prog_name[i] = tmp[i];
 			i++;
-			mcb_psp->prog_name[i] = name_tmp[i];
-		} else if(name_tmp[i] >= 'a' && name_tmp[i] <= 'z') {
-			mcb_psp->prog_name[i] = name_tmp[i] - 'a' + 'A';
+			mcb_psp->prog_name[i] = tmp[i];
+		} else if(tmp[i] >= 'a' && tmp[i] <= 'z') {
+			mcb_psp->prog_name[i] = tmp[i] - 'a' + 'A';
 		} else {
-			mcb_psp->prog_name[i] = name_tmp[i];
+			mcb_psp->prog_name[i] = tmp[i];
 		}
 	}
 	
@@ -13146,6 +13675,7 @@ inline void msdos_int_21h_49h()
 	
 	if(mcb->mz == 'M' || mcb->mz == 'Z') {
 		msdos_mem_free(CPU_ES);
+		CPU_AX = CPU_ES - 1; // undocumented
 	} else {
 		CPU_AX = 0x09; // illegal memory block address
 		CPU_SET_C_FLAG(1);
@@ -14715,38 +15245,15 @@ inline void msdos_int_21h_dch()
 inline void msdos_int_24h()
 {
 	USHORT lang = get_message_lang();
-	const char *message = NULL;
+	const char *message = msdos_critical_error_message(CPU_DI & 0xff);
 	int key = 0;
 	
-	for(int i = 0; i < array_length(critical_error_table); i++) {
-		if(critical_error_table[i].code == (CPU_DI & 0xff) || critical_error_table[i].code == (UINT16)-1) {
-			if(lang == LANG_FRENCH) {
-				message = (const char *)critical_error_table[i].message_french;
-			} else if(lang == LANG_GERMAN) {
-				message = (const char *)critical_error_table[i].message_german;
-			} else if(lang == LANG_SPANISH) {
-				message = (const char *)critical_error_table[i].message_spanish;
-			} else if(lang == LANG_PORTUGUESE) {
-				message = (const char *)critical_error_table[i].message_portuguese;
-			} else if(lang == LANG_BRAZILIAN) {
-				message = (const char *)critical_error_table[i].message_brazilian;
-			} else if(lang == LANG_JAPANESE) {
-				message = (const char *)critical_error_table[i].message_japanese;
-			} else if(lang == LANG_KOREAN) {
-				message = (const char *)critical_error_table[i].message_korean;
-			}
-			if(message == NULL) {
-				message = critical_error_table[i].message_english;
-			}
-			*(UINT8 *)(mem + WORK_TOP) = (UINT8)strlen(message);
-			strcpy((char *)(mem + WORK_TOP + 1), message);
-			
-			CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
-			CPU_DI = 0x0000;
-			break;
-		}
-	}
+	*(UINT8 *)(mem + WORK_TOP) = (UINT8)strlen(message);
+	strcpy((char *)(mem + WORK_TOP + 1), message);
+	CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
+	CPU_DI = 0x0000;
 	fprintf(stderr, "\n%s", message);
+	
 	if(!(CPU_AH & 0x80)) {
 		if(CPU_AH & 0x01) {
 			if(lang == LANG_FRENCH) {
@@ -15034,7 +15541,13 @@ inline void msdos_int_27h()
 
 inline void msdos_int_29h()
 {
-	msdos_putch_fast(CPU_AL, 0x29, CPU_AH);
+	if(src_int_num != 0) {
+		unsigned int int_num = src_int_num;
+		src_int_num = 0;
+		msdos_putch_fast(CPU_AL, int_num, CPU_AH);
+	} else {
+		msdos_putch_fast(CPU_AL, 0x29, CPU_AH);
+	}
 }
 
 inline void msdos_int_2eh()
@@ -15095,37 +15608,14 @@ inline void msdos_int_2eh()
 inline void msdos_int_2fh_05h()
 {
 	USHORT lang = get_message_lang();
+	const char *message = NULL;
 #if 0
 	if(dos_major_version < 4 && CPU_AL != 0) {
-		for(int i = 0; i < array_length(standard_error_table); i++) {
-			if(standard_error_table[i].code == CPU_AL || standard_error_table[i].code == (UINT16)-1) {
-				const char *message = NULL;
-				if(lang == LANG_FRENCH) {
-					message = (const char *)standard_error_table[i].message_french;
-				} else if(lang == LANG_GERMAN) {
-					message = (const char *)standard_error_table[i].message_german;
-				} else if(lang == LANG_SPANISH) {
-					message = (const char *)standard_error_table[i].message_spanish;
-				} else if(lang == LANG_PORTUGUESE) {
-					message = (const char *)standard_error_table[i].message_portuguese;
-				} else if(lang == LANG_BRAZILIAN) {
-					message = (const char *)standard_error_table[i].message_brazilian;
-				} else if(lang == LANG_JAPANESE) {
-					message = (const char *)standard_error_table[i].message_japanese;
-				} else if(lang == LANG_KOREAN) {
-					message = (const char *)standard_error_table[i].message_korean;
-				}
-				if(message == NULL) {
-					message = standard_error_table[i].message_english;
-				}
-				strcpy((char *)(mem + WORK_TOP), message);
-				
-				CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
-				CPU_DI = 0x0000;
-				CPU_AL = 0x01;
-				break;
-			}
-		}
+		message = msdos_standard_error_message(CPU_AL);
+		strcpy((char *)(mem + WORK_TOP), message);
+		CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
+		CPU_DI = 0x0000;
+		CPU_AL = 0x01;
 		return;
 	}
 #endif
@@ -15135,66 +15625,18 @@ inline void msdos_int_2fh_05h()
 		CPU_AL = 0xff;
 		break;
 	case 0x01:
-		for(int i = 0; i < array_length(standard_error_table); i++) {
-			if(standard_error_table[i].code == CPU_BX || standard_error_table[i].code == (UINT16)-1) {
-				const char *message = NULL;
-				if(lang == LANG_FRENCH) {
-					message = (const char *)standard_error_table[i].message_french;
-				} else if(lang == LANG_GERMAN) {
-					message = (const char *)standard_error_table[i].message_german;
-				} else if(lang == LANG_SPANISH) {
-					message = (const char *)standard_error_table[i].message_spanish;
-				} else if(lang == LANG_PORTUGUESE) {
-					message = (const char *)standard_error_table[i].message_portuguese;
-				} else if(lang == LANG_BRAZILIAN) {
-					message = (const char *)standard_error_table[i].message_brazilian;
-				} else if(lang == LANG_JAPANESE) {
-					message = (const char *)standard_error_table[i].message_japanese;
-				} else if(lang == LANG_KOREAN) {
-					message = (const char *)standard_error_table[i].message_korean;
-				}
-				if(message == NULL) {
-					message = standard_error_table[i].message_english;
-				}
-				strcpy((char *)(mem + WORK_TOP), message);
-				
-				CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
-				CPU_DI = 0x0000;
-				CPU_AL = 0x01;
-				break;
-			}
-		}
+		message = msdos_standard_error_message(CPU_BX);
+		strcpy((char *)(mem + WORK_TOP), message);
+		CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
+		CPU_DI = 0x0000;
+		CPU_AL = 0x01;
 		break;
 	case 0x02:
-		for(int i = 0; i < array_length(param_error_table); i++) {
-			if(param_error_table[i].code == CPU_BX || param_error_table[i].code == (UINT16)-1) {
-				const char *message = NULL;
-				if(lang == LANG_FRENCH) {
-					message = (const char *)param_error_table[i].message_french;
-				} else if(lang == LANG_GERMAN) {
-					message = (const char *)param_error_table[i].message_german;
-				} else if(lang == LANG_SPANISH) {
-					message = (const char *)param_error_table[i].message_spanish;
-				} else if(lang == LANG_PORTUGUESE) {
-					message = (const char *)param_error_table[i].message_portuguese;
-				} else if(lang == LANG_BRAZILIAN) {
-					message = (const char *)param_error_table[i].message_brazilian;
-				} else if(lang == LANG_JAPANESE) {
-					message = (const char *)param_error_table[i].message_japanese;
-				} else if(lang == LANG_KOREAN) {
-					message = (const char *)param_error_table[i].message_korean;
-				}
-				if(message == NULL) {
-					message = param_error_table[i].message_english;
-				}
-				strcpy((char *)(mem + WORK_TOP), message);
-				
-				CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
-				CPU_DI = 0x0000;
-				CPU_AL = 0x01;
-				break;
-			}
-		}
+		message = msdos_param_error_message(CPU_BX);
+		strcpy((char *)(mem + WORK_TOP), message);
+		CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
+		CPU_DI = 0x0000;
+		CPU_AL = 0x01;
 		break;
 	default:
 		unimplemented_2fh("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x2f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
@@ -19372,35 +19814,11 @@ void msdos_syscall(unsigned num)
 			if(code & 0xf0) {
 				code = (code & 7) | ((code & 0x10) >> 1);
 			}
-			for(int i = 0; i < array_length(param_error_table); i++) {
-				if(param_error_table[i].code == code || param_error_table[i].code == (UINT16)-1) {
-					const char *message = NULL;
-					if(lang == LANG_FRENCH) {
-						message = (const char *)param_error_table[i].message_french;
-					} else if(lang == LANG_GERMAN) {
-						message = (const char *)param_error_table[i].message_german;
-					} else if(lang == LANG_SPANISH) {
-						message = (const char *)param_error_table[i].message_spanish;
-					} else if(lang == LANG_PORTUGUESE) {
-						message = (const char *)param_error_table[i].message_portuguese;
-					} else if(lang == LANG_BRAZILIAN) {
-						message = (const char *)param_error_table[i].message_brazilian;
-					} else if(lang == LANG_JAPANESE) {
-						message = (const char *)param_error_table[i].message_japanese;
-					} else if(lang == LANG_KOREAN) {
-						message = (const char *)param_error_table[i].message_korean;
-					}
-					if(message == NULL) {
-						message = param_error_table[i].message_english;
-					}
-					*(UINT8 *)(mem + WORK_TOP) = (UINT8)strlen(message);
-					strcpy((char *)(mem + WORK_TOP + 1), message);
-					
-					CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
-					CPU_DI = 0x0000;
-					break;
-				}
-			}
+			const char *message = msdos_param_error_message(code);
+			*(UINT8 *)(mem + WORK_TOP) = (UINT8)strlen(message);
+			strcpy((char *)(mem + WORK_TOP + 1), message);
+			CPU_LOAD_SREG(CPU_ES_INDEX, WORK_TOP >> 4);
+			CPU_DI = 0x0000;
 		}
 		break;
 /*
@@ -19645,17 +20063,6 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		}
 	}
 	
-	if((path = msdos_search_command_com(argv[0], env_path)) != NULL) {
-		if((short_path = msdos_get_multiple_short_path(path)) != NULL && short_path[0] != '\0') {
-			strcpy(comspec_path, short_path);
-		}
-	}
-	if((path = getenv("MSDOS_COMSPEC")) != NULL && _access(path, 0) == 0) {
-		if((short_path = msdos_get_multiple_short_path(path)) != NULL && short_path[0] != '\0') {
-			strcpy(comspec_path, short_path);
-		}
-	}
-	
 	if((path = getenv("MSDOS_PATH")) != NULL) {
 		if((short_path = msdos_get_multiple_short_path(path)) != NULL && short_path[0] != '\0') {
 			strcpy(env_msdos_path, short_path);
@@ -19668,6 +20075,17 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 				strcat(env_path, ";");
 			}
 			strcat(env_path, short_path);
+		}
+	}
+	
+	if((path = msdos_search_command_com(argv[0], env_path)) != NULL) {
+		if((short_path = msdos_get_multiple_short_path(path)) != NULL && short_path[0] != '\0') {
+			strcpy(comspec_path, short_path);
+		}
+	}
+	if((path = getenv("MSDOS_COMSPEC")) != NULL && _access(path, 0) == 0) {
+		if((short_path = msdos_get_multiple_short_path(path)) != NULL && short_path[0] != '\0') {
+			strcpy(comspec_path, short_path);
 		}
 	}
 	
