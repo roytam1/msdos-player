@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								9/7/2024
+								9/8/2024
 
 ----- What's This
 
@@ -1080,11 +1080,13 @@ specified program is started directly.
 If the program is DOS internal command A-Z:/CHDIR/PATH/SET, it will be
 executed by MS-DOS Player internal routine.
 This is because changing current drive/directory or environment variables
-in the child process does not affect to the parent process.
+in the child COMMAND.COM process does not affect to the parent process.
 
-If the program is DOS internal command TYPE and COMMAND.COM is missing,
-it will be executed by MS-DOS Player internal routine.
-This is because we want to display contents of text files thru INT 29h.
+If the program is DOS internal command TYPE/TRUENAME/VER and COMMAND.COM is
+missing, it will be executed by MS-DOS Player internal routine.
+This is because we want to display contents of text files thru INT 29h,
+and want to display short full path name, and MS-DOS version.
+And in the first place, TRUENAME is not supported on cmd.exe of Windows NT.
 
 If the program is other DOS internal command and COMMAND.COM is missing,
 it will be executed by Win32 system() API.
