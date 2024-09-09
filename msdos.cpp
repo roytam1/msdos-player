@@ -5223,7 +5223,7 @@ const char *msdos_file_name(const char *path)
 bool msdos_is_internal_command(const char *command)
 {
 	const char *table[] = {
-		"DIR", "CALL", "CHCP", "RENAME", "REN", "ERASE", "DEL", "TYPE", "REM", "COPY", "PAUSE", "DATE", "TIME", "VER", "VOL", "CD", "CHDIR", "MD", "MKDIR", "RD", "RMDIR", "BREAK", "VERIFY", "SET", "PROMPT", "PATH", "EXIT", "CTTY", "ECHO", "LOCK", "UNLOCK", "GOTO", "SHIFT", "IF", "FOR", "CLS", "TRUENAME", "LOADHIGH", "LH", "LFNFOR"
+		"DIR", /*"CALL",*/ "CHCP", "RENAME", "REN", "ERASE", "DEL", "TYPE", "REM", "COPY", "PAUSE", "DATE", "TIME", "VER", "VOL", "CD", "CHDIR", "MD", "MKDIR", "RD", "RMDIR", "BREAK", "VERIFY", "SET", "PROMPT", "PATH", "EXIT", /*"CTTY",*/ "ECHO", /*"LOCK", "UNLOCK", "GOTO", "SHIFT", "IF", "FOR",*/ "CLS", "TRUENAME", /*"LOADHIGH", "LH", "LFNFOR"*/
 	};
 	for(int i = 0; i < array_length(table); i++) {
 		if(_stricmp(command, table[i]) == 0) {
@@ -7353,7 +7353,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 		strcpy(opt_tmp, opt);
 		
 		// search /C option, and get program and remaining command line
-		if((opt_len = strlen(opt)) > 0 && (strstr(opt, "/C ") != NULL || strstr(opt, "/c ") != NULL)) {
+		if((opt_len = (int)strlen(opt)) > 0 && (strstr(opt, "/C ") != NULL || strstr(opt, "/c ") != NULL)) {
 			for(int i = 0; i < opt_len - 3; i++) {
 				if(_strnicmp(opt + i, "/C ", 3) != 0) {
 					continue;
@@ -7637,7 +7637,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 								const char *env = msdos_env_get(parent_psp->env_seg, "PATH");
 								if(env != NULL) {
 									strcpy(&val[d], env);
-									d += strlen(env);
+									d += (int)strlen(env);
 								}
 								s += 6;
 							} else if(d > 0 && val[d - 1] == ';' && opt[s] == ';') {
@@ -7722,6 +7722,52 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 					return(0);
 				}
 				if(_access(path_tmp, 0) != 0) {
+					// want to display the short full path name
+					if(_stricmp(command, "TRUENAME") == 0) {
+						if(_stricmp(opt, "/?") == 0) {
+							USHORT lang = get_message_lang();
+							OPEN_STDOUT();
+							if(lang == LANG_FRENCH) {
+								msdos_printf(fstdout, (const char*)help_reserved_french);
+							} else if(lang == LANG_GERMAN) {
+								msdos_printf(fstdout, (const char*)help_reserved_german);
+							} else if(lang == LANG_SPANISH) {
+								msdos_printf(fstdout, (const char*)help_reserved_spanish);
+							} else if(lang == LANG_PORTUGUESE) {
+								msdos_printf(fstdout, (const char*)help_reserved_portuguese);
+							} else if(lang == LANG_BRAZILIAN) {
+								msdos_printf(fstdout, (const char*)help_reserved_brazilian);
+							} else if(lang == LANG_JAPANESE) {
+								msdos_printf(fstdout, (const char*)help_reserved_japanese);
+							} else if(lang == LANG_KOREAN) {
+								msdos_printf(fstdout, (const char*)help_reserved_korean);
+							} else {
+								msdos_printf(fstdout,
+								"Reserved command name\r\n"
+								);
+							}
+							CLOSE_STDOUT();
+							retval = 0x00;
+						} else if(opt[0] == '\0') {
+							if(_getcwd(path, MAX_PATH) != NULL) {
+								OPEN_STDOUT();
+								msdos_printf(fstdout, "%s\n", msdos_short_full_path(path));
+								CLOSE_STDOUT();
+								retval = 0x00;
+							} else {
+								retval = 0x0f;
+								OPEN_STDERR();
+								msdos_printf(fstderr, "%s\n", msdos_standard_error_message(retval));
+								CLOSE_STDERR();
+							}
+						} else {
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "%s\n", msdos_short_full_path(opt));
+							CLOSE_STDOUT();
+							retval = 0x00;
+						}
+						return(0);
+					}
 					// want to display a text file via INT 29h
 					if(_stricmp(command, "TYPE") == 0) {
 						if(_stricmp(opt, "/?") == 0) {
@@ -7773,6 +7819,41 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 								CLOSE_STDERR();
 							}
 						}
+						return(0);
+					}
+					// want to display the DOS version
+					if(_stricmp(command, "VER") == 0) {
+						if(_stricmp(opt, "/?") == 0) {
+							USHORT lang = get_message_lang();
+							OPEN_STDOUT();
+							if(lang == LANG_FRENCH) {
+								msdos_printf(fstdout, (const char*)help_ver_french);
+							} else if(lang == LANG_GERMAN) {
+								msdos_printf(fstdout, (const char*)help_ver_german);
+							} else if(lang == LANG_SPANISH) {
+								msdos_printf(fstdout, (const char*)help_ver_spanish);
+							} else if(lang == LANG_PORTUGUESE) {
+								msdos_printf(fstdout, (const char*)help_ver_portuguese);
+							} else if(lang == LANG_BRAZILIAN) {
+								msdos_printf(fstdout, (const char*)help_ver_brazilian);
+							} else if(lang == LANG_JAPANESE) {
+								msdos_printf(fstdout, (const char*)help_ver_japanese);
+							} else if(lang == LANG_KOREAN) {
+								msdos_printf(fstdout, (const char*)help_ver_korean);
+							} else {
+								msdos_printf(fstdout,
+								"Displays the MS-DOS Version.\r\n"
+								"\r\n"
+								"VER\r\n"
+								);
+							}
+							CLOSE_STDOUT();
+						} else {
+							OPEN_STDOUT();
+							msdos_printf(fstdout, "MS-DOS Version %d.%2d\n", dos_major_version, dos_minor_version);
+							CLOSE_STDOUT();
+						}
+						retval = 0x00;
 						return(0);
 					}
 					// execute as 32bit command
@@ -7932,7 +8013,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	psp_t *psp = msdos_psp_create(psp_seg, start_seg - (PSP_SIZE >> 4) + paragraphs, current_psp, env_seg);
 	
 	if(changed) {
-		opt_len = strlen(opt);
+		opt_len = (int)strlen(opt);
 		memset(psp->buffer, 0, sizeof(psp->buffer));
 		psp->buffer[0] = opt_len;
 		memcpy(&psp->buffer[1], opt, opt_len);
@@ -9498,31 +9579,31 @@ inline void pcbios_int_13h_08h()
 		case F5_320_1024:
 		case F5_180_512:
 		case F5_160_512:
-			CPU_BL = 0x01; // 320K/360K disk
+			CPU_BX = 0x01; // 320K/360K disk
 			break;
 		case F5_1Pt2_512:
 		case F3_1Pt2_512:
 		case F3_1Pt23_1024:
 		case F5_1Pt23_1024:
-			CPU_BL = 0x02; // 1.2M disk
+			CPU_BX = 0x02; // 1.2M disk
 			break;
 		case F3_720_512:
 		case F3_640_512:
 		case F5_640_512:
 		case F5_720_512:
-			CPU_BL = 0x03; // 720K disk
+			CPU_BX = 0x03; // 720K disk
 			break;
 		case F3_1Pt44_512:
-			CPU_BL = 0x04; // 1.44M disk
+			CPU_BX = 0x04; // 1.44M disk
 			break;
 		case F3_2Pt88_512:
-			CPU_BL = 0x06; // 2.88M disk
+			CPU_BX = 0x06; // 2.88M disk
 			break;
 		case RemovableMedia:
-			CPU_BL = 0x10; // ATAPI Removable Media Device
+			CPU_BX = 0x10; // ATAPI Removable Media Device
 			break;
 		default:
-			CPU_BL = 0x00; // unknown
+			CPU_BX = 0x00; // unknown
 			break;
 		}
 		if(CPU_DL & 0x80) {
@@ -9541,6 +9622,12 @@ inline void pcbios_int_13h_08h()
 			}
 		}
 		CPU_DH = drive_param->head_num();
+		CPU_DL = 0;
+		for(int i = 0; i < 2; i++) {
+			if(msdos_is_valid_drive(i) && msdos_is_removable_drive(i)) {
+				CPU_DL++;
+			}
+		}
 		int cyl = (geo->Cylinders.QuadPart > 0x3ff) ? 0x3ff : geo->Cylinders.QuadPart;
 		int sec = (geo->SectorsPerTrack > 0x3f) ? 0x3f : geo->SectorsPerTrack;
 		CPU_CH = cyl & 0xff;
