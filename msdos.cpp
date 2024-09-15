@@ -9659,13 +9659,39 @@ inline void pcbios_int_13h_15h()
 	int drive_num = (CPU_DL & 0x80) ? ((CPU_DL & 0x7f) + 2) : (CPU_DL < 2) ? CPU_DL : -1;
 	
 	if(pcbios_update_drive_param(drive_num, 1)) {
+		drive_param_t *drive_param = &drive_params[drive_num];
+		DISK_GEOMETRY *geo = &drive_param->geometry;
+		
 		if(CPU_DL & 0x80) {
-			CPU_AH = 0x02; // floppy (or other removable drive) with change-line support
-		} else {
 			CPU_AH = 0x03; // hard disk
+		} else {
+			switch(geo->MediaType) {
+			case F5_360_512:
+			case F5_320_512:
+			case F5_320_1024:
+			case F5_180_512:
+			case F5_160_512:
+				CPU_AH = 0x01; // 2D
+				break;
+			default:
+				CPU_AH = 0x02; // 2DD/2HD (or other removable drive) with change-line support
+				break;
+			}
+		}
+		UINT64 length = geo->BytesPerSector;
+		length *= geo->SectorsPerTrack;
+		length *= geo->TracksPerCylinder;
+		length *= geo->Cylinders.QuadPart;
+		length /= 512;
+		if((length >> 32) != 0) {
+			CPU_CX = CPU_DX = 0xffff;
+		} else {
+			CPU_DX = length & 0xffff;
+			CPU_CX = length >> 16;
 		}
 	} else {
 		CPU_AH = 0x00; // no such drive
+		CPU_CX = CPU_DX = 0x0000;
 	}
 }
 
