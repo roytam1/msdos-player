@@ -76,21 +76,25 @@
     <OutDir>.\out\Debug_ia32-Win32\</OutDir>
     <IntDir>.\out\Debug_ia32-Win32\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>msdos</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>.\out\Debug_ia32-x64\</OutDir>
     <IntDir>.\out\Debug_ia32-x64\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>msdos</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\out\Release_ia32-Win32\</OutDir>
     <IntDir>.\out\Release_ia32-Win32\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>msdos</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.\out\Release_ia32-x64\</OutDir>
     <IntDir>.\out\Release_ia32-x64\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>msdos</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
