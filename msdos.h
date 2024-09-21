@@ -483,7 +483,8 @@ int pit_run(int ch, UINT32 cur_time);
 void pit_latch_count(int ch);
 int pit_get_expired_time(int ch);
 
-UINT8 system_port = 0;
+UINT8 system_port = 0x0c;
+int refresh_count = 0;
 
 // sio
 
@@ -607,7 +608,7 @@ static void vga_write(UINT32 addr, UINT32 data, int size);
 #define WORK_SIZE	0x200
 // IO.SYS 0070:0000
 #define DEVICE_TOP	(WORK_TOP + WORK_SIZE)
-#define DEVICE_SIZE	0x100	/* 22 + 18 * 12 + 7 */
+#define DEVICE_SIZE	0x120	/* 22 + 18 * 14 + 7 */
 #define DOS_INFO_TOP	(DEVICE_TOP + DEVICE_SIZE)
 #define DOS_INFO_SIZE	0x100
 //#define EXT_BIOS_TOP	(DOS_INFO_TOP + DOS_INFO_SIZE)

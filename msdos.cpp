@@ -3209,6 +3209,7 @@ void set_ime_open_status(BOOL value)
 	}
 }
 
+#if 0
 DWORD get_ime_conversion_mode()
 {
 	HWND hWnd = MyImmGetDefaultIMEWnd(get_console_window_handle());
@@ -3228,6 +3229,7 @@ void set_ime_conversion_mode(DWORD value)
 		SendMessage(hWnd, WM_IME_CONTROL, IMC_SETCONVERSIONMODE, value);
 	}
 }
+#endif
 
 void get_sio_port_numbers()
 {
@@ -5269,6 +5271,8 @@ bool msdos_is_device_path(const char *path)
 			   _stricmp(name, "CONFIG$" ) == 0 ||
 			   _stricmp(name, "EMMXXXX0") == 0 ||
 //			   _stricmp(name, "SCSIMGR$") == 0 ||
+			   _stricmp(name, "$IBMAFNT") == 0 ||
+			   _stricmp(name, "$IBMADSP") == 0 ||
 			   _stricmp(name, "$IBMAIAS") == 0) {
 				return(true);
 			}
@@ -10693,43 +10697,49 @@ inline void pcbios_int_16h_13h()
 	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
 	switch(CPU_AL) {
 	case 0x00:
-		if(CPU_DX & 0x0080) {
+		if(CPU_DL & 0x81) {
+			set_ime_open_status(TRUE);
+#if 0
 			DWORD dwConv = 0x0000;
-			if(CPU_DX & 0x0001) {
+			if(CPU_DL & 0x01) {
 				dwConv |= IME_CMODE_FULLSHAPE;
 			}
-			if((CPU_DX & 0x06) == 0x02) {
+			if((CPU_DL & 0x06) == 0x02) {
 				dwConv |= IME_CMODE_NATIVE | IME_CMODE_KATAKANA;
-			} else if((CPU_DX & 0x06) == 0x04) {
+			} else if((CPU_DL & 0x06) == 0x04) {
 				dwConv |= IME_CMODE_NATIVE;
 			}
-			if(CPU_DX & 0x0040) {
+			if(CPU_DL & 0x40) {
 				dwConv |= IME_CMODE_ROMAN;
 			}
-			set_ime_open_status(TRUE);
 			set_ime_conversion_mode(dwConv);
+#endif
 		} else {
 			set_ime_open_status(FALSE);
 		}
 		break;
 	case 0x01:
-		CPU_DX = 0x0000;
+		CPU_DL = 0x00;
 		if(get_ime_open_status()) {
+#if 0
 			DWORD dwConv = get_ime_conversion_mode();
 			if(dwConv & IME_CMODE_FULLSHAPE) {
-				CPU_DX |= 0x0001; // full-size rather than half-size
+				CPU_DL |= 0x01; // full-size rather than half-size
 			}
 			if(dwConv & IME_CMODE_NATIVE) {
 				if(dwConv & IME_CMODE_KATAKANA) {
-					CPU_DX |= 0x0002; // Katakana
+					CPU_DL |= 0x02; // Katakana
 				} else {
-					CPU_DX |= 0x0004; // Hiragana
+					CPU_DL |= 0x04; // Hiragana
 				}
 			}
 			if(dwConv & IME_CMODE_ROMAN) {
-				CPU_DX |= 0x0040; // Romaji enabled
+				CPU_DX |= 0x40; // Romaji enabled
 			}
-			CPU_DX |= 0x0080; // Katakana to Kanji conversion enabled
+			CPU_DL |= 0x80; // Katakana to Kanji conversion enabled
+#else
+			CPU_DL = 0x81;
+#endif
 		}
 		break;
 	default:
@@ -18261,68 +18271,44 @@ inline void msdos_int_67h_deh()
 
 inline void atok_int_6fh_01h()
 {
-//	if(!get_ime_open_status()) {
-		set_ime_open_status(TRUE);
-//	}
-#if 0
-	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
-	if(!(get_ime_conversion_mode() & IME_CMODE_ROMAN)) {
-		hit_key(VK_KANA);
-	}
-#endif
-	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
+	set_ime_open_status(TRUE);
+//	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE | IME_CMODE_ROMAN);
 }
 
 inline void atok_int_6fh_02h()
 {
-//	if(!get_ime_open_status()) {
-		set_ime_open_status(TRUE);
-//	}
-#if 0
-	// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
-	if(get_ime_conversion_mode() & IME_CMODE_ROMAN) {
-		hit_key(VK_KANA);
-	}
-#endif
-	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
+	set_ime_open_status(TRUE);
+//	set_ime_conversion_mode(IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE);
 }
 
 inline void atok_int_6fh_03h()
 {
-//	if(!get_ime_open_status()) {
-		set_ime_open_status(TRUE);
-//	}
-	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
+	set_ime_open_status(TRUE);
+//	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
 }
 
 inline void atok_int_6fh_04h()
 {
-//	if(!get_ime_open_status()) {
-		set_ime_open_status(TRUE);
-//	}
-	set_ime_conversion_mode(IME_CMODE_SYMBOL);
+	set_ime_open_status(TRUE);
+//	set_ime_conversion_mode(IME_CMODE_SYMBOL);
 }
 
 inline void atok_int_6fh_05h()
 {
-//	if(!get_ime_open_status()) {
-		set_ime_open_status(TRUE);
-//	}
-	set_ime_conversion_mode(IME_CMODE_CHARCODE);
+	set_ime_open_status(TRUE);
+//	set_ime_conversion_mode(IME_CMODE_CHARCODE);
 }
 
 inline void atok_int_6fh_0bh()
 {
-//	if(get_ime_open_status()) {
-		set_ime_open_status(FALSE);
-//	}
-	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
+	set_ime_open_status(FALSE);
+//	set_ime_conversion_mode(IME_CMODE_ALPHANUMERIC);
 }
 
 inline void atok_int_6fh_66h()
 {
 	if(get_ime_open_status()) {
-		// NOTE: Standard IME on Windows10 is buggy and IME_CMODE_ROMAN bit of ConversionMode is not correct
+#if 0
 		DWORD dwConv = get_ime_conversion_mode();
 		if(dwConv & IME_CMODE_CHARCODE) {
 			CPU_AL = 0x05;
@@ -18335,6 +18321,9 @@ inline void atok_int_6fh_66h()
 		} else {
 			CPU_AL = 0x01;
 		}
+#else
+		CPU_AL = 0x01; // mode = "‚ ˜A‚qŠ¿"
+#endif
 	} else {
 		CPU_AL = 0x00;
 	}
@@ -20451,7 +20440,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 4 * 0xbf + 0) = 0x0000;	// 123R3 wants a null vector
 	*(UINT16 *)(mem + 4 * 0xbf + 2) = 0x0000;
 	
-	// dummy devices (NUL -> CON -> ... -> $IBMADSP -> FP$ATOK6 -> EMMXXXX0)
+	// dummy devices (NUL -> CON -> ... -> $IBMAIAS -> FP$ATOK6 -> EMMXXXX0)
 	static const struct {
 		UINT16 attributes;
 		const char *dev_name;
@@ -20468,7 +20457,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		{0x8000, "COM3    "},
 		{0x8000, "COM4    "},
 //		{0xc000, "CONFIG$ "},
+		{0xc000, "$IBMAFNT"},
 		{0xc000, "$IBMADSP"}, // for windows3.1 setup.exe
+		{0xc000, "$IBMAIAS"},
 	};
 	static const UINT8 dummy_device_routine[] = {
 		// from NUL device of Windows 98 SE
@@ -20921,12 +20912,11 @@ void hardware_update()
 		if(pit_active)
 #endif
 		{
-			if(pit_run(0, cur_time)) {
-				pic_req(0, 0, 1);
-			}
-			pit_run(1, cur_time);
+			pit_run(0, cur_time);
+//			pit_run(1, cur_time);
 			pit_run(2, cur_time);
 		}
+		refresh_count = (int)(PIT_FREQ / 1000.0 / PIT_COUNT_VALUE(1) + 0.5);
 		
 		// update sio and raise irq4/3
 		for(int c = 0; c < 4; c++) {
@@ -21777,17 +21767,28 @@ void pit_init()
 {
 	memset(pit, 0, sizeof(pit));
 	for(int ch = 0; ch < 3; ch++) {
-		pit[ch].count = 0x10000;
-		pit[ch].ctrl_reg = 0x34;
+		pit[ch].count_reg = 0;
+		pit[ch].ctrl_reg = 0x36;
 		pit[ch].mode = 3;
+		pit[ch].count = 0x10000;
 	}
-	// from DOSBox
-	pit[2].count_reg = 1320;
 	
-	// from bochs bios
-	pit_write(3, 0x34);
+	pit_write(3, 0x36); // mode 3
+	pit_write(0, 0x00); // count = 65536 (18.2Hz)
 	pit_write(0, 0x00);
-	pit_write(0, 0x00);
+#if 0
+//	pit_write(3, 0x74); // mode 2
+//	pit_write(1, 0x12); // count = 18 (15us)
+//	pit_write(1, 0x00);
+#else
+	pit[1].count_reg = 18;
+	pit[1].ctrl_reg = 0x34;
+	pit[1].mode = 2;
+	pit[1].count = PIT_COUNT_VALUE(1);
+#endif
+	pit_write(3, 0xb6); // mode 3
+	pit_write(2, 0x28); // count = 1320 (904Hz)
+	pit_write(2, 0x05);
 }
 
 void pit_write(int ch, UINT8 val)
@@ -21910,6 +21911,11 @@ int pit_run(int ch, UINT32 cur_time)
 		if(cur_time >= pit[ch].expired_time) {
 			pit[ch].prev_time = cur_time;
 			pit[ch].expired_time = pit[ch].prev_time + pit_get_expired_time(ch);
+		}
+		if(ch == 0) {
+			pic_req(0, 0, 1);
+		} else if(ch == 2) {
+			system_port |= 0x20;
 		}
 		return(1);
 	}
@@ -23004,7 +23010,14 @@ UINT8 debugger_read_io_byte(UINT32 addr)
 		val = kbd_read_data();
 		break;
 	case 0x61:
+		if(refresh_count > 0) {
+			system_port ^= 0x10;
+			refresh_count--;
+		} else {
+			REQUEST_HARDWRE_UPDATE();
+		}
 		val = system_port;
+		system_port &= ~0x20;
 		break;
 	case 0x64:
 		val = kbd_read_status();
@@ -23166,9 +23179,10 @@ void debugger_write_io_byte(UINT32 addr, UINT8 val)
 		kbd_write_data(val);
 		break;
 	case 0x61:
-		if(system_port != val) {
+		if((system_port & 0x0f) != (val & 0x0f)) {
 			bool changed = (((system_port & 3) == 3) != ((val & 3) == 3));
-			system_port = val;
+			system_port &= 0xf0;
+			system_port |= val & 0x0f;
 			if(changed) beep_update();
 		}
 		break;
