@@ -6652,7 +6652,7 @@ int msdos_mem_alloc(int mcb_seg, int paragraphs)
 	return(-1);
 }
 
-int msdos_mem_realloc(int seg, int paragraphs, int *max_paragraphs)
+int msdos_mem_realloc(int seg, int paragraphs, int *max_paragraphs, bool recover_size = true)
 {
 	int mcb_seg = seg - 1;
 	mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
@@ -6664,21 +6664,25 @@ int msdos_mem_realloc(int seg, int paragraphs, int *max_paragraphs)
 		if(max_paragraphs) {
 			*max_paragraphs = mcb->paragraphs;
 		}
-		msdos_mem_split(seg, current_paragraphs);
+		if(recover_size) {
+			msdos_mem_split(seg, current_paragraphs);
+		}
 		return(-1);
 	}
 	msdos_mem_split(seg, paragraphs);
 	return(0);
 }
 
-void msdos_mem_free(int seg)
+void msdos_mem_free(int seg, bool merge = true)
 {
 	int mcb_seg = seg - 1;
 	mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
 	msdos_mcb_check(mcb);
 	
+	if(merge) {
+		msdos_mem_merge(seg);
+	}
 	mcb->psp = 0;
-	msdos_mem_merge(seg);
 }
 
 int msdos_mem_get_free(int mcb_seg)
@@ -13787,7 +13791,7 @@ inline void msdos_int_21h_49h()
 	mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
 	
 	if(mcb->mz == 'M' || mcb->mz == 'Z') {
-		msdos_mem_free(CPU_ES);
+		msdos_mem_free(CPU_ES, false);
 		CPU_AX = CPU_ES - 1; // undocumented
 	} else {
 		CPU_AX = 0x09; // illegal memory block address
@@ -13802,12 +13806,18 @@ inline void msdos_int_21h_4ah()
 	int max_paragraphs;
 	
 	if(mcb->mz == 'M' || mcb->mz == 'Z') {
-		if(!msdos_mem_realloc(CPU_ES, CPU_BX, &max_paragraphs)) {
+		if(!msdos_mem_realloc(CPU_ES, CPU_BX, &max_paragraphs, false)) {
+			// change the owner of this memory block to current process
+			mcb->psp = current_psp;
 			// from DOSBox
 			CPU_AX = CPU_ES;
 		} else {
+			if(limit_max_memory && max_paragraphs > 0x7fff) {
+				msdos_mem_split(CPU_ES, 0x7fff);
+				max_paragraphs = 0x7fff;
+			}
 			CPU_AX = 0x08;
-			CPU_BX = max_paragraphs > 0x7fff && limit_max_memory ? 0x7fff : max_paragraphs;
+			CPU_BX = max_paragraphs;
 			CPU_SET_C_FLAG(1);
 		}
 	} else {
