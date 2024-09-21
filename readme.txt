@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								9/8/2024
+								9/22/2024
 
 ----- What's This
 
@@ -1122,6 +1122,10 @@ INT 33H AX=0020H (Enable Mouse Driver),
 INT 67H AX=DE01H (Get Protected Mode Interface),
 INT 67H AX=DE0CH (Switch To Protected Mode),
 and some DOS info block improvements are based on DOSBox.
+
+INT 16H, AX=1300H (Set Double-Byte Character Set Shift Control)
+INT 16H, AX=1301H (Get Double-Byte Character Set Shift Control)
+and some FEP control improvements are based on DOSVAXJ3.
 
 Imported many fixes from Mr.cracyc's fork hosted at:
 https://github.com/cracyc/msdos-player

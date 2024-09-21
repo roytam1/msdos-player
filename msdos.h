@@ -757,7 +757,7 @@ UINT32 ATOK_TOP = 0;
 // ATOK_TOP + 0x000	ATOK5 driver
 // ATOK_TOP + 0x012	ATOK5 dummy routine
 // ATOK_TOP + 0x015	"ATOK"
-// ATOK_TOP + 0x019	ATOK5 driver dummy routine (at ATOK_TOP + ATOK_TOP - 7)
+// ATOK_TOP + 0x019	ATOK5 driver dummy routine (at ATOK_TOP + ATOK_SIZE - 7)
 #define ATOK_SIZE	0x20	/* 18 + 3 + 4 + 7 */
 
 UINT32 XMS_TOP = 0;

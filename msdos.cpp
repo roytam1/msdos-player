@@ -1561,7 +1561,9 @@ void debugger_main()
 					params[num++] = token;
 				}
 			}
-			if(_stricmp(params[0], "D") == 0) {
+			if(num == 0) {
+				// do nothing
+			} else if(_stricmp(params[0], "D") == 0) {
 				if(num <= 3) {
 					bool pmode = CPU_STAT_PM && !CPU_STAT_VM86;
 					if(num >= 2) {
@@ -5192,8 +5194,16 @@ const char *msdos_short_full_dir(const char *path)
 const char *msdos_local_file_path(const char *path, int lfn)
 {
 	static char trimmed[MAX_PATH];
+	char tmp_path[MAX_PATH];
 	
-	strcpy(trimmed, msdos_trimmed_path(path, lfn));
+	strncpy(tmp_path, path, MAX_PATH);
+	tmp_path[MAX_PATH - 1] = '\0';
+	
+	// fix lack of null terminator (‚‹´”Å VZ Editor)
+	if(strncmp(tmp_path, "$IBMAIAS", 8) == 0) {
+		tmp_path[8] = '\0';
+	}
+	strcpy(trimmed, msdos_trimmed_path(tmp_path, lfn));
 #if 0
 	// I have forgotten the reason of this routine... :-(
 	if(_access(trimmed, 0) != 0) {
@@ -5273,7 +5283,8 @@ bool msdos_is_device_path(const char *path)
 //			   _stricmp(name, "SCSIMGR$") == 0 ||
 			   _stricmp(name, "$IBMAFNT") == 0 ||
 			   _stricmp(name, "$IBMADSP") == 0 ||
-			   _stricmp(name, "$IBMAIAS") == 0) {
+			   _stricmp(name, "$IBMAIAS") == 0 ||
+			   _stricmp(name, "FP$ATOK6") == 0) {
 				return(true);
 			}
 		}
@@ -5672,6 +5683,10 @@ UINT16 msdos_device_info(const char *path)
 			return(0xc0c0);
 		} else if(strstr(path, "MSCD001") != NULL) {
 			return(0xc880);
+		} else if(strstr(path, "$IBMAIAS") != NULL) {
+			return(0x8080);
+		} else if(strstr(path, "FP$ATOK6") != NULL) {
+			return(0x8080);
 		} else {
 			return(0x8084);
 		}
@@ -20456,10 +20471,10 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		{0x8000, "COM2    "},
 		{0x8000, "COM3    "},
 		{0x8000, "COM4    "},
-//		{0xc000, "CONFIG$ "},
-		{0xc000, "$IBMAFNT"},
-		{0xc000, "$IBMADSP"}, // for windows3.1 setup.exe
-		{0xc000, "$IBMAIAS"},
+//		{0xc080, "CONFIG$ "},
+		{0x8080, "$IBMAFNT"},
+		{0x8080, "$IBMADSP"}, // for windows3.1 setup.exe
+		{0x8080, "$IBMAIAS"},
 	};
 	static const UINT8 dummy_device_routine[] = {
 		// from NUL device of Windows 98 SE
@@ -20552,7 +20567,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		atok_device->next_driver.w.l = 0xffff;
 		atok_device->next_driver.w.h = 0xffff;
 	}
-	atok_device->attributes = 0xc000;
+	atok_device->attributes = 0x8080;
 	atok_device->strategy = ATOK_SIZE - sizeof(dummy_device_routine);
 	atok_device->interrupt = ATOK_SIZE - sizeof(dummy_device_routine) + 6;
 	memcpy(atok_device->dev_name, "FP$ATOK6", 8);
