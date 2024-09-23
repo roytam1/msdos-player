@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								9/22/2024
+								9/23/2024
 
 ----- What's This
 
@@ -857,6 +857,7 @@ INT 2FH		Multiplex Interrupt
 	160AH	Windows - Identify Windows Version And Type (*6)
 	1680H	Windows, DPMI - Release Current Virtual Machine Time-Slice
 	1683H	Windows 3+ - Get Current Virtual Machine ID
+	1689H	Windows 3+ - Kernel Idle Call
 	1A00H	ANSI.SYS - Installation Check
 	1A01H	ANSI.SYS - Set/Get Display Information
 	4000H	Windows 3+ - Get Virtual Device Driver (VDD) Capabilities
