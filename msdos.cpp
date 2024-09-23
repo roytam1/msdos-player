@@ -218,7 +218,7 @@ DWORD MyGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuff
 		}
 	}
 	
-	// Windows NT4 does not support GetLongPathNameA
+	// Windows NT 4 does not support GetLongPathNameA
 	// http://www.expertmg.co.jp/html/cti/vctips/file.htm
 	
 	WIN32_FIND_DATAA ffd;
@@ -2825,7 +2825,7 @@ bool is_started_from_console()
 	}
 	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
 		// If cursor position is (0,0) then we may be launched in a separate console
-		// Notice: a 4NT console window without scrollback and run with `cls && msdos.exe` can trigger this as well
+		// Notice: a Windows NT 4 console window without scrollback and run with `cls && msdos.exe` can trigger this as well
 		return !(csbi.dwCursorPosition.X == 0 && csbi.dwCursorPosition.Y == 0);
 	}
 	return false;
@@ -3613,7 +3613,7 @@ int main(int argc, char *argv[], char *envp[])
 				} else if((fo = fopen(new_exec_file, "wb")) == NULL) {
 					fprintf(stderr, "Can't open '%s'\n", new_exec_file);
 				} else {
-					// read pe header of msdos.exe
+					// read PE header of msdos.exe
 					UINT8 header[0x400];
 					fseek(fp, 0, SEEK_SET);
 					fread(header, sizeof(header), 1, fp);
@@ -4021,7 +4021,7 @@ void change_console_size(int width, int height)
 	int cur_buffer_width  = csbi.dwSize.X;
 	int cur_buffer_height = csbi.dwSize.Y;
 	
-	// workaround win10 conhost v2 bug that crash when cursor is out of range
+	// workaround Windows 10 conhost v2 bug that crash when cursor is out of range
 	if(is_win10_or_later) {
 		co.X = 0;
 		co.Y = 0;
@@ -4208,7 +4208,7 @@ bool update_console_input()
 					}
 				}
 				if(ir[i].EventType & KEY_EVENT) {
-					// update keyboard flags in bios data area
+					// update keyboard flags in BIOS data area
 					if(ir[i].Event.KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
 						mem[0x417] |= 0x40;
 					} else {
@@ -4350,7 +4350,7 @@ bool update_console_input()
 							} else if(scn == 0x57 || scn == 0x58) {
 								scn += 0x85 - 0x57;
 							}
-							// ignore shift, ctrl, alt, win and menu keys
+							// ignore Shift, Ctrl, Alt, Win and Menu keys
 							if(scn != 0x1d && scn != 0x2a && scn != 0x36 && scn != 0x38 && !(scn >= 0x5b && scn <= 0x5d && scn == scn_old)) {
 								if(key_buf_char != NULL && key_buf_scan != NULL) {
 									enter_key_buf_lock();
@@ -4534,7 +4534,7 @@ void msdos_sda_update(int psp_seg)
 	sda->current_drive = _getdrive();
 }
 
-// dta info
+// DTA info
 
 void msdos_dta_info_init()
 {
@@ -4639,7 +4639,7 @@ void msdos_cds_update(int drv, const char *path)
 	my_strcpy_s(cds->path_name, sizeof(cds->path_name), msdos_short_path(path));
 }
 
-// nls information tables
+// NLS information tables
 
 // uppercase table (func 6502h)
 void msdos_upper_table_update()
@@ -5681,15 +5681,18 @@ UINT16 msdos_device_info(const char *path)
 	} else if(msdos_is_device_path(path)) {
 		if(strstr(path, "EMMXXXX0") != NULL && support_ems) {
 			return(0xc0c0);
-		} else if(strstr(path, "MSCD001") != NULL) {
-			return(0xc880);
-		} else if(strstr(path, "$IBMAIAS") != NULL) {
-			return(0x8080);
-		} else if(strstr(path, "FP$ATOK6") != NULL) {
-			return(0x8080);
-		} else {
-			return(0x8084);
 		}
+//		if(strstr(path, "MSCD001") != NULL) {
+//			return(0xc880);
+//		}
+		if(strstr(path, "$IBMAFNT") != NULL ||
+		   strstr(path, "$IBMADSP") != NULL ||
+		   strstr(path, "$IBMAIAS") != NULL ||
+		   strstr(path, "FP$ATOK6") != NULL) {
+//			return(0xc080);
+			return(0x0080);
+		}
+		return(0x8084);
 	} else {
 		return(msdos_drive_number(path));
 	}
@@ -6644,7 +6647,7 @@ int msdos_mem_alloc(int mcb_seg, int paragraphs)
 			msdos_mcb_check(mcb);
 		}
 		if(mcb->mz != 'Z') {
-			// check if the next is dummy mcb to link to umb
+			// check if the next is dummy MCB to link to UMB
 			if((malloc_strategy & 0x0f) >= 2 && (mcb->paragraphs >= paragraphs) && !mcb->psp) {
 				found_seg = mcb_seg;
 			}
@@ -6844,7 +6847,7 @@ void msdos_hma_mem_merge(int offset)
 
 int msdos_hma_mem_alloc(int size, UINT16 owner)
 {
-	int offset = 0x10; // first mcb in HMA
+	int offset = 0x10; // first MCB in HMA
 	
 	while(1) {
 		hma_mcb_t *mcb = (hma_mcb_t *)(mem + 0xffff0 + offset);
@@ -6895,7 +6898,7 @@ void msdos_hma_mem_free(int offset)
 
 int msdos_hma_mem_get_free(int *available_offset)
 {
-	int offset = 0x10; // first mcb in HMA
+	int offset = 0x10; // first MCB in HMA
 	int size = 0;
 	
 	while(1) {
@@ -7917,7 +7920,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	_read(fd, file_buffer, sizeof(file_buffer));
 	_close(fd);
 	
-	// check if this is win32 program
+	// check if this is Win32 program
 	if(!first_process && al == 0) {
 		UINT16 sign_dos = *(UINT16 *)(file_buffer + 0x00);
 		UINT32 e_lfanew = *(UINT32 *)(file_buffer + 0x3c);
@@ -8030,7 +8033,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 		msdos_mem_link_umb();
 	}
 	
-	// create psp
+	// create PSP
 	*(UINT16 *)(mem + 4 * 0x22 + 0) = CPU_EIP;
 	*(UINT16 *)(mem + 4 * 0x22 + 2) = CPU_CS;
 	psp_t *psp = msdos_psp_create(psp_seg, start_seg - (PSP_SIZE >> 4) + paragraphs, current_psp, env_seg);
@@ -8300,7 +8303,7 @@ int msdos_drive_param_block_update(int drive_num, UINT16 *seg, UINT16 *ofs, int 
 	return(drive_param->valid);
 }
 
-// pc bios
+// PC BIOS
 
 void prepare_service_loop()
 {
@@ -10197,12 +10200,12 @@ inline void pcbios_int_15h_c2h()
 			} else {
 				SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), dwConsoleMode);
 			}
-			pic[1].imr |= 0x10; // disable irq12
+			pic[1].imr |= 0x10; // disable IRQ 12
 			mouse.enabled_ps2 = false;
 			CPU_AH = 0x00; // successful
 		} else if(CPU_BH == 0x01) {
 			SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), (dwConsoleMode | ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS) & ~ENABLE_QUICK_EDIT_MODE);
-			pic[1].imr &= ~0x10; // enable irq12
+			pic[1].imr &= ~0x10; // enable IRQ 12
 			mouse.enabled_ps2 = true;
 			CPU_AH = 0x00; // successful
 		} else {
@@ -10219,7 +10222,7 @@ inline void pcbios_int_15h_c2h()
 		} else {
 			SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), dwConsoleMode);
 		}
-		pic[1].imr |= 0x10; // disable irq12
+		pic[1].imr |= 0x10; // disable IRQ 12
 		mouse.enabled_ps2 = false;
 		sampling_rate = 5;
 		resolution = 2;
@@ -12302,7 +12305,7 @@ inline void msdos_int_21h_31h()
 	try {
 		msdos_mem_realloc(current_psp, CPU_DX, NULL);
 	} catch(...) {
-		// recover the broken mcb
+		// recover the broken MCB
 		int mcb_seg = current_psp - 1;
 		mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
 		
@@ -13775,7 +13778,7 @@ inline void msdos_int_21h_48h()
 	int seg, umb_linked;
 	
 	if((malloc_strategy & 0xf0) == 0x00) {
-		// unlink umb not to allocate memory in umb
+		// unlink UMB not to allocate memory in UMB
 		if((umb_linked = msdos_mem_get_umb_linked()) != 0) {
 			msdos_mem_unlink_umb();
 		}
@@ -15665,7 +15668,7 @@ inline void msdos_int_27h()
 	try {
 		msdos_mem_realloc(CPU_CS, paragraphs, NULL);
 	} catch(...) {
-		// recover the broken mcb
+		// recover the broken MCB
 		int mcb_seg = CPU_CS - 1;
 		mcb_t *mcb = (mcb_t *)(mem + (mcb_seg << 4));
 		
@@ -16274,11 +16277,11 @@ inline void msdos_int_2fh_16h()
 	case 0x85:
 	case 0x86:
 	case 0x87:
-	case 0x89:
 	case 0x8a:
 		// function not supported, do not clear AX
 		break;
 	case 0x80:
+	case 0x89:
 		Sleep(10);
 		REQUEST_HARDWRE_UPDATE();
 		CPU_AL = 0x00;
@@ -16488,7 +16491,7 @@ inline void msdos_int_2fh_4ah()
 	case 0x01: // DOS 5.0+ - Query Free HMA Space
 		if(!is_hma_used_by_xms && !is_hma_used_by_int_2fh) {
 			if(!msdos_is_hma_mcb_valid((hma_mcb_t *)(mem + 0xffff0 + 0x10))) {
-				// restore first free mcb in high memory area
+				// restore first free MCB in HMA
 				msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 			}
 			int offset = 0xffff;
@@ -16507,7 +16510,7 @@ inline void msdos_int_2fh_4ah()
 	case 0x02: // DOS 5.0+ - Allocate HMA Space
 		if(!is_hma_used_by_xms && !is_hma_used_by_int_2fh) {
 			if(!msdos_is_hma_mcb_valid((hma_mcb_t *)(mem + 0xffff0 + 0x10))) {
-				// restore first free mcb in high memory area
+				// restore first free MCB in HMA
 				msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 			}
 			int size = CPU_BX, offset;
@@ -16534,7 +16537,7 @@ inline void msdos_int_2fh_4ah()
 		if(CPU_DL == 0x00) {
 			if(!is_hma_used_by_xms) {
 				if(!msdos_is_hma_mcb_valid((hma_mcb_t *)(mem + 0xffff0 + 0x10))) {
-					// restore first free mcb in high memory area
+					// restore first free MCB in HMA
 					msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 					is_hma_used_by_int_2fh = false;
 				}
@@ -16572,7 +16575,7 @@ inline void msdos_int_2fh_4ah()
 		} else if(CPU_DL == 0x02) {
 			if(!is_hma_used_by_xms) {
 				if(!msdos_is_hma_mcb_valid((hma_mcb_t *)(mem + 0xffff0 + 0x10))) {
-					// restore first free mcb in high memory area
+					// restore first free MCB in HMA
 					msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 					is_hma_used_by_int_2fh = false;
 				} else {
@@ -16591,7 +16594,7 @@ inline void msdos_int_2fh_4ah()
 	case 0x04: // Windows95 - Get Start of HMA Memory Chain
 		if(!is_hma_used_by_xms) {
 			if(!msdos_is_hma_mcb_valid((hma_mcb_t *)(mem + 0xffff0 + 0x10))) {
-				// restore first free mcb in high memory area
+				// restore first free MCB in HMA
 				msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 				is_hma_used_by_int_2fh = false;
 			}
@@ -17391,7 +17394,7 @@ inline void msdos_int_67h_46h()
 
 inline void msdos_int_67h_47h()
 {
-	// NOTE: the map data should be stored in the specified ems page, not process data
+	// NOTE: the map data should be stored in the specified EMS page, not process data
 	process_t *process = msdos_process_info_get(current_psp);
 	
 	if(!support_ems) {
@@ -17413,7 +17416,7 @@ inline void msdos_int_67h_47h()
 
 inline void msdos_int_67h_48h()
 {
-	// NOTE: the map data should be restored from the specified ems page, not process data
+	// NOTE: the map data should be restored from the specified EMS page, not process data
 	process_t *process = msdos_process_info_get(current_psp);
 	
 	if(!support_ems) {
@@ -17922,7 +17925,7 @@ inline void msdos_int_67h_57h()
 			bool mapped;
 		} tmp_pages[4];
 		
-		// unmap pages to copy memory data to ems buffer
+		// unmap pages to copy memory data to EMS buffer
 		for(int i = 0; i < 4; i++) {
 			tmp_pages[i].handle = ems_pages[i].handle;
 			tmp_pages[i].page   = ems_pages[i].page;
@@ -18251,7 +18254,7 @@ inline void msdos_int_67h_deh()
 		} else {
 			// just cheat and switch to real mode instead of v86 mode
 			// otherwise a GDT and IDT would need to be set up
-			// hopefully most vcpi programs are okay with that
+			// hopefully most VCPI programs are okay with that
 			UINT32 new_cr0 = CPU_CR0 & 0x7ffffffe;
 			CPU_SET_CR0(new_cr0);
 
@@ -18531,7 +18534,7 @@ inline void msdos_call_xms_02h()
 	} else {
 		CPU_AX = 0x0001;
 		is_hma_used_by_xms = false;
-		// restore first free mcb in high memory area
+		// restore first free MCB in HMA
 		msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 #else
 	} else {
@@ -18949,17 +18952,16 @@ void msdos_syscall(unsigned num)
 	} else if(num == 0x30) {
 		// dummy interrupt for call 0005h (call near)
 		fprintf(fp_debug_log, "call 0005h (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-	} else if(num == 0x65) {
-		// dummy interrupt for ATOK5 (int 6fh) and EMS (int 67h)
-		if((CPU_AH >= 0x01 && CPU_AH <= 0x12) || CPU_AH == 0x66) {
-			fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x6f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-		} else {
-			fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x67, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-		}
-	} else if(num == 0x66) {
+	} else if(num == 0x42) {
+		// dummy interrupt for EMS (int 67h)
+		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x67, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
+	} else if(num == 0x43) {
 		// dummy interrupt for XMS (call far)
 		fprintf(fp_debug_log, "call XMS (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-	} else if(num == 0x64 || (num >= 0x68 && num <= 0x6e)) {
+	} else if(num == 0x4b) {
+		// dummy interrupt for ATOK5 (int 6Fh)
+		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x6f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
+	} else if(num == 0x40 || (num >= 0x44 && num <= 0x49)) {
 		// dummy interrupt
 	} else {
 		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", num, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
@@ -19284,7 +19286,7 @@ void msdos_syscall(unsigned num)
 		}
 		break;
 	case 0x30:
-		// dummy interrupt for case map routine pointed in the country info
+		// dummy interrupt for call 5
 //		if(!(CPU_CL >= 0x00 && CPU_CL <= 0x24)) {
 //			CPU_AL = 0x00;
 //			break;
@@ -19624,6 +19626,11 @@ void msdos_syscall(unsigned num)
 			break;
 		}
 		break;
+/*
+	case 0x30:
+		// dummy interrupt for call 5
+		break;
+*/
 	case 0x33:
 		switch(CPU_AH) {
 		case 0x00:
@@ -19695,7 +19702,7 @@ void msdos_syscall(unsigned num)
 			break;
 		}
 		break;
-	case 0x64:
+	case 0x40:
 		// dummy interrupt for end of alter page map and call
 		{
 			UINT16 handles[4], pages[4];
@@ -19720,22 +19727,14 @@ void msdos_syscall(unsigned num)
 			// do ret_far (pop cs/ip) in old mapping
 		}
 		break;
-	case 0x65:
-		// dummy interrupt for ATOK5 (int 6fh) and EMS (int 67h)
+/*
+	case 0x41:
+		// int 41h is used for Windows debugging kernel
+		break;
+*/
+	case 0x42:
+		// dummy interrupt for EMS (int 67h)
 		switch(CPU_AH) {
-		// ATOK5
-		case 0x01: atok_int_6fh_01h(); break;
-		case 0x02: atok_int_6fh_02h(); break;
-		case 0x03: atok_int_6fh_03h(); break;
-		case 0x04: atok_int_6fh_04h(); break;
-		case 0x05: atok_int_6fh_05h(); break;
-		case 0x0b: atok_int_6fh_0bh(); break;
-		case 0x0f: break;
-		case 0x10: break;
-		case 0x11: break;
-		case 0x12: break;
-		case 0x66: atok_int_6fh_66h(); break;
-		// EMS
 		case 0x40: msdos_int_67h_40h(); break;
 		case 0x41: msdos_int_67h_41h(); break;
 		case 0x42: msdos_int_67h_42h(); break;
@@ -19776,7 +19775,7 @@ void msdos_syscall(unsigned num)
 		}
 		break;
 #ifdef SUPPORT_XMS
-	case 0x66:
+	case 0x43:
 		// dummy interrupt for XMS (call far)
 		try {
 			switch(CPU_AH) {
@@ -19817,14 +19816,8 @@ void msdos_syscall(unsigned num)
 		}
 		break;
 #endif
-/*
-	case 0x67:
-		// int 67h handler is in EMS device driver (EMMXXXX0) and it calls int 65h
-		// NOTE: some softwares get address of int 67h handler and recognize the address is in EMS device driver
-		break;
-*/
-	case 0x69:
-		// irq12 (mouse)
+	case 0x44:
+		// IRQ 12 (mouse)
 		mouse_push_ax = CPU_AX;
 		mouse_push_bx = CPU_BX;
 		mouse_push_cx = CPU_CX;
@@ -19847,8 +19840,8 @@ void msdos_syscall(unsigned num)
 			mem[DUMMY_TOP + 0x04] = mouse.call_addr.w.l >> 8;
 			mem[DUMMY_TOP + 0x05] = mouse.call_addr.w.h & 0xff;
 			mem[DUMMY_TOP + 0x06] = mouse.call_addr.w.h >> 8;
-			mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6bh (dummy)
-			mem[DUMMY_TOP + 0x08] = 0x6b;
+			mem[DUMMY_TOP + 0x07] = 0xcd;	// int 46h (dummy)
+			mem[DUMMY_TOP + 0x08] = 0x46;
 			break;
 		}
 		for(int i = 0; i < 8; i++) {
@@ -19865,8 +19858,8 @@ void msdos_syscall(unsigned num)
 				mem[DUMMY_TOP + 0x04] = mouse.call_addr_alt[i].w.l >> 8;
 				mem[DUMMY_TOP + 0x05] = mouse.call_addr_alt[i].w.h & 0xff;
 				mem[DUMMY_TOP + 0x06] = mouse.call_addr_alt[i].w.h >> 8;
-				mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6bh (dummy)
-				mem[DUMMY_TOP + 0x08] = 0x6b;
+				mem[DUMMY_TOP + 0x07] = 0xcd;	// int 46h (dummy)
+				mem[DUMMY_TOP + 0x08] = 0x46;
 				break;
 			}
 		}
@@ -19883,8 +19876,8 @@ void msdos_syscall(unsigned num)
 			mem[DUMMY_TOP + 0x04] = mouse.call_addr_ps2.w.l >> 8;
 			mem[DUMMY_TOP + 0x05] = mouse.call_addr_ps2.w.h & 0xff;
 			mem[DUMMY_TOP + 0x06] = mouse.call_addr_ps2.w.h >> 8;
-			mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6ah (dummy)
-			mem[DUMMY_TOP + 0x08] = 0x6a;
+			mem[DUMMY_TOP + 0x07] = 0xcd;	// int 45h (dummy)
+			mem[DUMMY_TOP + 0x08] = 0x45;
 			break;
 		}
 		// invalid call addr :-(
@@ -19893,17 +19886,17 @@ void msdos_syscall(unsigned num)
 		mem[DUMMY_TOP + 0x04] = 0x90;	// nop
 		mem[DUMMY_TOP + 0x05] = 0x90;	// nop
 		mem[DUMMY_TOP + 0x06] = 0x90;	// nop
-		mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6bh (dummy)
-		mem[DUMMY_TOP + 0x08] = 0x6b;
+		mem[DUMMY_TOP + 0x07] = 0xcd;	// int 46h (dummy)
+		mem[DUMMY_TOP + 0x08] = 0x46;
 		break;
-	case 0x6a:
-		// end of ps/2 mouse bios
+	case 0x45:
+		// end of PS/2 mouse BIOS
 		CPU_POP();
 		CPU_POP();
 		CPU_POP();
 		CPU_POP();
-	case 0x6b:
-		// end of irq12 (mouse)
+	case 0x46:
+		// end of IRQ 12 (mouse)
 		CPU_AX = mouse_push_ax;
 		CPU_BX = mouse_push_bx;
 		CPU_CX = mouse_push_cx;
@@ -19919,7 +19912,7 @@ void msdos_syscall(unsigned num)
 		}
 		pic_update();
 		break;
-	case 0x6c:
+	case 0x47:
 		// dummy interrupt for case map routine pointed in the country info
 		if(CPU_AL >= 0x80) {
 			char tmp[2] = {0};
@@ -19928,12 +19921,12 @@ void msdos_syscall(unsigned num)
 			CPU_AL = tmp[0];
 		}
 		break;
-	case 0x6d:
+	case 0x48:
 		// dummy interrupt for font read routine pointed by int 15h, ax=5000h
 		CPU_AL = 0x86; // not supported
 		CPU_SET_C_FLAG(1);
 		break;
-	case 0x6e:
+	case 0x49:
 		// dummy interrupt for parameter error message read routine pointed by int 2fh, ax=122eh, dl=08h
 		{
 			USHORT lang = get_message_lang();
@@ -19949,8 +19942,33 @@ void msdos_syscall(unsigned num)
 		}
 		break;
 /*
+	case 0x4a:
+		// int 4Ah is used for user alarm
+		break;
+*/
+	case 0x4b:
+		// dummy interrupt for ATOK5 (int 6Fh)
+		switch(CPU_AH) {
+		case 0x01: atok_int_6fh_01h(); break;
+		case 0x02: atok_int_6fh_02h(); break;
+		case 0x03: atok_int_6fh_03h(); break;
+		case 0x04: atok_int_6fh_04h(); break;
+		case 0x05: atok_int_6fh_05h(); break;
+		case 0x0b: atok_int_6fh_0bh(); break;
+		case 0x0f: break;
+		case 0x10: break;
+		case 0x11: break;
+		case 0x12: break;
+		case 0x66: atok_int_6fh_66h(); break;
+		}
+		break;
+/*
+	case 0x67:
+		// int 67h handler is in EMS device driver (EMMXXXX0) and it calls int 42h
+		// NOTE: some softwares get address of int 67h handler and recognize the address is in EMS device driver
+		break;
 	case 0x6f:
-		// int 6fh handler is in ATOK5 device driver and it calls int 65h
+		// int 6Fh handler is in ATOK5 device driver and it calls int 4Bh
 		// NOTE: some softwares get address of int 6fh handler and recognize the address is in ATOK5 device driver
 		break;
 */
@@ -20024,7 +20042,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mouse.mickey.y = 16;
 	
 #ifdef SUPPORT_XMS
-	// init xms
+	// init XMS
 	msdos_xms_init();
 #endif
 	
@@ -20033,7 +20051,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	memset(process, 0, sizeof(process));
 #endif
 	
-	// init dtainfo
+	// init DTA info
 	msdos_dta_info_init();
 	
 #if 0
@@ -20041,7 +20059,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	memset(mem, 0, sizeof(mem));
 #endif
 	
-	// bios data area
+	// BIOS data area
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(hStdout, &csbi);
@@ -20111,9 +20129,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT8  *)(mem + 0x496) = 0x10; // enhanced keyboard installed
 	// put ROM configuration table for INT 15h, AH=C0h (Get Configuration) in reserved area
 	*(UINT16 *)(mem + 0x4ac + 0) = 0x0a; // number of bytes following
-	*(UINT8  *)(mem + 0x4ac + 2) = 0xfc; // model: pc/at
-	*(UINT8  *)(mem + 0x4ac + 3) = 0x00; // submodel: pc/at
-	*(UINT8  *)(mem + 0x4ac + 5) = 0x60; // 2nd pic, rtc
+	*(UINT8  *)(mem + 0x4ac + 2) = 0xfc; // model: PC/AT
+	*(UINT8  *)(mem + 0x4ac + 3) = 0x00; // submodel: PC/AT
+	*(UINT8  *)(mem + 0x4ac + 5) = 0x60; // 2nd PIC, RTC
 	*(UINT32 *)(mem + 0x4ac + 6) = 0x40; // int 16/ah=09h
 #ifdef EXT_BIOS_TOP
 	*(UINT16 *)(mem + EXT_BIOS_TOP) = 1;
@@ -20130,12 +20148,12 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		}
 	}
 	
-	// init mcb
+	// init MCB
 	int seg = MEMORY_TOP >> 4;
 	
 	// iret table
 	// note: int 2eh vector should address the routine in command.com,
-	// and some softwares invite (int 2eh vector segment) - 1 must address the mcb of command.com.
+	// and some softwares invite (int 2eh vector segment) - 1 must address the MCB of command.com.
 	// so move iret table into allocated memory block
 	// http://www5c.biglobe.ne.jp/~ecb/assembler2/2_6.html
 	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, (IRET_SIZE + 5 * 128) >> 4);
@@ -20143,7 +20161,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	seg += (IRET_SIZE + 5 * 128) >> 4;
 	memset(mem + IRET_TOP, 0xcf, IRET_SIZE); // iret
 	
-	// note: SO1 checks int 21h vector and if it aims iret (cfh)
+	// note: SO1 checks int 21h vector and if it aims iret (CFh)
 	// it is recognized SO1 is not running on MS-DOS environment
 	for(int i = 0; i < 128; i++) {
 		// jmp far (IRET_TOP >> 4):(interrupt number)
@@ -20157,7 +20175,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	ATOK_TOP = seg << 4;
 	seg += ATOK_SIZE >> 4;
 	
-	// dummy xms/ems device
+	// dummy XMS/EMS device
 	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, XMS_SIZE >> 4);
 	XMS_TOP = seg << 4;
 	seg += XMS_SIZE >> 4;
@@ -20401,31 +20419,31 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	}
 	seg += (ENV_SIZE >> 4);
 	
-	// psp
+	// PSP
 	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, PSP_SIZE >> 4);
 	current_psp = seg;
 	psp_t *psp = msdos_psp_create(seg, seg + (PSP_SIZE >> 4), -1, env_seg);
 	psp->parent_psp = current_psp;
 	seg += (PSP_SIZE >> 4);
 	
-	// first free mcb in conventional memory
+	// first free MCB in conventional memory
 	msdos_mcb_create(seg, 'M', 0, (MEMORY_END >> 4) - seg - 2);
 	first_mcb = seg;
 	
-	// dummy mcb to link to umb
+	// dummy MCB to link to UMB
 #if 0
-	msdos_mcb_create((MEMORY_END >> 4) - 1, 'M', PSP_SYSTEM, (UMB_TOP >> 4) - (MEMORY_END >> 4), "SC"); // link umb
+	msdos_mcb_create((MEMORY_END >> 4) - 1, 'M', PSP_SYSTEM, (UMB_TOP >> 4) - (MEMORY_END >> 4), "SC"); // link UMB
 #else
-	msdos_mcb_create((MEMORY_END >> 4) - 1, 'Z', PSP_SYSTEM, 0, "SC"); // unlink umb
+	msdos_mcb_create((MEMORY_END >> 4) - 1, 'Z', PSP_SYSTEM, 0, "SC"); // unlink UMB
 #endif
 	
-	// first mcb in upper memory block
+	// first MCB in upper memory block
 	msdos_mcb_create(UMB_TOP >> 4, 'M', PSP_SYSTEM, 0);
-	// desqview expects there to be more than one mcb in the umb and the last to be the largest
+	// desqview expects there to be more than one MCB in the UMB and the last to be the largest
 	msdos_mcb_create((UMB_TOP >> 4) + 1, 'Z', 0, (UMB_END >> 4) - (UMB_TOP >> 4) - 2);
 	
 #ifdef SUPPORT_HMA
-	// first free mcb in high memory area
+	// first free MCB in HMA
 	msdos_hma_mcb_create(0x10, 0, 0xffe0, 0);
 #endif
 	
@@ -20439,15 +20457,15 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		*(UINT16 *)(mem + 4 * i + 0) = (i <= 0x3f || (i >= 0x70 && i <= 0x77)) ? (IRET_SIZE + 5 * i) : i;
 		*(UINT16 *)(mem + 4 * i + 2) = (IRET_TOP >> 4);
 	}
-	*(UINT16 *)(mem + 4 * 0x08 + 0) = 0x0018;	// fffc:0018 irq0 (system timer)
+	*(UINT16 *)(mem + 4 * 0x08 + 0) = 0x0018;	// fffc:0018 IRQ 0 (system timer)
 	*(UINT16 *)(mem + 4 * 0x08 + 2) = DUMMY_TOP >> 4;
 	*(UINT16 *)(mem + 4 * 0x22 + 0) = 0x0000;	// ffff:0000 boot
 	*(UINT16 *)(mem + 4 * 0x22 + 2) = 0xffff;
-	*(UINT16 *)(mem + 4 * 0x67 + 0) = 0x0012;	// xxxx:0012 ems
+	*(UINT16 *)(mem + 4 * 0x67 + 0) = 0x0012;	// xxxx:0012 EMS
 	*(UINT16 *)(mem + 4 * 0x67 + 2) = XMS_TOP >> 4;
 	*(UINT16 *)(mem + 4 * 0x6f + 0) = 0x0012;	// xxxx:0012 ATOK5
 	*(UINT16 *)(mem + 4 * 0x6f + 2) = ATOK_TOP >> 4;
-	*(UINT16 *)(mem + 4 * 0x74 + 0) = 0x0000;	// fffc:0000 irq12 (mouse)
+	*(UINT16 *)(mem + 4 * 0x74 + 0) = 0x0000;	// fffc:0000 IRQ 12 (mouse)
 	*(UINT16 *)(mem + 4 * 0x74 + 2) = DUMMY_TOP >> 4;
 	for(int i = 0x50; i < 0x60; i++) {		// desqview wants 0x50-0x58 to point at the same address
 		*(UINT16 *)(mem + 4 * i + 0) = 0x0050;	// dos4gw wants two vectors pointing to the same address
@@ -20471,10 +20489,10 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		{0x8000, "COM2    "},
 		{0x8000, "COM3    "},
 		{0x8000, "COM4    "},
-//		{0xc080, "CONFIG$ "},
-		{0x8080, "$IBMAFNT"},
-		{0x8080, "$IBMADSP"}, // for windows3.1 setup.exe
-		{0x8080, "$IBMAIAS"},
+//		{0xc000, "CONFIG$ "},
+		{0xc000, "$IBMAFNT"},
+		{0xc000, "$IBMADSP"}, // for Windows 3.1 setup.exe
+		{0xc000, "$IBMAIAS"},
 	};
 	static const UINT8 dummy_device_routine[] = {
 		// from NUL device of Windows 98 SE
@@ -20567,18 +20585,18 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		atok_device->next_driver.w.l = 0xffff;
 		atok_device->next_driver.w.h = 0xffff;
 	}
-	atok_device->attributes = 0x8080;
+	atok_device->attributes = 0xc000;
 	atok_device->strategy = ATOK_SIZE - sizeof(dummy_device_routine);
 	atok_device->interrupt = ATOK_SIZE - sizeof(dummy_device_routine) + 6;
 	memcpy(atok_device->dev_name, "FP$ATOK6", 8);
 	
-	mem[ATOK_TOP + 0x12] = 0xcd;	// int 65h (dummy)
-	mem[ATOK_TOP + 0x13] = 0x65;
+	mem[ATOK_TOP + 0x12] = 0xcd;	// int 4Ch (dummy)
+	mem[ATOK_TOP + 0x13] = 0x4c;
 	mem[ATOK_TOP + 0x14] = 0xcf;	// iret
 	memcpy(mem + ATOK_TOP + 0x15, "ATOK", 4);
 	memcpy(mem + ATOK_TOP + ATOK_SIZE - sizeof(dummy_device_routine), dummy_device_routine, sizeof(dummy_device_routine));
 	
-	// ems (int 67h) and xms
+	// EMS (int 67h) and XMS
 	if(support_ems) {
 		device_t *xms_device = (device_t *)(mem + XMS_TOP);
 		xms_device->next_driver.w.l = 0xffff;
@@ -20588,49 +20606,49 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		xms_device->interrupt = XMS_SIZE - sizeof(dummy_device_routine) + 6;
 		memcpy(xms_device->dev_name, "EMMXXXX0", 8);
 		
-		mem[XMS_TOP + 0x12] = 0xcd;	// int 65h (dummy)
-		mem[XMS_TOP + 0x13] = 0x65;
+		mem[XMS_TOP + 0x12] = 0xcd;	// int 42h (dummy)
+		mem[XMS_TOP + 0x13] = 0x42;
 		mem[XMS_TOP + 0x14] = 0xcf;	// iret
 	} else {
 		mem[XMS_TOP + 0x12] = 0xcf;	// iret 
 	}
 #ifdef SUPPORT_XMS
 	if(support_xms) {
-		mem[XMS_TOP + 0x15] = 0xcd;	// int 66h (dummy)
-		mem[XMS_TOP + 0x16] = 0x66;
+		mem[XMS_TOP + 0x15] = 0xcd;	// int 43h (dummy)
+		mem[XMS_TOP + 0x16] = 0x43;
 		mem[XMS_TOP + 0x17] = 0xcb;	// retf
 	} else
 #endif
 	mem[XMS_TOP + 0x15] = 0xcb;	// retf
 	memcpy(mem + XMS_TOP + XMS_SIZE - sizeof(dummy_device_routine), dummy_device_routine, sizeof(dummy_device_routine));
 	
-	// irq12 routine (mouse)
-	mem[DUMMY_TOP + 0x00] = 0xcd;	// int 69h (dummy)
-	mem[DUMMY_TOP + 0x01] = 0x69;
+	// IRQ 12 routine (mouse)
+	mem[DUMMY_TOP + 0x00] = 0xcd;	// int 44h (dummy)
+	mem[DUMMY_TOP + 0x01] = 0x44;
 	mem[DUMMY_TOP + 0x02] = 0x9a;	// call far mouse
 	mem[DUMMY_TOP + 0x03] = 0xff;
 	mem[DUMMY_TOP + 0x04] = 0xff;
 	mem[DUMMY_TOP + 0x05] = 0xff;
 	mem[DUMMY_TOP + 0x06] = 0xff;
-//	mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6ah (dummy)
-//	mem[DUMMY_TOP + 0x08] = 0x6a;
-	mem[DUMMY_TOP + 0x07] = 0xcd;	// int 6bh (dummy)
-	mem[DUMMY_TOP + 0x08] = 0x6b;
+//	mem[DUMMY_TOP + 0x07] = 0xcd;	// int 45h (dummy)
+//	mem[DUMMY_TOP + 0x08] = 0x45;
+	mem[DUMMY_TOP + 0x07] = 0xcd;	// int 46h (dummy)
+	mem[DUMMY_TOP + 0x08] = 0x46;
 	mem[DUMMY_TOP + 0x09] = 0xcf;	// iret
 	
 	// case map routine
-	mem[DUMMY_TOP + 0x0a] = 0xcd;	// int 6ch (dummy)
-	mem[DUMMY_TOP + 0x0b] = 0x6c;
+	mem[DUMMY_TOP + 0x0a] = 0xcd;	// int 47h (dummy)
+	mem[DUMMY_TOP + 0x0b] = 0x47;
 	mem[DUMMY_TOP + 0x0c] = 0xcb;	// retf
 	
 	// font read routine
-	mem[DUMMY_TOP + 0x0d] = 0xcd;	// int 6dh (dummy)
-	mem[DUMMY_TOP + 0x0e] = 0x6d;
+	mem[DUMMY_TOP + 0x0d] = 0xcd;	// int 48h (dummy)
+	mem[DUMMY_TOP + 0x0e] = 0x48;
 	mem[DUMMY_TOP + 0x0f] = 0xcb;	// retf
 	
 	// error message read routine
-	mem[DUMMY_TOP + 0x10] = 0xcd;	// int 6eh (dummy)
-	mem[DUMMY_TOP + 0x11] = 0x6e;
+	mem[DUMMY_TOP + 0x10] = 0xcd;	// int 49h (dummy)
+	mem[DUMMY_TOP + 0x11] = 0x49;
 	mem[DUMMY_TOP + 0x12] = 0xcb;	// retf
 	
 	// dummy loop to wait BIOS/DOS service is done
@@ -20640,7 +20658,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[DUMMY_TOP + 0x16] = 0xfc;
 	mem[DUMMY_TOP + 0x17] = 0xcb;	// retf
 	
-	// irq0 routine (system timer)
+	// IRQ 0 routine (system timer)
 	mem[DUMMY_TOP + 0x18] = 0xcd;	// int 1ch
 	mem[DUMMY_TOP + 0x19] = 0x1c;
 	mem[DUMMY_TOP + 0x1a] = 0xea;	// jmp far (IRET_TOP >> 4):0008
@@ -20655,8 +20673,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[DUMMY_TOP + 0x21] = 0xff;
 	mem[DUMMY_TOP + 0x22] = 0xff;
 	mem[DUMMY_TOP + 0x23] = 0xff;
-	mem[DUMMY_TOP + 0x24] = 0xcd;	// int 64h (dummy)
-	mem[DUMMY_TOP + 0x25] = 0x64;
+	mem[DUMMY_TOP + 0x24] = 0xcd;	// int 40h (dummy)
+	mem[DUMMY_TOP + 0x25] = 0x40;
 	mem[DUMMY_TOP + 0x26] = 0xcb;	// retf
 	
 	// call int 29h routine
@@ -20665,8 +20683,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[DUMMY_TOP + 0x29] = 0xcb;	// retf
 	
 	// VCPI entry point
-	mem[DUMMY_TOP + 0x2a] = 0xcd;	// int 65h (dummy)
-	mem[DUMMY_TOP + 0x2b] = 0x65;
+	mem[DUMMY_TOP + 0x2a] = 0xcd;	// int 42h (dummy)
+	mem[DUMMY_TOP + 0x2b] = 0x42;
 	mem[DUMMY_TOP + 0x2c] = 0xcb;	// retf
 	
 	// boot routine
@@ -20680,7 +20698,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[0xffff0 + 0x0a] = '/';
 	mem[0xffff0 + 0x0b] = '9';
 	mem[0xffff0 + 0x0c] = '2';
-	mem[0xffff0 + 0x0e] = 0xfc;	// machine id (pc/at)
+	mem[0xffff0 + 0x0e] = 0xfc;	// machine id (PC/AT)
 	mem[0xffff0 + 0x0f] = 0x55;	// signature
 #else
 	mem[0xffff0 + 0x05] = '0';	// rom date (same as Windows 98 SE)
@@ -20691,14 +20709,14 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[0xffff0 + 0x0a] = '/';
 	mem[0xffff0 + 0x0b] = '0';
 	mem[0xffff0 + 0x0c] = '6';
-	mem[0xffff0 + 0x0e] = 0xfc;	// machine id (pc/at)
+	mem[0xffff0 + 0x0e] = 0xfc;	// machine id (PC/AT)
 	mem[0xffff0 + 0x0f] = 0x00;
 #endif
 	
 	// param block
 	// + 0: param block (22bytes)
-	// +24: fcb1 (16bytes)
-	// +40: fcb2 (16bytes)
+	// +24: FCB1 (16bytes)
+	// +40: FCB2 (16bytes)
 	// +56: command tail (128bytes)
 	param_block_t *param = (param_block_t *)(mem + WORK_TOP);
 	param->env_seg = 0;
@@ -20743,7 +20761,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT8  *)(mem + DISK_BUF_TOP + 10) = 0x01;		// number of FATs
 	*(UINT32 *)(mem + DISK_BUF_TOP + 13) = 0xffffffff;	// pointer to DPB
 	
-	// fcb table
+	// FCB table
 	*(UINT32 *)(mem + FCB_TABLE_TOP + 0) = 0xffffffff;
 	*(UINT16 *)(mem + FCB_TABLE_TOP + 4) = 0;
 	
@@ -20774,7 +20792,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 		msdos_drive_param_block_update(i, &seg, &ofs, 1);
 	}
 	
-	// nls stuff
+	// NLS stuff
 	msdos_nls_tables_init();
 	
 	// execute command
@@ -20922,7 +20940,7 @@ void hardware_update()
 	UINT32 cur_time = timeGetTime();
 	
 	if(prev_time != cur_time) {
-		// update pit and raise irq0
+		// update pit and raise IRQ 0
 #ifndef PIT_ALWAYS_RUNNING
 		if(pit_active)
 #endif
@@ -20933,7 +20951,7 @@ void hardware_update()
 		}
 		refresh_count = (int)(PIT_FREQ / 1000.0 / PIT_COUNT_VALUE(1) + 0.5);
 		
-		// update sio and raise irq4/3
+		// update sio and raise IRQ 4/3
 		for(int c = 0; c < 4; c++) {
 			sio_update(c);
 		}
@@ -20980,7 +20998,7 @@ void hardware_update()
 				}
 			}
 			
-			// raise irq1 if key is pressed/released or key buffer is not empty
+			// raise IRQ 1 if key is pressed/released or key buffer is not empty
 			if(!key_changed) {
 				enter_key_buf_lock();
 				if(!pcbios_is_key_buffer_empty()) {
@@ -21005,7 +21023,7 @@ void hardware_update()
 				key_changed = false;
 			}
 			
-			// raise irq12 if mouse status is changed
+			// raise IRQ 12 if mouse status is changed
 			if((mouse.status & 0x1f) && mouse.call_addr_ps2.dw && mouse.enabled_ps2) {
 				mouse.status_irq = 0; // ???
 				mouse.status_irq_alt = 0; // ???
@@ -21039,7 +21057,7 @@ void hardware_update()
 			prev_tick = cur_tick;
 		}
 		
-		// update cursor size/position by crtc
+		// update cursor size/position by CRTC
 		if(crtc_changed[10] != 0 || crtc_changed[11] != 0) {
 			int size = (int)(crtc_regs[11] & 7) - (int)(crtc_regs[10] & 7) + 1;
 			if(!((crtc_regs[10] & 0x20) != 0 || size < 0)) {
@@ -21085,7 +21103,7 @@ void hardware_update()
 	}
 }
 
-// ems
+// EMS
 
 void ems_init()
 {
@@ -21193,7 +21211,7 @@ void ems_unmap_page(int physical)
 	}
 }
 
-// dma
+// DMA
 
 void dma_init()
 {
@@ -21452,47 +21470,47 @@ void dma_run(int c, int ch)
 	}
 }
 
-// pic
+// PIC
 
 void pic_init()
 {
 	memset(pic, 0, sizeof(pic));
 	
-	// from bochs bios
-	pic_write(0, 0, 0x11);	// icw1 = 11h
-	pic_write(0, 1, 0x08);	// icw2 = 08h
-	pic_write(0, 1, 0x04);	// icw3 = 04h
-	pic_write(0, 1, 0x01);	// icw4 = 01h
-	pic_write(0, 1, 0xb8);	// ocw1 = b8h
-	pic_write(1, 0, 0x11);	// icw1 = 11h
-	pic_write(1, 1, 0x70);	// icw2 = 70h
-	pic_write(1, 1, 0x02);	// icw3 = 02h
-	pic_write(1, 1, 0x01);	// icw4 = 01h
-	pic_write(1, 1, 0xff);	// ocw1 = ffh
+	// from Bochs BIOS
+	pic_write(0, 0, 0x11);	// ICW1 = 11h
+	pic_write(0, 1, 0x08);	// ICW2 = 08h
+	pic_write(0, 1, 0x04);	// ICW3 = 04h
+	pic_write(0, 1, 0x01);	// ICW4 = 01h
+	pic_write(0, 1, 0xb8);	// OCW1 = B8h
+	pic_write(1, 0, 0x11);	// ICW1 = 11h
+	pic_write(1, 1, 0x70);	// ICW2 = 70h
+	pic_write(1, 1, 0x02);	// ICW3 = 02h
+	pic_write(1, 1, 0x01);	// ICW4 = 01h
+	pic_write(1, 1, 0xff);	// OCW1 = FFh
 }
 
 void pic_write(int c, UINT32 addr, UINT8 data)
 {
 	if(addr & 1) {
 		if(pic[c].icw2_r) {
-			// icw2
+			// ICW2
 			pic[c].icw2 = data;
 			pic[c].icw2_r = 0;
 		} else if(pic[c].icw3_r) {
-			// icw3
+			// ICW3
 			pic[c].icw3 = data;
 			pic[c].icw3_r = 0;
 		} else if(pic[c].icw4_r) {
-			// icw4
+			// ICW4
 			pic[c].icw4 = data;
 			pic[c].icw4_r = 0;
 		} else {
-			// ocw1
+			// OCW1
 			pic[c].imr = data;
 		}
 	} else {
 		if(data & 0x10) {
-			// icw1
+			// ICW1
 			pic[c].icw1 = data;
 			pic[c].icw2_r = 1;
 			pic[c].icw3_r = (data & 2) ? 0 : 1;
@@ -21506,7 +21524,7 @@ void pic_write(int c, UINT32 addr, UINT8 data)
 			}
 			pic[c].ocw3 = 0;
 		} else if(data & 8) {
-			// ocw3
+			// OCW3
 			if(!(data & 2)) {
 				data = (data & ~1) | (pic[c].ocw3 & 1);
 			}
@@ -21515,7 +21533,7 @@ void pic_write(int c, UINT32 addr, UINT8 data)
 			}
 			pic[c].ocw3 = data;
 		} else {
-			// ocw2
+			// OCW2
 			int level = 0;
 			if(data & 0x40) {
 				level = data & 7;
@@ -21638,7 +21656,7 @@ void pic_update()
 	CPU_IRQ_LINE(FALSE);
 }
 
-// pio
+// PIO
 
 void pio_init()
 {
@@ -21776,7 +21794,7 @@ void printer_out(int c, UINT8 data)
 	}
 }
 
-// pit
+// PIT
 
 void pit_init()
 {
@@ -21985,7 +22003,7 @@ int pit_get_expired_time(int ch)
 	return((val != 0) ? val : 1);
 }
 
-// sio
+// SIO
 
 void sio_init()
 {
@@ -21999,13 +22017,13 @@ void sio_init()
 		
 		sio[c].divisor.w = 12;		// 115200Hz / 9600Baud
 		sio[c].line_ctrl = 0x03;	// 8bit, stop 1bit, non parity
-		sio[c].modem_ctrl = 0x03;	// rts=on, dtr=on
+		sio[c].modem_ctrl = 0x03;	// RTS = on, DTR = on
 		sio[c].set_rts = sio[c].prev_set_rts = true;
 		sio[c].set_dtr = sio[c].prev_set_dtr = true;
-		sio[c].modem_stat = 0x30;	// cts=on, dsr=on
+		sio[c].modem_stat = 0x30;	// CTS = on, DSR = on
 		sio[c].prev_modem_stat = 0x30;
 		sio[c].line_stat_buf = 0x60;	// send/recv buffers are empty
-		sio[c].irq_identify = 0x01;	// no pending irq
+		sio[c].irq_identify = 0x01;	// no pending IRQ
 		
 		InitializeCriticalSection(&sio_mt[c].csSendData);
 		InitializeCriticalSection(&sio_mt[c].csRecvData);
@@ -22147,7 +22165,7 @@ void sio_write(int c, UINT32 addr, UINT8 data)
 			LeaveCriticalSection(&sio_mt[c].csModemCtrl);
 			
 			if(data_changed & 0x03) {
-				// wait until dtr/rts signals are set
+				// wait until DTR/RTS signals are set
 				DWORD timeout = timeGetTime() + 1000;
 				while((sio[c].prev_set_dtr != sio[c].set_dtr || sio[c].prev_set_rts != sio[c].set_rts) && timeGetTime() < timeout) {
 					Sleep(10);
@@ -22309,7 +22327,7 @@ void sio_update_irq(int c)
 		LeaveCriticalSection(&sio_mt[c].csLineStat);
 	}
 	
-	// COM1 and COM3 shares IRQ4, COM2 and COM4 shares IRQ3
+	// COM1 and COM3 shares IRQ 4, COM2 and COM4 shares IRQ 3
 	if(level != -1) {
 		sio[c].irq_identify = level << 1;
 		pic_req(0, (c == 0 || c == 2) ? 4 : 3, 1);
@@ -22672,7 +22690,7 @@ bool sio_wait_sending_complete(int c)
 	return(empty);
 }
 
-// cmos
+// CMOS
 
 void cmos_init()
 {
@@ -22725,7 +22743,7 @@ UINT8 cmos_read(int addr)
 	return(cmos[addr & 0x7f]);
 }
 
-// kbd (a20)
+// keyboard (A20)
 
 void kbd_init()
 {
@@ -22956,11 +22974,11 @@ void beep_update()
 	}
 }
 
-// vga
+// VGA
 
 UINT8 mda_read_status()
 {
-	// 50hz
+	// 50Hz
 	UINT32 time = timeGetTime() % 20;
 	
 	return((time < 4 ? 0x08 : 0) | (time == 0 ? 0 : 0x01));
@@ -22968,7 +22986,7 @@ UINT8 mda_read_status()
 
 UINT8 vga_read_status()
 {
-	// 60hz
+	// 60Hz
 	static const int period[3] = {16, 17, 17};
 	static int index = 0;
 	UINT32 time = timeGetTime() % period[index];
@@ -22977,7 +22995,7 @@ UINT8 vga_read_status()
 	return((time < 4 ? 0x08 : 0) | (time == 0 ? 0 : 0x01));
 }
 
-// i/o bus
+// I/O bus
 
 // this is ugly patch for SW1US.EXE, it sometimes mistakely read/write 01h-10h for serial I/O
 //#define SW1US_PATCH

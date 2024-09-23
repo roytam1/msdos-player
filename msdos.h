@@ -342,7 +342,7 @@ __attribute__ ((aligned(4096)))
 #endif
 ;
 
-// ems
+// EMS
 
 #define MAX_EMS_HANDLES 16
 #define MAX_EMS_PAGES 2048	/* 32MB */
@@ -373,7 +373,7 @@ void ems_release_pages(int handle);
 void ems_map_page(int physical, int handle, int logical);
 void ems_unmap_page(int physical);
 
-// dma
+// DMA
 
 typedef struct {
 	struct {
@@ -401,7 +401,7 @@ void dma_page_write(int c, int ch, UINT8 data);
 UINT8 dma_page_read(int c, int ch);
 void dma_run(int c, int ch);
 
-// pic
+// PIC
 
 typedef struct {
 	UINT8 imr, isr, irr, prio;
@@ -421,7 +421,7 @@ void pic_req(int c, int level, int signal);
 int pic_ack();
 void pic_update();
 
-// pio
+// PIO
 
 typedef struct {
 	UINT8 data, stat, ctrl;
@@ -447,7 +447,7 @@ UINT8 pio_read(int c, UINT32 addr);
 void printer_out(int c, UINT8 data);
 void pcbios_printer_out(int c, UINT8 data);
 
-// pit
+// PIT
 
 #define PIT_ALWAYS_RUNNING
 #define PIT_FREQ (UINT64)1193182
@@ -486,7 +486,7 @@ int pit_get_expired_time(int ch);
 UINT8 system_port = 0x0c;
 int refresh_count = 0;
 
-// sio
+// SIO
 
 #define SIO_BUFFER_SIZE 1024
 
@@ -540,7 +540,7 @@ void sio_update_irq(int c);
 DWORD WINAPI sio_thread(void *lpx);
 bool sio_wait_sending_complete(int c);
 
-// cmos
+// CMOS
 
 UINT8 cmos[128];
 UINT8 cmos_addr;
@@ -549,7 +549,7 @@ void cmos_init();
 void cmos_write(int addr, UINT8 val);
 UINT8 cmos_read(int addr);
 
-// kbd (a20)
+// keyboard
 
 UINT8 kbd_data;
 UINT8 kbd_status;
@@ -575,14 +575,14 @@ void beep_finish();
 void beep_release();
 void beep_update();
 
-// crtc
+// CRTC
 
 UINT8 crtc_addr = 0;
 UINT8 crtc_regs[16] = {0};
 UINT8 crtc_changed[16] = {0};
 
 #ifdef SUPPORT_GRAPHIC_SCREEN
-// vram
+// VRAM
 static UINT32 vga_read(UINT32 addr, int size);
 static void vga_write(UINT32 addr, UINT32 data, int size);
 #endif
@@ -629,7 +629,7 @@ static void vga_write(UINT32 addr, UINT32 data, int size);
 #define FCB_TABLE_SIZE	0x10
 #define SDA_TOP		(FCB_TABLE_TOP + FCB_TABLE_SIZE)
 #define SDA_SIZE	0xb0
-// nls tables
+// NLS tables
 #define UPPERTABLE_TOP	(SDA_TOP + SDA_SIZE)
 #define UPPERTABLE_SIZE	0x82
 #define LOWERTABLE_TOP	(UPPERTABLE_TOP + UPPERTABLE_SIZE)
@@ -659,7 +659,7 @@ static void vga_write(UINT32 addr, UINT32 data, int size);
 UINT32 UMB_TOP = EMS_TOP; // EMS is disabled
 #define UMB_END		0xf8000
 #define SHADOW_BUF_TOP	0xf8000
-// text vram size: 80x25x2 = 4000 = 0fa0h
+// text VRAM size: 80x25x2 = 4000 = 0fa0h
 // fffa0h-fffefh can be used for dummy routines
 #define DUMMY_TOP	0xfffc0
 //#define EMB_TOP	0x10fff0
@@ -1264,14 +1264,14 @@ UINT16 mouse_push_di;
 UINT16 mouse_push_ds;
 UINT16 mouse_push_es;
 
-// hma
+// HMA
 
 #ifdef SUPPORT_HMA
 bool is_hma_used_by_xms = false;
 bool is_hma_used_by_int_2fh = false;
 #endif
 
-// xms
+// XMS
 
 #ifdef SUPPORT_XMS
 typedef struct emb_handle_s {
