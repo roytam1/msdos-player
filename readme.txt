@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								9/23/2024
+								10/6/2024
 
 ----- What's This
 
@@ -858,6 +858,14 @@ INT 2FH		Multiplex Interrupt
 	1680H	Windows, DPMI - Release Current Virtual Machine Time-Slice
 	1683H	Windows 3+ - Get Current Virtual Machine ID
 	1689H	Windows 3+ - Kernel Idle Call
+	1700H	MS Windows "WINOLDAP" - Identify WinOldAp Version
+	1701H	MS Windows "WINOLDAP" - Open Clipboard
+	1702H	MS Windows "WINOLDAP" - Empty Clipboard
+	1703H	MS Windows "WINOLDAP" - Set Clipboard Data
+	1704H	MS Windows "WINOLDAP" - Get Clipboard Data Size
+	1705H	MS Windows "WINOLDAP" - Get Clipboard Data
+	1708H	MS Windows "WINOLDAP" - Close Clipboard
+	1709H	MS Windows "WINOLDAP" - Compact Clipboard
 	1A00H	ANSI.SYS - Installation Check
 	1A01H	ANSI.SYS - Set/Get Display Information
 	4000H	Windows 3+ - Get Virtual Device Driver (VDD) Capabilities

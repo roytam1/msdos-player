@@ -353,7 +353,7 @@ UINT32 IOINPCALL iocore_inp32(UINT port)
 void dmax86(void)
 {
 #ifdef SINGLE_MODE_DMA
-	if(device_dma != NULL) device_dma->do_dma();
+	dma_run();
 #endif
 }
 

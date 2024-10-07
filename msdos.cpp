@@ -16312,6 +16312,115 @@ inline void msdos_int_2fh_16h()
 	}
 }
 
+inline void msdos_int_2fh_17h()
+{
+	static bool opened = false;
+	bool func04h = (CPU_AL == 0x04);
+	bool func04h_failed = true;
+	
+	switch(CPU_AL) {
+	case 0x00:
+		CPU_AX = 0x0101; // same as DOSVAXJ3
+		break;
+	case 0x01:
+		CPU_AX = 0x0000;
+		if(!opened && OpenClipboard(NULL)) {
+			CPU_AX = 0x0001;
+			opened = true;
+			CloseClipboard();
+		}
+		break;
+	case 0x02:
+		CPU_AX = 0x0000;
+		if(OpenClipboard(NULL)) {
+			if(EmptyClipboard()) {
+				CPU_AX = 0x0001;
+			}
+			CloseClipboard();
+		}
+		break;
+	case 0x03:
+		CPU_AX = 0x0000;
+		if((CPU_DX == 1 || CPU_DX == 7) && OpenClipboard(NULL)) {
+			UINT uFormat = (CPU_DX == 1) ? CF_TEXT : CF_OEMTEXT;
+			size_t size = strlen((const char *)(mem + CPU_ES_BASE + CPU_BX)) + 1;
+			if(CPU_SI || CPU_CX) {
+				size = min(size, (CPU_SI << 16) | CPU_CX);
+			}
+			UINT8 *term = mem + CPU_ES_BASE + CPU_BX + size - 1;
+			if(*term++ != 0) {
+				size++; // +1 is for null-termination
+			}
+			HGLOBAL hMem = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, size);
+			LPVOID lpLock = GlobalLock(hMem);
+			UINT8 value = *term;
+			*term = 0; // make the text null-terminated
+			memcpy(lpLock, mem + CPU_ES_BASE + CPU_BX, size);
+			*term = value;
+			GlobalUnlock(hMem);
+			EmptyClipboard();
+			if(SetClipboardData(uFormat, hMem)) {
+				CPU_AX = 0x0001;
+			}
+			CloseClipboard();
+		}
+		break;
+	case 0x04:
+	case 0x05:
+		CPU_AX = 0x0000;
+		if((CPU_DX == 1 || CPU_DX == 7) && OpenClipboard(NULL)) {
+			UINT uFormat = (CPU_DX == 1) ? CF_TEXT : CF_OEMTEXT;
+			if(IsClipboardFormatAvailable(uFormat)) {
+				HGLOBAL hMem = GetClipboardData(uFormat);
+				if(hMem) {
+					LPVOID lpLock = GlobalLock(hMem);
+//					size_t size = GlobalSize(hMem);
+					size_t size = strlen((const char *)lpLock) + 1;
+					if(func04h) {
+						// get size
+						CPU_DX = (size >> 16) & 0xffff;
+						CPU_AX = (size >>  0) & 0xffff;
+						func04h_failed = false;
+					} else {
+						// get data
+						memcpy(mem + CPU_ES_BASE + CPU_BX, lpLock, size);
+						CPU_AX = 0x0001;
+					}
+					GlobalUnlock(hMem);
+				}
+			}
+			CloseClipboard();
+		}
+		if(func04h && func04h_failed) {
+			CPU_AX = CPU_DX = 0x0000;
+		}
+		break;
+	case 0x08:
+		if(opened) {
+			CPU_AX = 0x0001;
+			opened = false;
+		} else {
+			CPU_AX = 0x0000;
+		}
+		break;
+	case 0x09:
+		{
+			DWORD size = msdos_mem_get_free(first_mcb) * 16;
+			if(size < ((CPU_SI << 16) | CPU_CX)) {
+				size = 0;
+			}
+			CPU_DX = (size >> 16) & 0xffff;
+			CPU_AX = (size >>  0) & 0xffff;
+		}
+		break;
+	default:
+		unimplemented_2fh("int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", 0x2f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
+		CPU_AX = 0x01;
+		CPU_SET_C_FLAG(1);
+		break;
+	}
+}
+
 inline void msdos_int_2fh_19h()
 {
 	switch(CPU_AL) {
@@ -19575,6 +19684,7 @@ void msdos_syscall(unsigned num)
 		case 0x14: msdos_int_2fh_14h(); break;
 		case 0x15: msdos_int_2fh_15h(); break;
 		case 0x16: msdos_int_2fh_16h(); break;
+		case 0x17: msdos_int_2fh_17h(); break;
 		case 0x19: msdos_int_2fh_19h(); break;
 		case 0x1a: msdos_int_2fh_1ah(); break;
 		case 0x40: msdos_int_2fh_40h(); break;
@@ -19945,8 +20055,11 @@ void msdos_syscall(unsigned num)
 	case 0x4a:
 		// int 4Ah is used for user alarm
 		break;
-*/
 	case 0x4b:
+		// int 4Bh is used for IBM SCSI interface and the Virtual DMA
+		break;
+*/
+	case 0x4c:
 		// dummy interrupt for ATOK5 (int 6Fh)
 		switch(CPU_AH) {
 		case 0x01: atok_int_6fh_01h(); break;
@@ -19968,7 +20081,7 @@ void msdos_syscall(unsigned num)
 		// NOTE: some softwares get address of int 67h handler and recognize the address is in EMS device driver
 		break;
 	case 0x6f:
-		// int 6Fh handler is in ATOK5 device driver and it calls int 4Bh
+		// int 6Fh handler is in ATOK5 device driver and it calls int 4Ch
 		// NOTE: some softwares get address of int 6fh handler and recognize the address is in ATOK5 device driver
 		break;
 */
@@ -20439,7 +20552,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	
 	// first MCB in upper memory block
 	msdos_mcb_create(UMB_TOP >> 4, 'M', PSP_SYSTEM, 0);
-	// desqview expects there to be more than one MCB in the UMB and the last to be the largest
+	// DESQview expects there to be more than one MCB in the UMB and the last to be the largest
 	msdos_mcb_create((UMB_TOP >> 4) + 1, 'Z', 0, (UMB_END >> 4) - (UMB_TOP >> 4) - 2);
 	
 #ifdef SUPPORT_HMA
@@ -20467,11 +20580,12 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 4 * 0x6f + 2) = ATOK_TOP >> 4;
 	*(UINT16 *)(mem + 4 * 0x74 + 0) = 0x0000;	// fffc:0000 IRQ 12 (mouse)
 	*(UINT16 *)(mem + 4 * 0x74 + 2) = DUMMY_TOP >> 4;
-	for(int i = 0x50; i < 0x60; i++) {		// desqview wants 0x50-0x58 to point at the same address
-		*(UINT16 *)(mem + 4 * i + 0) = 0x0050;	// dos4gw wants two vectors pointing to the same address
+	for(int i = 0x50; i < 0x60; i++) {		// DESQview wants 0x50-0x58 to point at the same address
+		*(UINT16 *)(mem + 4 * i + 0) = 0x0050;	// DOS/4GW wants two vectors pointing to the same address
 	}
 	*(UINT16 *)(mem + 4 * 0xbf + 0) = 0x0000;	// 123R3 wants a null vector
 	*(UINT16 *)(mem + 4 * 0xbf + 2) = 0x0000;
+	*(UINT16 *)(mem + 4 * 0xdd + 0) = 0x00dc;	// not to be recognized as NEC PC-9801 series
 	
 	// dummy devices (NUL -> CON -> ... -> $IBMAIAS -> FP$ATOK6 -> EMMXXXX0)
 	static const struct {
@@ -21347,6 +21461,20 @@ UINT8 dma_page_read(int c, int ch)
 	return(dma[c].ch[ch].pagereg);
 }
 
+void dma_req(int c, int ch, bool req)
+{
+	UINT8 bit = 1 << ch;
+	
+	if(req) {
+		if(!(dma[c].req & bit)) {
+			dma[c].req |= bit;
+			dma_run(c, ch);
+		}
+	} else {
+		dma[c].req &= ~bit;
+	}
+}
+
 void dma_run(int c, int ch)
 {
 	UINT8 bit = 1 << ch;
@@ -21466,6 +21594,15 @@ void dma_run(int c, int ch)
 					break;
 				}
 			}
+		}
+	}
+}
+
+void dma_run()
+{
+	for(int c = 0; c < 2; c++) {
+		for(int ch = 0; ch < 4; ch++) {
+			dma_run(c, ch);
 		}
 	}
 }

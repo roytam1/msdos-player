@@ -483,6 +483,7 @@ void dma_write(int c, UINT32 addr, UINT8 data);
 UINT8 dma_read(int c, UINT32 addr);
 void dma_page_write(int c, int ch, UINT8 data);
 UINT8 dma_page_read(int c, int ch);
+void dma_req(int c, int ch, bool req);
 void dma_run(int c, int ch);
 
 // PIC
