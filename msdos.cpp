@@ -16315,7 +16315,8 @@ inline void msdos_int_2fh_16h()
 inline void msdos_int_2fh_17h()
 {
 	static bool opened = false;
-	BYTE func = CPU_AL;
+	bool func04h = (CPU_AL == 0x04);
+	bool func04h_failed = true;
 	
 	switch(CPU_AL) {
 	case 0x00:
@@ -16340,9 +16341,12 @@ inline void msdos_int_2fh_17h()
 		break;
 	case 0x03:
 		CPU_AX = 0x0000;
-		if((CPU_DX == 1 || CPU_DX == 7) && (CPU_SI || CPU_DI) && OpenClipboard(NULL)) {
+		if((CPU_DX == 1 || CPU_DX == 7) && OpenClipboard(NULL)) {
 			UINT uFormat = (CPU_DX == 1) ? CF_TEXT : CF_OEMTEXT;
-			DWORD size = (CPU_SI << 16) | CPU_DI;
+			size_t size = strlen((const char *)(mem + CPU_ES_BASE + CPU_BX)) + 1;
+			if(CPU_SI || CPU_CX) {
+				size = min(size, (CPU_SI << 16) | CPU_CX);
+			}
 			UINT8 *term = mem + CPU_ES_BASE + CPU_BX + size - 1;
 			if(*term++ != 0) {
 				size++; // +1 is for null-termination
@@ -16370,11 +16374,13 @@ inline void msdos_int_2fh_17h()
 				HGLOBAL hMem = GetClipboardData(uFormat);
 				if(hMem) {
 					LPVOID lpLock = GlobalLock(hMem);
-					size_t size = GlobalSize(hMem);
-					if(func == 0x04) {
+//					size_t size = GlobalSize(hMem);
+					size_t size = strlen((const char *)lpLock) + 1;
+					if(func04h) {
 						// get size
 						CPU_DX = (size >> 16) & 0xffff;
 						CPU_AX = (size >>  0) & 0xffff;
+						func04h_failed = false;
 					} else {
 						// get data
 						memcpy(mem + CPU_ES_BASE + CPU_BX, lpLock, size);
@@ -16384,6 +16390,9 @@ inline void msdos_int_2fh_17h()
 				}
 			}
 			CloseClipboard();
+		}
+		if(func04h && func04h_failed) {
+			CPU_AX = CPU_DX = 0x0000;
 		}
 		break;
 	case 0x08:
@@ -16397,7 +16406,7 @@ inline void msdos_int_2fh_17h()
 	case 0x09:
 		{
 			DWORD size = msdos_mem_get_free(first_mcb) * 16;
-			if(size < ((CPU_SI << 16) | CPU_DI)) {
+			if(size < ((CPU_SI << 16) | CPU_CX)) {
 				size = 0;
 			}
 			CPU_DX = (size >> 16) & 0xffff;
