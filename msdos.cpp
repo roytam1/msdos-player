@@ -20055,8 +20055,11 @@ void msdos_syscall(unsigned num)
 	case 0x4a:
 		// int 4Ah is used for user alarm
 		break;
-*/
 	case 0x4b:
+		// int 4Bh is used for IBM SCSI interface and the Virtual DMA
+		break;
+*/
+	case 0x4c:
 		// dummy interrupt for ATOK5 (int 6Fh)
 		switch(CPU_AH) {
 		case 0x01: atok_int_6fh_01h(); break;
@@ -20078,7 +20081,7 @@ void msdos_syscall(unsigned num)
 		// NOTE: some softwares get address of int 67h handler and recognize the address is in EMS device driver
 		break;
 	case 0x6f:
-		// int 6Fh handler is in ATOK5 device driver and it calls int 4Bh
+		// int 6Fh handler is in ATOK5 device driver and it calls int 4Ch
 		// NOTE: some softwares get address of int 6fh handler and recognize the address is in ATOK5 device driver
 		break;
 */
@@ -20549,7 +20552,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	
 	// first MCB in upper memory block
 	msdos_mcb_create(UMB_TOP >> 4, 'M', PSP_SYSTEM, 0);
-	// desqview expects there to be more than one MCB in the UMB and the last to be the largest
+	// DESQview expects there to be more than one MCB in the UMB and the last to be the largest
 	msdos_mcb_create((UMB_TOP >> 4) + 1, 'Z', 0, (UMB_END >> 4) - (UMB_TOP >> 4) - 2);
 	
 #ifdef SUPPORT_HMA
@@ -20577,11 +20580,12 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 4 * 0x6f + 2) = ATOK_TOP >> 4;
 	*(UINT16 *)(mem + 4 * 0x74 + 0) = 0x0000;	// fffc:0000 IRQ 12 (mouse)
 	*(UINT16 *)(mem + 4 * 0x74 + 2) = DUMMY_TOP >> 4;
-	for(int i = 0x50; i < 0x60; i++) {		// desqview wants 0x50-0x58 to point at the same address
-		*(UINT16 *)(mem + 4 * i + 0) = 0x0050;	// dos4gw wants two vectors pointing to the same address
+	for(int i = 0x50; i < 0x60; i++) {		// DESQview wants 0x50-0x58 to point at the same address
+		*(UINT16 *)(mem + 4 * i + 0) = 0x0050;	// DOS/4GW wants two vectors pointing to the same address
 	}
 	*(UINT16 *)(mem + 4 * 0xbf + 0) = 0x0000;	// 123R3 wants a null vector
 	*(UINT16 *)(mem + 4 * 0xbf + 2) = 0x0000;
+	*(UINT16 *)(mem + 4 * 0xdd + 0) = 0x00dc;	// not to be recognized as NEC PC-9801 series
 	
 	// dummy devices (NUL -> CON -> ... -> $IBMAIAS -> FP$ATOK6 -> EMMXXXX0)
 	static const struct {
