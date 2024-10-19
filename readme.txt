@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								10/6/2024
+								10/18/2024
 
 ----- What's This
 
@@ -44,7 +44,7 @@ In this case, "COMMAND.COM /C vz.bat readme.doc" will be executed.
 Usage:
 
 MSDOS [-b] [-c[(new exec file)] [-p[P]]] [-d] [-e] [-i] [-m] [-n[L[,C]]]
-      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a] [-l]
+      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a] [-l] [-h]
       (command) [options]
 
 	-b	stay busy during keyboard polling
@@ -63,6 +63,7 @@ MSDOS [-b] [-c[(new exec file)] [-p[P]]] [-d] [-e] [-i] [-m] [-n[L[,C]]]
 	-x	enable XMS and LIM EMS
 	-a	disable ANSI.SYS
 	-l	draw box lines with ank characters
+	-h	allow making cursor invisible
 
 ISH.COM contains any invalid instructions and it cause an error.
 Please specify the option '-i' to ignore the invalid instructions.

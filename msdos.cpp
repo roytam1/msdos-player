@@ -201,6 +201,24 @@ inline char *my_strupr(char *str)
 #endif
 #define array_length(array) (sizeof(array) / sizeof(array[0]))
 
+UINT MyGetDriveType(int drv)
+{
+	if(drv >= 0 && drv < 26) {
+		char volume[] = "A:\\";
+		char local[] = "A:";
+		char remote[1024];
+		DWORD length = sizeof(remote);
+		
+		volume[0] = local[0] = 'A' + drv;
+		
+		if(WNetGetConnectionA(local, remote, &length) == ERROR_NOT_CONNECTED) {
+			return GetDriveTypeA(volume);
+		}
+		return DRIVE_REMOTE;
+	}
+	return DRIVE_NO_ROOT_DIR;
+}
+
 DWORD MyGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuffer)
 {
 	if(is_win2k_or_later) {
@@ -367,6 +385,7 @@ bool sio_dsr_flow_ctrl = false;
 bool sio_cts_flow_ctrl = false;
 bool ansi_sys = true;
 bool box_line = false;
+bool hide_cursor = false;
 
 #define UPDATE_OPS 16384
 #define REQUEST_HARDWRE_UPDATE() { \
@@ -3322,6 +3341,7 @@ int main(int argc, char *argv[], char *envp[])
 	char new_exec_file[MAX_PATH];
 	bool convert_cmd_file = false;
 	unsigned int code_page = 0;
+	bool set_code_page = false;
 	unsigned int old_error_mode = 0;
 	
 	char path[MAX_PATH], full[MAX_PATH], *name = NULL;
@@ -3362,6 +3382,7 @@ int main(int argc, char *argv[], char *envp[])
 #endif
 			ansi_sys = ((buffer[1] & 0x04) != 0);
 			box_line = ((buffer[1] & 0x08) != 0);
+			hide_cursor = ((buffer[1] & 0x10) != 0);
 			if((buffer[2] != 0 || buffer[3] != 0) && (buffer[4] != 0 || buffer[5] != 0)) {
 				buf_width  = buffer[2] | (buffer[3] << 8);
 				buf_height = buffer[4] | (buffer[5] << 8);
@@ -3375,8 +3396,7 @@ int main(int argc, char *argv[], char *envp[])
 				win_minor_version = buffer[9];
 			}
 			if((code_page = buffer[10] | (buffer[11] << 8)) != 0) {
-				set_input_code_page(code_page);
-				set_output_code_page(code_page);
+				set_code_page = true;
 			}
 			int name_len = buffer[12];
 			int file_len = buffer[13] | (buffer[14] << 8) | (buffer[15] << 16) | (buffer[16] << 24);
@@ -3444,6 +3464,7 @@ int main(int argc, char *argv[], char *envp[])
 		} else if(_strnicmp(argv[i], "-p", 2) == 0) {
 			if(IS_NUMERIC(argv[i][2])) {
 				code_page = atoi(&argv[i][2]);
+				set_code_page = true;
 			} else {
 				code_page = get_input_code_page();
 			}
@@ -3523,6 +3544,9 @@ int main(int argc, char *argv[], char *envp[])
 		} else if(_strnicmp(argv[i], "-l", 2) == 0) {
 			box_line = true;
 			arg_offset++;
+		} else if(_strnicmp(argv[i], "-h", 2) == 0) {
+			hide_cursor = true;
+			arg_offset++;
 		} else {
 			break;
 		}
@@ -3544,7 +3568,7 @@ int main(int argc, char *argv[], char *envp[])
 		fprintf(stderr,
 			"Usage:\n\n"
 			"MSDOS [-b] [-c[(new exec file)] [-p[P]]] [-d] [-e] [-i] [-m] [-n[L[,C]]]\n"
-			"      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a] [-l]\n"
+			"      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a] [-l] [-h]\n"
 			"      (command) [options]\n"
 			"\n"
 			"\t-b\tstay busy during keyboard polling\n"
@@ -3573,6 +3597,7 @@ int main(int argc, char *argv[], char *envp[])
 #endif
 			"\t-a\tdisable ANSI.SYS\n"
 			"\t-l\tdraw box lines with ank characters\n"
+			"\t-h\tallow making cursor invisible\n"
 		);
 		
 		if(!started_from_console) {
@@ -3688,6 +3713,9 @@ int main(int argc, char *argv[], char *envp[])
 					if(box_line) {
 						flags2 |= 0x08;
 					}
+					if(hide_cursor) {
+						flags2 |= 0x10;
+					}
 					fputc(flags, fo);
 					fputc(flags2, fo);
 					fputc((buf_width  >> 0) & 0xff, fo);
@@ -3799,6 +3827,10 @@ int main(int argc, char *argv[], char *envp[])
 		main_thread_id = GetCurrentThreadId();
 	}
 	
+	if(set_code_page) {
+		set_input_code_page(code_page);
+		set_output_code_page(code_page);
+	}
 	get_console_buffer_success = (GetConsoleScreenBufferInfo(hStdout, &csbi) != 0);
 	get_console_cursor_success = (GetConsoleCursorInfo(hStdout, &ci) != 0);
 	get_console_font_success = get_console_font_info(&fi);
@@ -5399,29 +5431,17 @@ bool msdos_is_valid_drive(int drv)
 
 bool msdos_is_removable_drive(int drv)
 {
-	char volume[] = "A:\\";
-	
-	volume[0] = 'A' + drv;
-	
-	return(GetDriveTypeA(volume) == DRIVE_REMOVABLE);
+	return(MyGetDriveType(drv) == DRIVE_REMOVABLE);
 }
 
 bool msdos_is_cdrom_drive(int drv)
 {
-	char volume[] = "A:\\";
-	
-	volume[0] = 'A' + drv;
-	
-	return(GetDriveTypeA(volume) == DRIVE_CDROM);
+	return(MyGetDriveType(drv) == DRIVE_CDROM);
 }
 
 bool msdos_is_remote_drive(int drv)
 {
-	char volume[] = "A:\\";
-	
-	volume[0] = 'A' + drv;
-	
-	return(GetDriveTypeA(volume) == DRIVE_REMOTE);
+	return(MyGetDriveType(drv) == DRIVE_REMOTE);
 }
 
 bool msdos_is_subst_drive(int drv)
@@ -19067,7 +19087,7 @@ void msdos_syscall(unsigned num)
 	} else if(num == 0x43) {
 		// dummy interrupt for XMS (call far)
 		fprintf(fp_debug_log, "call XMS (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
-	} else if(num == 0x4b) {
+	} else if(num == 0x4c) {
 		// dummy interrupt for ATOK5 (int 6Fh)
 		fprintf(fp_debug_log, "int %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X) %04X:%04X\n", 0x6f, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_CS, CPU_EIP);
 	} else if(num == 0x40 || (num >= 0x44 && num <= 0x49)) {
@@ -21200,7 +21220,7 @@ void hardware_update()
 		}
 		
 		// update cursor info
-		if(!is_cursor_blink_off()) {
+		if(!hide_cursor && !is_cursor_blink_off()) {
 			ci_new.bVisible = TRUE;
 		}
 		if(!(ci_old.dwSize == ci_new.dwSize && ci_old.bVisible == ci_new.bVisible)) {
