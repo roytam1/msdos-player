@@ -438,7 +438,7 @@ typedef struct {
 	SYSTEMTIME time;
 } pio_t;
 
-pio_t pio[2];
+pio_t pio[3];
 
 void pio_init();
 void pio_finish();

@@ -6001,7 +6001,7 @@ retry:
 	}
 	
 	// input from console
-	int key_char, key_scan;
+	int key_char = 0, key_scan = 0;
 	if(key_recv != 0) {
 		key_char = (key_code >> 0) & 0xff;
 		key_scan = (key_code >> 8) & 0xff;
@@ -7146,6 +7146,8 @@ bool msdos_search_command_file(const char *command, int env_seg, char *dest_path
 				}
 			}
 		}
+	} else {
+		return(false);
 	}
 	if(_access(path, 0) == 0) {
 		strcpy(dest_path, path);
@@ -13142,7 +13144,7 @@ inline void msdos_int_21h_44h()
 	static UINT16 iteration_count = 0;
 	
 	process_t *process;
-	int fd, drv;
+	int fd = 0, drv = 0;
 	
 	switch(CPU_AL) {
 	case 0x00:
@@ -16337,6 +16339,8 @@ inline void msdos_int_2fh_17h()
 	static bool opened = false;
 	bool func04h = (CPU_AL == 0x04);
 	bool func04h_failed = true;
+	HGLOBAL hMem = NULL;
+	LPVOID lpLock = NULL;
 	
 	switch(CPU_AL) {
 	case 0x00:
@@ -16371,16 +16375,20 @@ inline void msdos_int_2fh_17h()
 			if(*term++ != 0) {
 				size++; // +1 is for null-termination
 			}
-			HGLOBAL hMem = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, size);
-			LPVOID lpLock = GlobalLock(hMem);
-			UINT8 value = *term;
-			*term = 0; // make the text null-terminated
-			memcpy(lpLock, mem + CPU_ES_BASE + CPU_BX, size);
-			*term = value;
-			GlobalUnlock(hMem);
-			EmptyClipboard();
-			if(SetClipboardData(uFormat, hMem)) {
-				CPU_AX = 0x0001;
+			if((hMem = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, size)) != NULL){
+				if((lpLock = GlobalLock(hMem)) != NULL) {
+					UINT8 value = *term;
+					*term = 0; // make the text null-terminated
+					memcpy(lpLock, mem + CPU_ES_BASE + CPU_BX, size);
+					*term = value;
+					GlobalUnlock(hMem);
+					EmptyClipboard();
+					if(SetClipboardData(uFormat, hMem)) {
+						CPU_AX = 0x0001;
+					}
+				} else {
+					GlobalFree(hMem);
+				}
 			}
 			CloseClipboard();
 		}
@@ -16391,22 +16399,22 @@ inline void msdos_int_2fh_17h()
 		if((CPU_DX == 1 || CPU_DX == 7) && OpenClipboard(NULL)) {
 			UINT uFormat = (CPU_DX == 1) ? CF_TEXT : CF_OEMTEXT;
 			if(IsClipboardFormatAvailable(uFormat)) {
-				HGLOBAL hMem = GetClipboardData(uFormat);
-				if(hMem) {
-					LPVOID lpLock = GlobalLock(hMem);
-//					size_t size = GlobalSize(hMem);
-					size_t size = strlen((const char *)lpLock) + 1;
-					if(func04h) {
-						// get size
-						CPU_DX = (size >> 16) & 0xffff;
-						CPU_AX = (size >>  0) & 0xffff;
-						func04h_failed = false;
-					} else {
-						// get data
-						memcpy(mem + CPU_ES_BASE + CPU_BX, lpLock, size);
-						CPU_AX = 0x0001;
+				if((hMem = GetClipboardData(uFormat)) != NULL) {
+					if((lpLock = GlobalLock(hMem)) != NULL) {
+//						size_t size = GlobalSize(hMem);
+						size_t size = strlen((const char *)lpLock) + 1;
+						if(func04h) {
+							// get size
+							CPU_DX = (size >> 16) & 0xffff;
+							CPU_AX = (size >>  0) & 0xffff;
+							func04h_failed = false;
+						} else {
+							// get data
+							memcpy(mem + CPU_ES_BASE + CPU_BX, lpLock, size);
+							CPU_AX = 0x0001;
+						}
+						GlobalUnlock(hMem);
 					}
-					GlobalUnlock(hMem);
 				}
 			}
 			CloseClipboard();
@@ -17801,9 +17809,9 @@ inline void msdos_int_67h_54h()
 	} else if(CPU_AL == 0x00) {
 		for(int i = 1; i <= MAX_EMS_HANDLES; i++) {
 			if(ems_handles[i].allocated) {
-				memcpy(mem + CPU_ES_BASE + CPU_DI + 10 * i + 2, ems_handles[i].name, 10);
+				memcpy(mem + CPU_ES_BASE + CPU_DI + 10 * i + 2, ems_handles[i].name, 8);
 			} else {
-				memset(mem + CPU_ES_BASE + CPU_DI + 10 * i + 2, 0, 10);
+				memset(mem + CPU_ES_BASE + CPU_DI + 10 * i + 2, 0, 8);
 			}
 			*(UINT16 *)(mem + CPU_ES_BASE + CPU_DI + 10 * i + 0) = i;
 		}
@@ -21821,7 +21829,7 @@ void pio_init()
 	
 	memset(pio, 0, sizeof(pio));
 	
-	for(int c = 0; c < 2; c++) {
+	for(int c = 0; c < 3; c++) {
 		pio[c].stat = 0xdf;
 		pio[c].ctrl = 0x0c;
 //		pio[c].conv_mode = conv_mode;
@@ -21835,7 +21843,7 @@ void pio_finish()
 
 void pio_release()
 {
-	for(int c = 0; c < 2; c++) {
+	for(int c = 0; c < 3; c++) {
 		if(pio[c].fp != NULL) {
 			if(pio[c].jis_mode) {
 				fputc(0x1c, pio[c].fp);
