@@ -20396,7 +20396,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	// http://www5c.biglobe.ne.jp/~ecb/assembler2/2_6.html
 	msdos_mcb_create(seg++, 'M', PSP_SYSTEM, (IRET_SIZE + 5 * 128 + 16) >> 4);
 	IRET_TOP = seg << 4;
-	seg += (IRET_SIZE + 5 * 128) >> 4;
+	seg += (IRET_SIZE + 5 * 128 + 16) >> 4;
 	memset(mem + IRET_TOP, 0xcf, IRET_SIZE); // iret
 	
 	// note: SO1 checks int 21h vector and if it aims iret (CFh)
