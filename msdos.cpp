@@ -563,6 +563,54 @@ void add_cpu_trace(UINT32 pc, UINT16 cs, UINT32 eip, BOOL op32)
 	memory accessors
 ---------------------------------------------------------------------------- */
 
+void vram_flush();
+
+UINT8 read_text_vram_byte(UINT32 offset)
+{
+	short co_X;
+	COORD co;
+	DWORD num;
+	
+	if(use_vram_thread) {
+		vram_flush();
+	}
+	co_X = (offset >> 1) % scr_width;
+	co.X = 0;
+	co.Y = (offset >> 1) / scr_width;
+	
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	if(offset & 1) {
+		ReadConsoleOutputAttribute(hStdout, scr_attr, scr_width, co, &num);
+		return (UINT8)(scr_attr[co_X] & 0xff);
+	} else {
+		ReadConsoleOutputCharacterA(hStdout, scr_char, scr_width, co, &num);
+		return (UINT8)scr_char[co_X];
+	}
+}
+
+UINT16 read_text_vram_word(UINT32 offset)
+{
+	short co_X;
+	COORD co;
+	DWORD num;
+	
+	if(use_vram_thread) {
+		vram_flush();
+	}
+	co_X = (offset >> 1) % scr_width;
+	co.X = 0;
+	co.Y = (offset >> 1) / scr_width;
+	
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	ReadConsoleOutputCharacterA(hStdout, scr_char, scr_width, co, &num);
+	ReadConsoleOutputAttribute(hStdout, scr_attr, scr_width, co, &num);
+	
+	num = (UINT8)(scr_attr[co_X] & 0xff);
+	num <<= 8;
+	num |= (UINT8)scr_char[co_X];
+	return num;
+}
+
 // read accessors
 UINT8 read_byte(UINT32 byteaddress)
 #ifdef USE_DEBUGGER
@@ -597,8 +645,15 @@ UINT8 debugger_read_byte(UINT32 byteaddress)
 		return mem[byteaddress];
 #endif
 	} else {
+		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
+			return read_text_vram_byte(byteaddress - text_vram_top_address);
+		} else if(byteaddress >= shadow_buffer_top_address && byteaddress < shadow_buffer_end_address) {
+			if(int_10h_feh_called && !int_10h_ffh_called) {
+				return read_text_vram_byte(byteaddress - shadow_buffer_top_address);
+			}
+		}
 #ifdef SUPPORT_GRAPHIC_SCREEN
-		if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
+		else if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
 			if(mem[0x449] > 3) {
 				return vga_read(byteaddress - VGA_VRAM_TOP, 1);
 			}
@@ -661,8 +716,15 @@ UINT16 debugger_read_word(UINT32 byteaddress)
 		value |= read_byte(byteaddress + 1) << 8;
 		return value;
 	} else {
+		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
+			return read_text_vram_word(byteaddress - text_vram_top_address);
+		} else if(byteaddress >= shadow_buffer_top_address && byteaddress < shadow_buffer_end_address) {
+			if(int_10h_feh_called && !int_10h_ffh_called) {
+				return read_text_vram_word(byteaddress - shadow_buffer_top_address);
+			}
+		}
 #ifdef SUPPORT_GRAPHIC_SCREEN
-		if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
+		else if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
 			if(mem[0x449] > 3) {
 				return vga_read(byteaddress - VGA_VRAM_TOP, 2);
 			}
@@ -722,8 +784,21 @@ UINT32 debugger_read_dword(UINT32 byteaddress)
 		}
 		return value;
 	} else {
+		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
+			UINT32 value;
+			value  = read_text_vram_word(byteaddress - text_vram_top_address    );
+			value |= read_text_vram_word(byteaddress - text_vram_top_address + 2) << 16;
+			return value;
+		} else if(byteaddress >= shadow_buffer_top_address && byteaddress < shadow_buffer_end_address) {
+			if(int_10h_feh_called && !int_10h_ffh_called) {
+				UINT32 value;
+				value  = read_text_vram_word(byteaddress - shadow_buffer_top_address    );
+				value |= read_text_vram_word(byteaddress - shadow_buffer_top_address + 2) << 16;
+				return value;
+			}
+		}
 #ifdef SUPPORT_GRAPHIC_SCREEN
-		if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
+		else if(byteaddress >= VGA_VRAM_TOP && byteaddress < VGA_VRAM_END) {
 			if(mem[0x449] > 3) {
 				return vga_read(byteaddress - VGA_VRAM_TOP, 4);
 			}
@@ -5133,14 +5208,24 @@ const char *msdos_fcb_path(fcb_t *fcb)
 	memcpy(ext, fcb->file_name + 8, 3);
 	strcpy(ext, msdos_trimmed_path(ext));
 	
-	if(name[0] == '\0' || strcmp(name, "????????") == 0) {
+	if(name[0] == '\0') {
 		strcpy(name, "*");
+	} else {
+		for(int i = 0; i < 8; i++) {
+			if(strncmp(name + i, "????????", 8 - i) == 0) {
+				strcpy(name + i, "*");
+				break;
+			}
+		}
 	}
 	if(ext[0] == '\0') {
 		strcpy(tmp, name);
 	} else {
-		if(strcmp(ext, "???") == 0) {
-			strcpy(ext, "*");
+		for(int i = 0; i < 3; i++) {
+			if(strncmp(ext + i, "???", 3 - i) == 0) {
+				strcpy(ext + i, "*");
+				break;
+			}
 		}
 		sprintf(tmp, "%s.%s", name, ext);
 	}
@@ -11904,17 +11989,34 @@ inline void msdos_int_21h_12h()
 
 inline void msdos_int_21h_13h()
 {
-	if(remove(msdos_fcb_path((fcb_t *)(mem + CPU_DS_BASE + CPU_DX)))) {
-		CPU_AL = 0xff;
+	WIN32_FIND_DATAA fd;
+	HANDLE hFind;
+	DWORD error = ERROR_FILE_NOT_FOUND;
+	
+	CPU_AL = 0xff;
+	
+	if((hFind = FindFirstFileA(msdos_fcb_path((fcb_t *)(mem + CPU_DS_BASE + CPU_DX)), &fd)) != INVALID_HANDLE_VALUE) {
+		do {
+			if(!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				if(!remove(fd.cFileName)) {
+					CPU_AL = 0x00;
+				} else {
+					error = _doserrno;
+				}
+			}
+		} while(FindNextFileA(hFind, &fd) != 0);
+		FindClose(hFind);
+	} else {
+		error = GetLastError();
+	}
+	if(CPU_AL == 0xff) {
 		// set extended error
 		sda_t *sda = (sda_t *)(mem + SDA_TOP);
 		sda->int21h_5d0ah_called = 0;
-		sda->extended_error_code = msdos_error_code(_doserrno);
+		sda->extended_error_code = msdos_error_code(error);
 		sda->error_class = msdos_error_class(sda->extended_error_code);
 		sda->suggested_action = 6; // ignore
 		sda->locus_of_last_error = 2; // block device
-	} else {
-		CPU_AL = 0x00;
 	}
 }
 
@@ -11998,26 +12100,59 @@ inline void msdos_int_21h_17h()
 {
 	ext_fcb_t *ext_fcb_src = (ext_fcb_t *)(mem + CPU_DS_BASE + CPU_DX);
 	fcb_t *fcb_src = (fcb_t *)(ext_fcb_src + (ext_fcb_src->flag == 0xff ? 1 : 0));
-//	const char *path_src = msdos_fcb_path(fcb_src);
-	char path_src[MAX_PATH];
-	strcpy(path_src, msdos_fcb_path(fcb_src));
-	
 	fcb_t *fcb_dst = (fcb_t *)(mem + CPU_DS_BASE + CPU_DX + 16 + (ext_fcb_src->flag == 0xff ? 7 : 0));
-//	const char *path_dst = msdos_fcb_path(fcb_dst);
-	char path_dst[MAX_PATH];
-	strcpy(path_dst, msdos_fcb_path(fcb_dst));
 	
-	if(rename(path_src, path_dst)) {
-		CPU_AL = 0xff;
+	WIN32_FIND_DATAA fd;
+	HANDLE hFind;
+	DWORD error = ERROR_FILE_NOT_FOUND;
+	
+	CPU_AL = 0xff;
+	
+	if((hFind = FindFirstFileA(msdos_fcb_path(fcb_src), &fd)) != INVALID_HANDLE_VALUE) {
+		do {
+			if(!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				char path[MAX_PATH], *ext = NULL;
+				char new_name[MAX_PATH] = {0}, new_ext[MAX_PATH] = {0};
+				
+				strcpy(path, fd.cFileName);
+				
+				if((ext = strrchr(path, '.')) != NULL) {
+					*ext++ = '\0';
+					for(int i = 0; i < strlen(ext); i++) {
+						char c = (i < 3) ? fcb_dst->file_name[8 + i] : (fcb_dst->file_name[10] == '?') ? '?' : '\0';
+						new_ext[i] = (c == '?') ? ext[i] : (c == ' ') ? '\0' : c;
+					}
+				}
+				for(int i = 0; i < strlen(path); i++) {
+					char c = (i < 8) ? fcb_dst->file_name[i] : (fcb_dst->file_name[7] == '?') ? '?' : '\0';
+					new_name[i] = (c == '?') ? path[i] : (c == ' ') ? '\0' : c;
+				}
+				if(new_ext[0] != '\0') {
+					sprintf(path, "%s.%s", new_name, new_ext);
+				} else {
+					strcpy(path, new_name);
+				}
+				my_strupr(path);
+				
+				if(!rename(fd.cFileName, path)) {
+					CPU_AL = 0x00;
+				} else {
+					error = _doserrno;
+				}
+			}
+		} while(FindNextFileA(hFind, &fd) != 0);
+		FindClose(hFind);
+	} else {
+		error = GetLastError();
+	}
+	if(CPU_AL == 0xff) {
 		// set extended error
 		sda_t *sda = (sda_t *)(mem + SDA_TOP);
 		sda->int21h_5d0ah_called = 0;
-		sda->extended_error_code = msdos_error_code(_doserrno);
+		sda->extended_error_code = msdos_error_code(error);
 		sda->error_class = msdos_error_class(sda->extended_error_code);
 		sda->suggested_action = 6; // ignore
 		sda->locus_of_last_error = 2; // block device
-	} else {
-		CPU_AL = 0;
 	}
 }
 
