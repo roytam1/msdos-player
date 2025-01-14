@@ -1,6 +1,6 @@
 LIBRARY ntvdm.exe
 
-EXPORTS	
+EXPORTS
 	SetFuncTable	@1
 	getAL	@2
 	getAH	@3
@@ -93,4 +93,10 @@ EXPORTS
 	VdmMapFlat	@90
 	VdmUnmapFlat	@91
 	VdmFlushCache	@92
-	VDDTerminateVDM	@93
+	VDDInstallMemoryHook	@93
+	VDDDeInstallMemoryHook	@94
+	VDDAllocMem	@95
+	VDDFreeMem	@96
+	VDDIncludeMem	@97
+	VDDExcludeMem	@98
+	VDDTerminateVDM	@99

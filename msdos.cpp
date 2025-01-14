@@ -565,6 +565,25 @@ int cpu_type = 0, cpu_step = 0;
 	memory accessors
 ---------------------------------------------------------------------------- */
 
+#ifdef USE_DEBUGGER
+static void check_bp(UINT32 address, break_point_t *bp, int size)
+{
+	if(now_debugging && !now_suspended) {
+		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
+			if(bp->table[i].status == 1) {
+				if((address >= bp->table[i].addr) && (address < (bp->table[i].addr + size))) {
+					bp->hit = i + 1;
+					now_suspended = true;
+					break;
+				}
+			}
+		}
+	}
+}
+#else
+#define check_bp(x,y,z)
+#endif
+
 void vram_flush();
 
 UINT8 read_text_vram_byte(UINT32 offset)
@@ -615,24 +634,8 @@ UINT16 read_text_vram_word(UINT32 offset)
 
 // read accessors
 UINT8 read_byte(UINT32 byteaddress)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(rd_break_point.table[i].status == 1) {
-				if(byteaddress == rd_break_point.table[i].addr) {
-					rd_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_byte(byteaddress));
-}
-UINT8 debugger_read_byte(UINT32 byteaddress)
-#endif
-{
+	check_bp(byteaddress, &rd_break_point, 1);
 	if(byteaddress < MEMORY_END) {
 		return mem[byteaddress];
 	} else if(byteaddress >= DUMMY_TOP) {
@@ -666,24 +669,8 @@ UINT8 debugger_read_byte(UINT32 byteaddress)
 }
 
 UINT16 read_word(UINT32 byteaddress)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(rd_break_point.table[i].status == 1) {
-				if(byteaddress >= rd_break_point.table[i].addr && byteaddress < rd_break_point.table[i].addr + 2) {
-					rd_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_word(byteaddress));
-}
-UINT16 debugger_read_word(UINT32 byteaddress)
-#endif
-{
+	check_bp(byteaddress, &rd_break_point, 2);
 	if(byteaddress < MEMORY_END - 1) {
 		if(byteaddress == 0x41c) {
 			// pointer to first free slot in keyboard buffer
@@ -713,9 +700,10 @@ UINT16 debugger_read_word(UINT32 byteaddress)
 		return *(UINT16 *)(mem + byteaddress);
 #endif
 	} else if(byteaddress & 1) {
+		// if the bp hit above now_suspended will be true so it won't hit again in read_byte
 		UINT16 value;
-		value  = debugger_read_byte(byteaddress    );
-		value |= debugger_read_byte(byteaddress + 1) << 8;
+		value  = read_byte(byteaddress    );
+		value |= read_byte(byteaddress + 1) << 8;
 		return value;
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
@@ -737,24 +725,8 @@ UINT16 debugger_read_word(UINT32 byteaddress)
 }
 
 UINT32 read_dword(UINT32 byteaddress)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(rd_break_point.table[i].status == 1) {
-				if(byteaddress >= rd_break_point.table[i].addr && byteaddress < rd_break_point.table[i].addr + 4) {
-					rd_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_dword(byteaddress));
-}
-UINT32 debugger_read_dword(UINT32 byteaddress)
-#endif
-{
+	check_bp(byteaddress, &rd_break_point, 4);
 	if(byteaddress < MEMORY_END - 3) {
 		return *(UINT32 *)(mem + byteaddress);
 	} else if(byteaddress >= DUMMY_TOP) {
@@ -775,14 +747,15 @@ UINT32 debugger_read_dword(UINT32 byteaddress)
 		return *(UINT32 *)(mem + byteaddress);
 #endif
 	} else if(byteaddress & 3) {
+		// if the bp hit above now_suspended will be true so it won't hit again in read_byte/word
 		UINT32 value;
 		if(byteaddress & 1) {
-			value  = debugger_read_byte(byteaddress    );
-			value |= debugger_read_word(byteaddress + 1) <<  8;
-			value |= debugger_read_byte(byteaddress + 3) << 24;
+			value  = read_byte(byteaddress    );
+			value |= read_word(byteaddress + 1) <<  8;
+			value |= read_byte(byteaddress + 3) << 24;
 		} else {
-			value  = debugger_read_word(byteaddress    );
-			value |= debugger_read_word(byteaddress + 2) << 16;
+			value  = read_word(byteaddress    );
+			value |= read_word(byteaddress + 2) << 16;
 		}
 		return value;
 	} else {
@@ -1032,24 +1005,8 @@ void write_text_vram_dword(UINT32 offset, UINT32 data)
 #endif
 
 void write_byte(UINT32 byteaddress, UINT8 data)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(wr_break_point.table[i].status == 1) {
-				if(byteaddress == wr_break_point.table[i].addr) {
-					wr_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_byte(byteaddress, data);
-}
-void debugger_write_byte(UINT32 byteaddress, UINT8 data)
-#endif
-{
+	check_bp(byteaddress, &wr_break_point, 1);
 	if(byteaddress < MEMORY_END) {
 		mem[byteaddress] = data;
 	} else if(byteaddress >= DUMMY_TOP) {
@@ -1081,24 +1038,8 @@ void debugger_write_byte(UINT32 byteaddress, UINT8 data)
 }
 
 void write_word(UINT32 byteaddress, UINT16 data)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(wr_break_point.table[i].status == 1) {
-				if(byteaddress >= wr_break_point.table[i].addr && byteaddress < wr_break_point.table[i].addr + 2) {
-					wr_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_word(byteaddress, data);
-}
-void debugger_write_word(UINT32 byteaddress, UINT16 data)
-#endif
-{
+	check_bp(byteaddress, &wr_break_point, 2);
 	if(byteaddress < MEMORY_END - 1) {
 		if(byteaddress == cursor_position_address) {
 			if(*(UINT16 *)(mem + byteaddress) != data) {
@@ -1119,8 +1060,9 @@ void debugger_write_word(UINT32 byteaddress, UINT16 data)
 			*(UINT16 *)(mem + byteaddress) = data;
 		}
 	} else if(byteaddress & 1) {
-		debugger_write_byte(byteaddress    , (data     ) & 0xff);
-		debugger_write_byte(byteaddress + 1, (data >> 8) & 0xff);
+		// if the bp hit above now_suspended will be true so it won't hit again in write_byte
+		write_byte(byteaddress    , (data     ) & 0xff);
+		write_byte(byteaddress + 1, (data >> 8) & 0xff);
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
 			if(!restore_console_size) {
@@ -1159,24 +1101,8 @@ void debugger_write_word(UINT32 byteaddress, UINT16 data)
 }
 
 void write_dword(UINT32 byteaddress, UINT32 data)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(wr_break_point.table[i].status == 1) {
-				if(byteaddress >= wr_break_point.table[i].addr && byteaddress < wr_break_point.table[i].addr + 4) {
-					wr_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_dword(byteaddress, data);
-}
-void debugger_write_dword(UINT32 byteaddress, UINT32 data)
-#endif
-{
+	check_bp(byteaddress, &wr_break_point, 4);
 	if(byteaddress < MEMORY_END - 3) {
 		*(UINT32 *)(mem + byteaddress) = data;
 	} else if(byteaddress >= DUMMY_TOP) {
@@ -1187,13 +1113,14 @@ void debugger_write_dword(UINT32 byteaddress, UINT32 data)
 			*(UINT32 *)(mem + byteaddress) = data;
 		}
 	} else if(byteaddress & 3) {
+		// if the bp hit above now_suspended will be true so it won't hit again in write_byte/word
 		if(byteaddress & 1) {
-			debugger_write_byte(byteaddress    , (data      ) & 0x00ff);
-			debugger_write_word(byteaddress + 1, (data >>  8) & 0xffff);
-			debugger_write_byte(byteaddress + 3, (data >> 24) & 0x00ff);
+			write_byte(byteaddress    , (data      ) & 0x00ff);
+			write_word(byteaddress + 1, (data >>  8) & 0xffff);
+			write_byte(byteaddress + 3, (data >> 24) & 0x00ff);
 		} else {
-			debugger_write_word(byteaddress    , (data      ) & 0xffff);
-			debugger_write_word(byteaddress + 2, (data >> 16) & 0xffff);
+			write_word(byteaddress    , (data      ) & 0xffff);
+			write_word(byteaddress + 2, (data >> 16) & 0xffff);
 		}
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
@@ -1403,7 +1330,7 @@ int debugger_dasm(char *buffer, size_t buffer_len, UINT32 pc, UINT32 eip, BOOL o
 	UINT8 oprom[16];
 	
 	for(int i = 0; i < 16; i++) {
-		oprom[i] = debugger_read_byte((pc++) & ADDR_MASK);
+		oprom[i] = read_byte((pc++) & ADDR_MASK);
 	}
 	
 #if defined(HAS_I386) || defined(HAS_V30)
@@ -1708,7 +1635,7 @@ void debugger_main()
 							telnet_printf("   ");
 							buffer[addr & 0x0f] = ' ';
 						} else {
-							UINT8 data = debugger_read_byte(addr & ADDR_MASK);
+							UINT8 data = read_byte(addr & ADDR_MASK);
 							telnet_printf(" %02X", data);
 //							if(is_sjis) {
 //								buffer[addr & 0x0f] = data;
@@ -1740,7 +1667,7 @@ void debugger_main()
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
 					for(int i = 2, j = 0; i < num; i++, j++) {
-						debugger_write_byte(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]) & 0xff);
+						write_byte(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]) & 0xff);
 					}
 				} else {
 					telnet_printf("invalid parameter number\n");
@@ -1750,7 +1677,7 @@ void debugger_main()
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
 					for(int i = 2, j = 0; i < num; i++, j += 2) {
-						debugger_write_word(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]) & 0xffff);
+						write_word(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]) & 0xffff);
 					}
 				} else {
 					telnet_printf("invalid parameter number\n");
@@ -1760,7 +1687,7 @@ void debugger_main()
 					UINT32 seg = debugger_get_seg(params[1], data_seg);
 					UINT32 ofs = debugger_get_ofs(params[1]);
 					for(int i = 2, j = 0; i < num; i++, j += 4) {
-						debugger_write_dword(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]));
+						write_dword(((seg << 4) + (ofs + j)) & ADDR_MASK, debugger_get_val(params[i]));
 					}
 				} else {
 					telnet_printf("invalid parameter number\n");
@@ -1773,7 +1700,7 @@ void debugger_main()
 					if((token = strtok(buffer, "\"")) != NULL && (token = strtok(NULL, "\"")) != NULL) {
 						int len = (int)strlen(token);
 						for(int i = 0; i < len; i++) {
-							debugger_write_byte(((seg << 4) + (ofs + i)) & ADDR_MASK, token[i] & 0xff);
+							write_byte(((seg << 4) + (ofs + i)) & ADDR_MASK, token[i] & 0xff);
 						}
 					} else {
 						telnet_printf("invalid parameter\n");
@@ -1783,37 +1710,37 @@ void debugger_main()
 				}
 			} else if(_stricmp(params[0], "I") == 0 || _stricmp(params[0], "IB") == 0) {
 				if(num == 2) {
-					telnet_printf("%02X\n", debugger_read_io_byte(debugger_get_val(params[1])) & 0xff);
+					telnet_printf("%02X\n", read_io_byte(debugger_get_val(params[1])) & 0xff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
 			} else if(_stricmp(params[0], "IW") == 0) {
 				if(num == 2) {
-					telnet_printf("%04X\n", debugger_read_io_word(debugger_get_val(params[1])) & 0xffff);
+					telnet_printf("%04X\n", read_io_word(debugger_get_val(params[1])) & 0xffff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
 			} else if(_stricmp(params[0], "ID") == 0) {
 				if(num == 2) {
-					telnet_printf("%08X\n", debugger_read_io_dword(debugger_get_val(params[1])));
+					telnet_printf("%08X\n", read_io_dword(debugger_get_val(params[1])));
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
 			} else if(_stricmp(params[0], "O") == 0 || _stricmp(params[0], "OB") == 0) {
 				if(num == 3) {
-					debugger_write_io_byte(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xff);
+					write_io_byte(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
 			} else if(_stricmp(params[0], "OW") == 0) {
 				if(num == 3) {
-					debugger_write_io_word(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xffff);
+					write_io_word(debugger_get_val(params[1]), debugger_get_val(params[2]) & 0xffff);
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
 			} else if(_stricmp(params[0], "OD") == 0) {
 				if(num == 3) {
-					debugger_write_io_dword(debugger_get_val(params[1]), debugger_get_val(params[2]));
+					write_io_dword(debugger_get_val(params[1]), debugger_get_val(params[2]));
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
@@ -1948,7 +1875,7 @@ void debugger_main()
 					while((cur_seg << 4) + cur_ofs <= (end_seg << 4) + end_ofs) {
 						bool found = true;
 						for(int i = 3, j = 0; i < num && j < 32; i++, j++) {
-							if(debugger_read_byte(((cur_seg << 4) + (cur_ofs + j)) & ADDR_MASK) != list[j]) {
+							if(read_byte(((cur_seg << 4) + (cur_ofs + j)) & ADDR_MASK) != list[j]) {
 								found = false;
 								break;
 							}
@@ -1980,7 +1907,7 @@ void debugger_main()
 							int len = debugger_dasm(buffer, sizeof(buffer), dasm_adr, dasm_ofs);
 							telnet_printf("%08X(%04X:%04X)  ", dasm_adr, dasm_seg, dasm_ofs);
 							for(int i = 0; i < len; i++) {
-								telnet_printf("%02X", debugger_read_byte((dasm_adr + i) & ADDR_MASK));
+								telnet_printf("%02X", read_byte((dasm_adr + i) & ADDR_MASK));
 							}
 							for(int i = len; i < 8; i++) {
 								telnet_printf("  ");
@@ -1994,7 +1921,7 @@ void debugger_main()
 							int len = debugger_dasm(buffer, sizeof(buffer), dasm_adr, dasm_ofs);
 							telnet_printf("%08X(%04X:%04X)  ", dasm_adr, dasm_seg, dasm_ofs);
 							for(int i = 0; i < len; i++) {
-								telnet_printf("%02X", debugger_read_byte((dasm_adr + i) & ADDR_MASK));
+								telnet_printf("%02X", read_byte((dasm_adr + i) & ADDR_MASK));
 							}
 							for(int i = len; i < 8; i++) {
 								telnet_printf("  ");
@@ -2020,7 +1947,7 @@ void debugger_main()
 							int len = debugger_dasm(buffer, sizeof(buffer), cpu_trace[index].pc, cpu_trace[index].eip);
 							telnet_printf("%08X(%04X:%04X)  ", cpu_trace[index].pc, cpu_trace[index].cs, cpu_trace[index].eip);
 							for(int i = 0; i < len; i++) {
-								telnet_printf("%02X", debugger_read_byte((cpu_trace[index].pc + i) & ADDR_MASK));
+								telnet_printf("%02X", read_byte((cpu_trace[index].pc + i) & ADDR_MASK));
 							}
 							for(int i = len; i < 8; i++) {
 								telnet_printf("  ");
@@ -2071,7 +1998,7 @@ void debugger_main()
 								UINT32 bytes = debugger_hexatob(line + 1);
 								UINT32 addr = debugger_hexatow(line + 3) + start_addr + linear + segment;
 								for(UINT32 i = 0; i < bytes; i++) {
-									debugger_write_byte((addr + i) & ADDR_MASK, debugger_hexatob(line + 9 + 2 * i));
+									write_byte((addr + i) & ADDR_MASK, debugger_hexatob(line + 9 + 2 * i));
 								}
 							} else if(type == 0x01) {
 								break;
@@ -2108,7 +2035,7 @@ void debugger_main()
 							if(data == EOF) {
 								break;
 							}
-							debugger_write_byte(addr & ADDR_MASK, data);
+							write_byte(addr & ADDR_MASK, data);
 						}
 						fclose(fp);
 					} else {
@@ -2131,7 +2058,7 @@ void debugger_main()
 								UINT32 sum = len + ((addr >> 8) & 0xff) + (addr & 0xff) + 0x00;
 								fprintf(fp, ":%02X%04X%02X", len, addr & 0xffff, 0x00);
 								for(UINT32 i = 0; i < len; i++) {
-									UINT8 data = debugger_read_byte((addr++) & ADDR_MASK);
+									UINT8 data = read_byte((addr++) & ADDR_MASK);
 									sum += data;
 									fprintf(fp, "%02X", data);
 								}
@@ -2145,7 +2072,7 @@ void debugger_main()
 					} else {
 						if((fp = fopen(file_path, "wb")) != NULL) {
 							for(UINT32 addr = start_addr; addr <= end_addr; addr++) {
-								fputc(debugger_read_byte(addr & ADDR_MASK),fp);
+								fputc(read_byte(addr & ADDR_MASK),fp);
 							}
 							fclose(fp);
 						} else {
@@ -23637,24 +23564,8 @@ UINT8 vga_read_status()
 //#define SW1US_PATCH
 
 UINT8 read_io_byte(UINT32 addr)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(in_break_point.table[i].status == 1) {
-				if(addr == in_break_point.table[i].addr) {
-					in_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_io_byte(addr));
-}
-UINT8 debugger_read_io_byte(UINT32 addr)
-#endif
-{
+	check_bp(addr, &in_break_point, 1);
 	UINT8 val = 0xff;
 #ifdef SUPPORT_VDD
 	if(!vdd_io_read(addr, 1, &val))
@@ -23776,24 +23687,8 @@ UINT8 debugger_read_io_byte(UINT32 addr)
 }
 
 UINT16 read_io_word(UINT32 addr)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(in_break_point.table[i].status == 1) {
-				if(addr >= in_break_point.table[i].addr && addr < in_break_point.table[i].addr + 2) {
-					in_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_io_word(addr));
-}
-UINT16 debugger_read_io_word(UINT32 addr)
-#endif
-{
+	check_bp(addr, &in_break_point, 2);
 	UINT16 val = 0xffff;
 #ifdef ENABLE_DEBUG_IOPORT
 	skip_debug_ioport++;
@@ -23801,7 +23696,8 @@ UINT16 debugger_read_io_word(UINT32 addr)
 #ifdef SUPPORT_VDD
 	if(!vdd_io_read(addr, 2, &val))
 #endif
-	val = debugger_read_io_byte(addr) | (debugger_read_io_byte(addr + 1) << 8);
+	// if the bp hit above now_suspended will be true so it won't hit again in read_io_byte
+	val = read_io_byte(addr) | (read_io_byte(addr + 1) << 8);
 #ifdef ENABLE_DEBUG_IOPORT
 	if(--skip_debug_ioport == 0 && fp_debug_log != NULL) {
 		fprintf(fp_debug_log, "inw %04X, %04X\n", addr, val);
@@ -23811,32 +23707,17 @@ UINT16 debugger_read_io_word(UINT32 addr)
 }
 
 UINT32 read_io_dword(UINT32 addr)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(in_break_point.table[i].status == 1) {
-				if(addr >= in_break_point.table[i].addr && addr < in_break_point.table[i].addr + 4) {
-					in_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	return(debugger_read_io_dword(addr));
-}
-UINT32 debugger_read_io_dword(UINT32 addr)
-#endif
-{
+	check_bp(addr, &in_break_point, 4);
 	DWORD val = 0xffffffff;
 #ifdef ENABLE_DEBUG_IOPORT
 	skip_debug_ioport++;
 #endif
+	// if the bp hit above now_suspended will be true so it won't hit again in read_io_byte/word
 	if(addr & 1) {
-		val = debugger_read_io_byte(addr) | (debugger_read_io_word(addr + 1) << 8) | (debugger_read_io_byte(addr + 3) << 24);
+		val = read_io_byte(addr) | (read_io_word(addr + 1) << 8) | (read_io_byte(addr + 3) << 24);
 	} else {
-		val = debugger_read_io_word(addr) | (debugger_read_io_word(addr + 2) << 16);
+		val = read_io_word(addr) | (read_io_word(addr + 2) << 16);
 	}
 #ifdef ENABLE_DEBUG_IOPORT
 	if(--skip_debug_ioport == 0 && fp_debug_log != NULL) {
@@ -23847,24 +23728,8 @@ UINT32 debugger_read_io_dword(UINT32 addr)
 }
 
 void write_io_byte(UINT32 addr, UINT8 val)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(out_break_point.table[i].status == 1) {
-				if(addr == out_break_point.table[i].addr) {
-					out_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_io_byte(addr, val);
-}
-void debugger_write_io_byte(UINT32 addr, UINT8 val)
-#endif
-{
+	check_bp(addr, &out_break_point, 1);
 #ifdef ENABLE_DEBUG_IOPORT
 	if(skip_debug_ioport == 0 && fp_debug_log != NULL) {
 		if(!(use_service_thread && addr == 0xf7)) {
@@ -23994,24 +23859,8 @@ void debugger_write_io_byte(UINT32 addr, UINT8 val)
 }
 
 void write_io_word(UINT32 addr, UINT16 val)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(out_break_point.table[i].status == 1) {
-				if(addr >= out_break_point.table[i].addr && addr < out_break_point.table[i].addr + 2) {
-					out_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_io_word(addr, val);
-}
-void debugger_write_io_word(UINT32 addr, UINT16 val)
-#endif
-{
+	check_bp(addr, &out_break_point, 2);
 #ifdef ENABLE_DEBUG_IOPORT
 	if(skip_debug_ioport++ == 0 && fp_debug_log != NULL) {
 		if(!(use_service_thread && addr == 0xf7)) {
@@ -24022,9 +23871,10 @@ void debugger_write_io_word(UINT32 addr, UINT16 val)
 #ifdef SUPPORT_VDD
 	if(!vdd_io_write(addr, 2, val))
 #endif
+	// if the bp hit above now_suspended will be true so it won't hit again in write_io_byte
 	{
-		debugger_write_io_byte(addr + 0, (val >> 0) & 0xff);
-		debugger_write_io_byte(addr + 1, (val >> 8) & 0xff);
+		write_io_byte(addr + 0, (val >> 0) & 0xff);
+		write_io_byte(addr + 1, (val >> 8) & 0xff);
 	}
 #ifdef ENABLE_DEBUG_IOPORT
 	skip_debug_ioport--;
@@ -24032,24 +23882,8 @@ void debugger_write_io_word(UINT32 addr, UINT16 val)
 }
 
 void write_io_dword(UINT32 addr, UINT32 val)
-#ifdef USE_DEBUGGER
 {
-	if(now_debugging) {
-		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
-			if(out_break_point.table[i].status == 1) {
-				if(addr >= out_break_point.table[i].addr && addr < out_break_point.table[i].addr + 4) {
-					out_break_point.hit = i + 1;
-					now_suspended = true;
-					break;
-				}
-			}
-		}
-	}
-	debugger_write_io_dword(addr, val);
-}
-void debugger_write_io_dword(UINT32 addr, UINT32 val)
-#endif
-{
+	check_bp(addr, &out_break_point, 4);
 #ifdef ENABLE_DEBUG_IOPORT
 	if(skip_debug_ioport++ == 0 && fp_debug_log != NULL) {
 		if(!(use_service_thread && addr == 0xf7)) {
@@ -24057,13 +23891,14 @@ void debugger_write_io_dword(UINT32 addr, UINT32 val)
 		}
 	}
 #endif
+	// if the bp hit above now_suspended will be true so it won't hit again in write_io_byte/word
 	if(addr & 1) {
-		debugger_write_io_byte(addr + 0, (val >>  0) & 0x00ff);
-		debugger_write_io_word(addr + 1, (val >>  8) & 0xffff);
-		debugger_write_io_byte(addr + 3, (val >> 24) & 0x00ff);
+		write_io_byte(addr + 0, (val >>  0) & 0x00ff);
+		write_io_word(addr + 1, (val >>  8) & 0xffff);
+		write_io_byte(addr + 3, (val >> 24) & 0x00ff);
 	} else {
-		debugger_write_io_word(addr + 0, (val >>  0) & 0xffff);
-		debugger_write_io_word(addr + 2, (val >> 16) & 0xffff);
+		write_io_word(addr + 0, (val >>  0) & 0xffff);
+		write_io_word(addr + 2, (val >> 16) & 0xffff);
 	}
 #ifdef ENABLE_DEBUG_IOPORT
 	skip_debug_ioport--;
@@ -24651,26 +24486,38 @@ void VDDDeInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRan
 
 BYTE *MGetVdmPointer(DWORD addr, DWORD size, BOOL protmode)
 {
-	DWORD offset = CPU_TRANS_CODE_ADDR(HIWORD(addr), LOWORD(addr));
-	
-	if (offset >= 0xfff80000) {
-		offset &= 0xfffff;
+	// NOTE: ReactOS ignores protmode and always translates address as real mode
+	if (protmode) {
+		// NOTE: i386 may not be protected mode now :-(
+		addr = CPU_TRANS_CODE_ADDR(HIWORD(addr), LOWORD(addr));
+	} else {
+		addr = (HIWORD(addr) << 4) + LOWORD(addr);
 	}
-	if (offset < MAX_MEM) {
-		return mem + offset;
+	if (addr >= 0xfff80000) {
+		addr &= 0xfffff;
+	}
+	if (addr < MAX_MEM) {
+		return mem + addr;
 	}
 	return NULL;
 }
 
 BYTE *VdmMapFlat(WORD seg, DWORD ofs, VDM_MODE mode)
 {
-	DWORD offset = CPU_TRANS_CODE_ADDR(seg, ofs);
+	DWORD addr;
 	
-	if (offset >= 0xfff80000) {
-		offset &= 0xfffff;
+	// NOTE: ReactOS ignores mode and always translates address as real mode
+	if (mode == VDM_PM) {
+		// NOTE: i386 may not be protected mode now :-(
+		addr = CPU_TRANS_CODE_ADDR(seg, ofs);
+	} else {
+		addr = (seg << 4) + (ofs & 0xffff);
 	}
-	if (offset < MAX_MEM) {
-		return mem + offset;
+	if (addr >= 0xfff80000) {
+		addr &= 0xfffff;
+	}
+	if (addr < MAX_MEM) {
+		return mem + addr;
 	}
 	return NULL;
 }

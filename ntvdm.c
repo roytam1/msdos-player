@@ -478,6 +478,36 @@ __declspec(dllexport) BOOL WINAPI VdmFlushCache(WORD seg, DWORD ofs, DWORD size,
 	return TRUE;
 }
 
+__declspec(dllexport) BOOL WINAPI VDDInstallMemoryHook(HANDLE hVdd, PVOID addr, DWORD size, PVDD_MEMORY_HANDLER MemoryHandler)
+{
+	return FALSE;
+}
+
+__declspec(dllexport) BOOL WINAPI VDDDeInstallMemoryHook(HANDLE hVdd, PVOID addr, DWORD size)
+{
+	return FALSE;
+}
+
+__declspec(dllexport) BOOL WINAPI VDDAllocMem(HANDLE hVdd, PVOID addr, ULONG size)
+{
+	return FALSE;
+}
+
+__declspec(dllexport) BOOL WINAPI VDDFreeMem(HANDLE hVdd, PVOID addr, ULONG size)
+{
+	return FALSE;
+}
+
+__declspec(dllexport) BOOL WINAPI VDDIncludeMem(HANDLE hVdd, PVOID addr, ULONG size)
+{
+	return FALSE;
+}
+
+__declspec(dllexport) BOOL WINAPI VDDExcludeMem(HANDLE hVdd, PVOID addr, ULONG size)
+{
+	return FALSE;
+}
+
 __declspec(dllexport) void WINAPI VDDTerminateVDM(void)
 {
 	func.VDDTerminateVDM();

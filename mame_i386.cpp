@@ -554,7 +554,7 @@ UINT32 CPU_TRANS_CODE_ADDR(UINT32 seg, UINT32 ofs)
 		translate_address(m_CPL, TRANSLATE_FETCH, &addr, NULL);
 		return addr;
 	}
-	return (seg << 4) + (ofs & 0xffff);
+	return (seg << 4) + ofs;
 }
 
 #ifdef USE_DEBUGGER

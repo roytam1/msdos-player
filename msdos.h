@@ -184,30 +184,6 @@ int_break_point_t int_break_point = {0};
 
 FILE *fp_debugger = NULL;
 FILE *fi_debugger = NULL;
-
-// these read/write interfaces do not check break points,
-// debugger should use them not to hit any break point mistakely
-UINT8 debugger_read_byte(UINT32 byteaddress);
-UINT16 debugger_read_word(UINT32 byteaddress);
-UINT32 debugger_read_dword(UINT32 byteaddress);
-void debugger_write_byte(UINT32 byteaddress, UINT8 data);
-void debugger_write_word(UINT32 byteaddress, UINT16 data);
-void debugger_write_dword(UINT32 byteaddress, UINT32 data);
-UINT8 debugger_read_io_byte(UINT32 addr);
-UINT16 debugger_read_io_word(UINT32 addr);
-UINT32 debugger_read_io_dword(UINT32 addr);
-void debugger_write_io_byte(UINT32 addr, UINT8 val);
-void debugger_write_io_word(UINT32 addr, UINT16 val);
-void debugger_write_io_dword(UINT32 addr, UINT32 val);
-#else
-#define debugger_read_byte read_byte
-#define debugger_read_word read_word
-#define debugger_write_byte write_byte
-#define debugger_write_word write_word
-#define debugger_read_io_byte read_io_byte
-#define debugger_read_io_word read_io_word
-#define debugger_write_io_byte write_io_byte
-#define debugger_write_io_word write_io_word
 #endif
 
 /* ----------------------------------------------------------------------------

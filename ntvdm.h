@@ -18,6 +18,7 @@ typedef VOID (WINAPI *PFNVDD_OUTB)(WORD iport, BYTE data);
 typedef VOID (WINAPI *PFNVDD_OUTW)(WORD iport, WORD data);
 typedef VOID (WINAPI *PFNVDD_OUTSB)(WORD iport, PBYTE data, WORD count);
 typedef VOID (WINAPI *PFNVDD_OUTSW)(WORD iport, PWORD data, WORD count);
+typedef VOID (WINAPI *PVDD_MEMORY_HANDLER)(PVOID addr, ULONG mode);
 
 typedef struct _VDD_IO_HANDLERS {
 	PFNVDD_INB inb_handler;

@@ -560,7 +560,7 @@ UINT32 CPU_TRANS_CODE_ADDR(UINT32 seg, UINT32 ofs)
 		parse_selector(&sel, seg);
 		return CPU_TRANS_PAGING_ADDR(sdp->u.seg.segbase + ofs);
 	}
-	return (seg << 4) + (ofs & 0xffff);
+	return (seg << 4) + ofs;
 }
 
 #ifdef USE_DEBUGGER
