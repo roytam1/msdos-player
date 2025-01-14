@@ -68,6 +68,9 @@ void nolog(const char *format, ...)
 		#define unimplemented_67h fatalerror
 		#define unimplemented_xms fatalerror
 	#endif
+	#ifdef ENABLE_DEBUG_IOPORT
+		int skip_debug_ioport = 0;
+	#endif
 #endif
 #ifndef unimplemented_10h
 	#define unimplemented_10h nolog
@@ -711,8 +714,8 @@ UINT16 debugger_read_word(UINT32 byteaddress)
 #endif
 	} else if(byteaddress & 1) {
 		UINT16 value;
-		value  = read_byte(byteaddress    );
-		value |= read_byte(byteaddress + 1) << 8;
+		value  = debugger_read_byte(byteaddress    );
+		value |= debugger_read_byte(byteaddress + 1) << 8;
 		return value;
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
@@ -774,12 +777,12 @@ UINT32 debugger_read_dword(UINT32 byteaddress)
 	} else if(byteaddress & 3) {
 		UINT32 value;
 		if(byteaddress & 1) {
-			value  = read_byte(byteaddress    );
-			value |= read_word(byteaddress + 1) <<  8;
-			value |= read_byte(byteaddress + 3) << 24;
+			value  = debugger_read_byte(byteaddress    );
+			value |= debugger_read_word(byteaddress + 1) <<  8;
+			value |= debugger_read_byte(byteaddress + 3) << 24;
 		} else {
-			value  = read_word(byteaddress    );
-			value |= read_word(byteaddress + 2) << 16;
+			value  = debugger_read_word(byteaddress    );
+			value |= debugger_read_word(byteaddress + 2) << 16;
 		}
 		return value;
 	} else {
@@ -1116,8 +1119,8 @@ void debugger_write_word(UINT32 byteaddress, UINT16 data)
 			*(UINT16 *)(mem + byteaddress) = data;
 		}
 	} else if(byteaddress & 1) {
-		write_byte(byteaddress    , (data     ) & 0xff);
-		write_byte(byteaddress + 1, (data >> 8) & 0xff);
+		debugger_write_byte(byteaddress    , (data     ) & 0xff);
+		debugger_write_byte(byteaddress + 1, (data >> 8) & 0xff);
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
 			if(!restore_console_size) {
@@ -1185,12 +1188,12 @@ void debugger_write_dword(UINT32 byteaddress, UINT32 data)
 		}
 	} else if(byteaddress & 3) {
 		if(byteaddress & 1) {
-			write_byte(byteaddress    , (data      ) & 0x00ff);
-			write_word(byteaddress + 1, (data >>  8) & 0xffff);
-			write_byte(byteaddress + 3, (data >> 24) & 0x00ff);
+			debugger_write_byte(byteaddress    , (data      ) & 0x00ff);
+			debugger_write_word(byteaddress + 1, (data >>  8) & 0xffff);
+			debugger_write_byte(byteaddress + 3, (data >> 24) & 0x00ff);
 		} else {
-			write_word(byteaddress    , (data      ) & 0xffff);
-			write_word(byteaddress + 2, (data >> 16) & 0xffff);
+			debugger_write_word(byteaddress    , (data      ) & 0xffff);
+			debugger_write_word(byteaddress + 2, (data >> 16) & 0xffff);
 		}
 	} else {
 		if(byteaddress >= text_vram_top_address && byteaddress < text_vram_end_address) {
@@ -1422,7 +1425,7 @@ int debugger_dasm(char *buffer, size_t buffer_len, UINT32 pc, UINT32 eip)
 #endif
 }
 
-void debugger_regs_info(char *buffer, bool r32)
+void debugger_regs_info(char *buffer, int r32)
 {
 	UINT32 flags = CPU_EFLAG;
 	
@@ -1480,7 +1483,7 @@ void debugger_regs_info(char *buffer)
 #if defined(HAS_I386)
 	debugger_regs_info(buffer, CPU_INST_OP32);
 #else
-	debugger_regs_info(buffer, false);
+	debugger_regs_info(buffer, 0);
 #endif
 }
 
@@ -1691,7 +1694,7 @@ void debugger_main()
 					for(UINT64 addr = (start_addr & ~0x0f); addr <= (end_addr | 0x0f); addr++) {
 						if((addr & 0x0f) == 0) {
 							if(!pmode) {
-							 	if((data_ofs = addr - (data_seg << 4)) > 0xffff) {
+								if((data_ofs = addr - (data_seg << 4)) > 0xffff) {
 									data_seg += 0x1000;
 									data_ofs -= 0x10000;
 								}
@@ -1816,7 +1819,7 @@ void debugger_main()
 				}
 #if defined(HAS_I386)
 			} else if(_stricmp(params[0], "RX") == 0) {
-				debugger_regs_info(buffer, true);
+				debugger_regs_info(buffer, 1);
 				telnet_printf("%s", buffer);
 #endif
 			} else if(_stricmp(params[0], "R") == 0) {
@@ -3001,7 +3004,7 @@ BOOL is_greater_windows_version(DWORD dwMajorVersion, DWORD dwMinorVersion, WORD
 			osvi.wServicePackMajor = wServicePackMajor;
 			osvi.wServicePackMinor = wServicePackMinor;
 			
-			 // Initialize the condition mask.
+			// Initialize the condition mask.
 			#define MY_VER_SET_CONDITION(_m_,_t_,_c_) ((_m_)=lpfnVerSetConditionMask((_m_),(_t_),(_c_)))
 			
 			MY_VER_SET_CONDITION( dwlConditionMask, VER_MAJORVERSION, op );
@@ -8203,6 +8206,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	// check COMMAND.COM version
 	if(first_process && !dos_version_specified && _stricmp(msdos_file_name(path), "COMMAND.COM") == 0) {
 		for(int p = 0; p < length; p++) {
+			const BYTE msdos_version_kana[] = {0xCF,0xB2,0xB8,0xDB,0xBF,0xCC,0xC4,0x20,0x4D,0x53,0x2D,0x44,0x4F,0x53,0x20,0xCA,0xDE,0xB0,0xBC,0xDE,0xAE,0xDD,0x20};
 			char *s = (char *)&file_buffer[p];
 			bool found = false;
 			if(strncmp(s, "Microsoft(R) Windows 95", 23) == 0) {
@@ -8224,6 +8228,9 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 			} else if(strncmp(s, "Microsoft(R) MS-DOS(R)  Ver", 27) == 0) {
 				s += 27;
 				while((*s++) != ' ');
+				found = true;
+			} else if(strncmp(s, (const char *)msdos_version_kana, 23) == 0) {
+				s += 23;
 				found = true;
 			} else if(strncmp(s, "IBM Personal Computer DOS\r\nVer", 30) == 0) {
 				s += 30;
@@ -12794,8 +12801,8 @@ inline void msdos_int_21h_30h()
 		CPU_BX = 0xff00;	// OEM = Microsoft
 	}
 	CPU_CX = 0x0000;
-	CPU_AL = dos_major_version;	// 7
-	CPU_AH = dos_minor_version;	// 10
+	CPU_AL = dos_major_version;
+	CPU_AH = dos_minor_version;
 }
 
 inline void msdos_int_21h_31h()
@@ -13024,22 +13031,22 @@ void set_country_info(country_info_t *ci, int size)
 	}
 	if(size >= 0x07 + 2) {
 		memset(LCdata, 0, sizeof(LCdata));
-	 	*LCdata = *ci->thou_sep;
+		*LCdata = *ci->thou_sep;
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, LCdata);
 	}
 	if(size >= 0x09 + 2) {
 		memset(LCdata, 0, sizeof(LCdata));
-	 	*LCdata = *ci->dec_sep;
+		*LCdata = *ci->dec_sep;
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, LCdata);
 	}
 	if(size >= 0x0b + 2) {
 		memset(LCdata, 0, sizeof(LCdata));
-	 	*LCdata = *ci->date_sep;
+		*LCdata = *ci->date_sep;
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDATE, LCdata);
 	}
 	if(size >= 0x0d + 2) {
 		memset(LCdata, 0, sizeof(LCdata));
-	 	*LCdata = *ci->time_sep;
+		*LCdata = *ci->time_sep;
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STIME, LCdata);
 	}
 	if(size >= 0x0f + 1) {
@@ -13066,7 +13073,7 @@ void set_country_info(country_info_t *ci, int size)
 	}
 	if(size >= 0x16 + 2) {
 		memset(LCdata, 0, sizeof(LCdata));
-	 	*LCdata = *ci->list_sep;
+		*LCdata = *ci->list_sep;
 		SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SLIST, LCdata);
 	}
 }
@@ -16585,8 +16592,10 @@ inline void msdos_int_2fh_12h()
 			dos_major_version = CPU_DL;
 			dos_minor_version = CPU_DH;
 		} else {
-			dos_major_version = TRUE_MAJOR_VERSION;
-			dos_minor_version = TRUE_MINOR_VERSION;
+//			dos_major_version = TRUE_MAJOR_VERSION;
+//			dos_minor_version = TRUE_MINOR_VERSION;
+			dos_major_version = DOS_MAJOR_VERSION;
+			dos_minor_version = DOS_MINOR_VERSION;
 		}
 		break;
 //	case 0x30: // Windows95 - Find SFT Entry in Internal File Tables
@@ -19596,6 +19605,16 @@ void msdos_syscall(unsigned num)
 		}
 		break;
 	case 0x06:
+#ifdef SUPPORT_VDD
+		try {
+			UINT8 *opcode = mem + CPU_TRANS_CODE_ADDR(CPU_CS, CPU_EIP);
+			if((opcode[0] == 0xc4) && (opcode[1] == 0xc4) && (opcode[2] == 0x58)) {
+				vdd_req(opcode[3]);
+				break;
+			}
+		} catch(...) {
+		}
+#endif
 		// NOTE: ish.com has illegal instruction...
 		if(!ignore_illegal_insn) {
 			try {
@@ -20613,6 +20632,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	// init XMS
 	msdos_xms_init();
 #endif
+#ifdef SUPPORT_VDD
+	vdd_init();
+#endif
 	
 #if 0
 	// init process
@@ -21415,6 +21437,9 @@ void msdos_finish()
 #endif
 #ifdef SUPPORT_XMS
 	msdos_xms_finish();
+#endif
+#ifdef SUPPORT_VDD
+	vdd_finish();
 #endif
 	msdos_dbcs_table_finish();
 }
@@ -23631,7 +23656,9 @@ UINT8 debugger_read_io_byte(UINT32 addr)
 #endif
 {
 	UINT8 val = 0xff;
-	
+#ifdef SUPPORT_VDD
+	if(!vdd_io_read(addr, 1, &val))
+#endif
 	switch(addr) {
 #ifdef SW1US_PATCH
 	case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07: case 0x08:
@@ -23741,7 +23768,7 @@ UINT8 debugger_read_io_byte(UINT32 addr)
 		break;
 	}
 #ifdef ENABLE_DEBUG_IOPORT
-	if(fp_debug_log != NULL) {
+	if(skip_debug_ioport == 0 && fp_debug_log != NULL) {
 		fprintf(fp_debug_log, "inb %04X, %02X\n", addr, val);
 	}
 #endif
@@ -23749,28 +23776,75 @@ UINT8 debugger_read_io_byte(UINT32 addr)
 }
 
 UINT16 read_io_word(UINT32 addr)
-{
-	return(read_io_byte(addr) | (read_io_byte(addr + 1) << 8));
-}
-
 #ifdef USE_DEBUGGER
-UINT16 debugger_read_io_word(UINT32 addr)
 {
-	return(debugger_read_io_byte(addr) | (debugger_read_io_byte(addr + 1) << 8));
+	if(now_debugging) {
+		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
+			if(in_break_point.table[i].status == 1) {
+				if(addr >= in_break_point.table[i].addr && addr < in_break_point.table[i].addr + 2) {
+					in_break_point.hit = i + 1;
+					now_suspended = true;
+					break;
+				}
+			}
+		}
+	}
+	return(debugger_read_io_word(addr));
 }
+UINT16 debugger_read_io_word(UINT32 addr)
 #endif
+{
+	UINT16 val = 0xffff;
+#ifdef ENABLE_DEBUG_IOPORT
+	skip_debug_ioport++;
+#endif
+#ifdef SUPPORT_VDD
+	if(!vdd_io_read(addr, 2, &val))
+#endif
+	val = debugger_read_io_byte(addr) | (debugger_read_io_byte(addr + 1) << 8);
+#ifdef ENABLE_DEBUG_IOPORT
+	if(--skip_debug_ioport == 0 && fp_debug_log != NULL) {
+		fprintf(fp_debug_log, "inw %04X, %04X\n", addr, val);
+	}
+#endif
+	return(val);
+}
 
 UINT32 read_io_dword(UINT32 addr)
-{
-	return(read_io_word(addr) | (read_io_word(addr + 2) << 16));
-}
-
 #ifdef USE_DEBUGGER
-UINT32 debugger_read_io_dword(UINT32 addr)
 {
-	return(debugger_read_io_word(addr) | (debugger_read_io_word(addr + 2) << 16));
+	if(now_debugging) {
+		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
+			if(in_break_point.table[i].status == 1) {
+				if(addr >= in_break_point.table[i].addr && addr < in_break_point.table[i].addr + 4) {
+					in_break_point.hit = i + 1;
+					now_suspended = true;
+					break;
+				}
+			}
+		}
+	}
+	return(debugger_read_io_dword(addr));
 }
+UINT32 debugger_read_io_dword(UINT32 addr)
 #endif
+{
+	DWORD val = 0xffffffff;
+#ifdef ENABLE_DEBUG_IOPORT
+	skip_debug_ioport++;
+#endif
+	if(addr & 1) {
+		val = debugger_read_io_byte(addr) | (debugger_read_io_word(addr + 1) << 8) | (debugger_read_io_byte(addr + 3) << 24);
+	} else {
+		val = debugger_read_io_word(addr) | (debugger_read_io_word(addr + 2) << 16);
+	}
+#ifdef ENABLE_DEBUG_IOPORT
+	if(--skip_debug_ioport == 0 && fp_debug_log != NULL) {
+		fprintf(fp_debug_log, "inl %04X, %08X\n", addr, val);
+	}
+#endif
+	return(val);
+}
 
 void write_io_byte(UINT32 addr, UINT8 val)
 #ifdef USE_DEBUGGER
@@ -23792,11 +23866,14 @@ void debugger_write_io_byte(UINT32 addr, UINT8 val)
 #endif
 {
 #ifdef ENABLE_DEBUG_IOPORT
-	if(fp_debug_log != NULL) {
+	if(skip_debug_ioport == 0 && fp_debug_log != NULL) {
 		if(!(use_service_thread && addr == 0xf7)) {
 			fprintf(fp_debug_log, "outb %04X, %02X\n", addr, val);
 		}
 	}
+#endif
+#ifdef SUPPORT_VDD
+	if(!vdd_io_write(addr, 1, val))
 #endif
 	switch(addr) {
 #ifdef SW1US_PATCH
@@ -23917,29 +23994,836 @@ void debugger_write_io_byte(UINT32 addr, UINT8 val)
 }
 
 void write_io_word(UINT32 addr, UINT16 val)
-{
-	write_io_byte(addr + 0, (val >> 0) & 0xff);
-	write_io_byte(addr + 1, (val >> 8) & 0xff);
-}
-
 #ifdef USE_DEBUGGER
-void debugger_write_io_word(UINT32 addr, UINT16 val)
 {
-	debugger_write_io_byte(addr + 0, (val >> 0) & 0xff);
-	debugger_write_io_byte(addr + 1, (val >> 8) & 0xff);
+	if(now_debugging) {
+		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
+			if(out_break_point.table[i].status == 1) {
+				if(addr >= out_break_point.table[i].addr && addr < out_break_point.table[i].addr + 2) {
+					out_break_point.hit = i + 1;
+					now_suspended = true;
+					break;
+				}
+			}
+		}
+	}
+	debugger_write_io_word(addr, val);
 }
+void debugger_write_io_word(UINT32 addr, UINT16 val)
 #endif
+{
+#ifdef ENABLE_DEBUG_IOPORT
+	if(skip_debug_ioport++ == 0 && fp_debug_log != NULL) {
+		if(!(use_service_thread && addr == 0xf7)) {
+			fprintf(fp_debug_log, "outw %04X, %04X\n", addr, val);
+		}
+	}
+#endif
+#ifdef SUPPORT_VDD
+	if(!vdd_io_write(addr, 2, val))
+#endif
+	{
+		debugger_write_io_byte(addr + 0, (val >> 0) & 0xff);
+		debugger_write_io_byte(addr + 1, (val >> 8) & 0xff);
+	}
+#ifdef ENABLE_DEBUG_IOPORT
+	skip_debug_ioport--;
+#endif
+}
 
 void write_io_dword(UINT32 addr, UINT32 val)
+#ifdef USE_DEBUGGER
 {
-	write_io_word(addr + 0, (val >>  0) & 0xffff);
-	write_io_word(addr + 2, (val >> 16) & 0xffff);
+	if(now_debugging) {
+		for(int i = 0; i < MAX_BREAK_POINTS; i++) {
+			if(out_break_point.table[i].status == 1) {
+				if(addr >= out_break_point.table[i].addr && addr < out_break_point.table[i].addr + 4) {
+					out_break_point.hit = i + 1;
+					now_suspended = true;
+					break;
+				}
+			}
+		}
+	}
+	debugger_write_io_dword(addr, val);
+}
+void debugger_write_io_dword(UINT32 addr, UINT32 val)
+#endif
+{
+#ifdef ENABLE_DEBUG_IOPORT
+	if(skip_debug_ioport++ == 0 && fp_debug_log != NULL) {
+		if(!(use_service_thread && addr == 0xf7)) {
+			fprintf(fp_debug_log, "outl %04X, %08X\n", addr, val);
+		}
+	}
+#endif
+	if(addr & 1) {
+		debugger_write_io_byte(addr + 0, (val >>  0) & 0x00ff);
+		debugger_write_io_word(addr + 1, (val >>  8) & 0xffff);
+		debugger_write_io_byte(addr + 3, (val >> 24) & 0x00ff);
+	} else {
+		debugger_write_io_word(addr + 0, (val >>  0) & 0xffff);
+		debugger_write_io_word(addr + 2, (val >> 16) & 0xffff);
+	}
+#ifdef ENABLE_DEBUG_IOPORT
+	skip_debug_ioport--;
+#endif
 }
 
-#ifdef USE_DEBUGGER
-void debugger_write_io_dword(UINT32 addr, UINT32 val)
+#ifdef SUPPORT_VDD
+void vdd_init()
 {
-	debugger_write_io_word(addr + 0, (val >>  0) & 0xffff);
-	debugger_write_io_word(addr + 2, (val >> 16) & 0xffff);
+/*
+	memset(vdd_modules, 0, sizeof(vdd_modules));
+	memset(vdd_io, 0, sizeof(vdd_io));
+	hNTVDM = NULL;
+*/
+}
+
+void vdd_finish()
+{
+	if (hNTVDM) {
+		for (int i = 0; i < 5; i++) {
+			if (vdd_io[i].hvdd) {
+				if (vdd_io[i].io_range) {
+					HeapFree(GetProcessHeap(), 0, vdd_io[i].io_range);
+					vdd_io[i].io_range = NULL;
+				}
+				vdd_io[i].hvdd = NULL;
+			}
+		}
+		for (int i = 0; i < 5; i++) {
+			if (vdd_modules[i].hvdd) {
+				FreeLibrary(vdd_modules[i].hvdd);
+				vdd_modules[i].hvdd = NULL;
+			}
+		}
+		FreeLibrary(hNTVDM);
+		hNTVDM = NULL;
+	}
+}
+
+void vdd_req(char func)
+{
+	/*
+	 * RegisterModule
+	 * DS:SI DLL
+	 * ES:DI init func name
+	 * DS:BX dispatch routine name
+	 */
+	if (func == 0x00) {
+		if (!hNTVDM) {
+			// preload ntvdm.exe
+			typedef void (WINAPI* SetFuncTableFunction)(PVDD_FUNC_TABLE ptr);
+			SetFuncTableFunction pfnSetFuncTable = NULL;
+			if ((hNTVDM = LoadLibraryA("ntvdm.exe")) != NULL) {
+				pfnSetFuncTable = reinterpret_cast<SetFuncTableFunction>(::GetProcAddress(hNTVDM, "SetFuncTable"));
+			}
+			if (!pfnSetFuncTable) {
+				if (hNTVDM) {
+					FreeLibrary(hNTVDM);
+					hNTVDM = NULL;
+				}
+				CPU_SET_C_FLAG(1);
+				CPU_AX = GetLastError();
+				return;
+			}
+			VDD_FUNC_TABLE func;
+			vdd_init_table(&func);
+			pfnSetFuncTable(&func);
+		}
+		LPCSTR dll = (LPCSTR)(mem + CPU_ESI + CPU_DS_BASE);
+		LPCSTR init = (LPCSTR)(mem + CPU_EDI + CPU_ES_BASE);
+		LPCSTR dispatch = (LPCSTR)(mem + CPU_EBX + CPU_DS_BASE);
+		CPU_EIP += 4;
+		HMODULE hVdd = LoadLibraryA(dll);
+		if (!hVdd) {
+			CPU_SET_C_FLAG(1);
+			CPU_AX = GetLastError();
+			return;
+		}
+		FARPROC pfnInit = GetProcAddress(hVdd, init);
+		FARPROC pfnDispatch = GetProcAddress(hVdd, dispatch);
+		int i;
+		for (i = 0; i < 5; i++) {
+			if (!vdd_modules[i].hvdd) {
+				vdd_modules[i].hvdd = hVdd;
+				vdd_modules[i].dispatch = pfnDispatch;
+				break;
+			}
+		}
+		if (i == 5) {
+			FreeLibrary(hVdd);
+			CPU_SET_C_FLAG(1);
+			CPU_AX = 4;
+			return;
+		}
+		CPU_SET_C_FLAG(0);
+		CPU_AX = i + 1;
+		if (pfnInit) {
+			pfnInit();
+		}
+	}
+	/* UnregisterModule */
+	else if (func == 0x01) {
+		WORD handle = CPU_AX - 1;
+		CPU_EIP += 4;
+		if ((handle > 5) || !vdd_modules[handle].hvdd) {
+			return; // ntvdm exits here
+		}
+		FreeLibrary(vdd_modules[handle].hvdd);
+		vdd_modules[handle].hvdd = 0;
+	}
+	/* DispatchCall */
+	else if (func == 0x02) {
+		WORD handle = CPU_AX - 1;
+		CPU_EIP += 4;
+		if ((handle > 5) || !vdd_modules[handle].hvdd) {
+			return; // ntvdm exits here
+		}
+		vdd_modules[handle].dispatch();
+	}
+}
+
+BYTE getAL()
+{
+	return CPU_AL;
+}
+
+BYTE getAH()
+{
+	return CPU_AH;
+}
+
+WORD getAX()
+{
+	return CPU_AX;
+}
+
+DWORD getEAX()
+{
+	return CPU_EAX;
+}
+
+BYTE getBL()
+{
+	return CPU_BL;
+}
+
+BYTE getBH()
+{
+	return CPU_BH;
+}
+
+WORD getBX()
+{
+	return CPU_BX;
+}
+
+DWORD getEBX()
+{
+	return CPU_EBX;
+}
+
+BYTE getCL()
+{
+	return CPU_CL;
+}
+
+BYTE getCH()
+{
+	return CPU_CH;
+}
+
+WORD getCX()
+{
+	return CPU_CX;
+}
+
+DWORD getECX()
+{
+	return CPU_ECX;
+}
+
+BYTE getDL()
+{
+	return CPU_DL;
+}
+
+BYTE getDH()
+{
+	return CPU_DH;
+}
+
+WORD getDX()
+{
+	return CPU_DX;
+}
+
+DWORD getEDX()
+{
+	return CPU_EDX;
+}
+
+WORD getSP()
+{
+	return CPU_SP;
+}
+
+DWORD getESP()
+{
+	return CPU_ESP;
+}
+
+WORD getBP()
+{
+	return CPU_BP;
+}
+
+DWORD getEBP()
+{
+	return CPU_EBP;
+}
+
+WORD getSI()
+{
+	return CPU_SI;
+}
+
+DWORD getESI()
+{
+	return CPU_ESI;
+}
+
+WORD getDI()
+{
+	return CPU_DI;
+}
+
+DWORD getEDI()
+{
+	return CPU_EDI;
+}
+
+void setAL(BYTE val)
+{
+	CPU_AL = val;
+}
+
+void setAH(BYTE val)
+{
+	CPU_AH = val;
+}
+
+void setAX(WORD val)
+{
+	CPU_AX = val;
+}
+
+void setEAX(DWORD val)
+{
+	CPU_EAX = val;
+}
+
+void setBL(BYTE val)
+{
+	CPU_BL = val;
+}
+
+void setBH(BYTE val)
+{
+	CPU_BH = val;
+}
+
+void setBX(WORD val)
+{
+	CPU_BX = val;
+}
+
+void setEBX(DWORD val)
+{
+	CPU_EBX = val;
+}
+
+void setCL(BYTE val)
+{
+	CPU_CL = val;
+}
+
+void setCH(BYTE val)
+{
+	CPU_CH = val;
+}
+
+void setCX(WORD val)
+{
+	CPU_CX = val;
+}
+
+void setECX(DWORD val)
+{
+	CPU_ECX = val;
+}
+
+void setDL(BYTE val)
+{
+	CPU_DL = val;
+}
+
+void setDH(BYTE val)
+{
+	CPU_DH = val;
+}
+
+void setDX(WORD val)
+{
+	CPU_DX = val;
+}
+
+void setEDX(DWORD val)
+{
+	CPU_EDX = val;
+}
+
+void setSP(WORD val)
+{
+	CPU_SP = val;
+}
+
+void setESP(DWORD val)
+{
+	CPU_ESP = val;
+}
+
+void setBP(WORD val)
+{
+	CPU_BP = val;
+}
+
+void setEBP(DWORD val)
+{
+	CPU_EBP = val;
+}
+
+void setSI(WORD val)
+{
+	CPU_SI = val;
+}
+
+void setESI(DWORD val)
+{
+	CPU_ESI = val;
+}
+
+void setDI(WORD val)
+{
+	CPU_DI = val;
+}
+
+void setEDI(DWORD val)
+{
+	CPU_EDI = val;
+}
+
+WORD getDS()
+{
+	return CPU_DS;
+}
+
+WORD getES()
+{
+	return CPU_ES;
+}
+
+WORD getCS()
+{
+	return CPU_CS;
+}
+
+WORD getSS()
+{
+	return CPU_SS;
+}
+
+WORD getFS()
+{
+	return CPU_FS;
+}
+
+WORD getGS()
+{
+	return CPU_GS;
+}
+
+void setDS(WORD val)
+{
+	CPU_DS = val;
+}
+
+void setES(WORD val)
+{
+	CPU_ES = val;
+}
+
+void setCS(WORD val)
+{
+	CPU_CS = val;
+}
+
+void setSS(WORD val)
+{
+	CPU_SS = val;
+}
+
+void setFS(WORD val)
+{
+	CPU_FS = val;
+}
+
+void setGS(WORD val)
+{
+	CPU_GS = val;
+}
+
+WORD getIP()
+{
+	return CPU_EIP;
+}
+
+DWORD getEIP()
+{
+	return CPU_EIP;
+}
+
+void setIP(WORD val)
+{
+	CPU_EIP = (CPU_EIP & ~0xffff) | val;
+}
+
+void setEIP(DWORD val)
+{
+	CPU_EIP = val;
+}
+
+DWORD getCF()
+{
+	return CPU_C_FLAG;
+}
+
+DWORD getPF()
+{
+	return CPU_P_FLAG;
+}
+
+DWORD getAF()
+{
+	return CPU_A_FLAG;
+}
+
+DWORD getZF()
+{
+	return CPU_Z_FLAG;
+}
+
+DWORD getSF()
+{
+	return CPU_S_FLAG;
+}
+
+DWORD getIF()
+{
+	return CPU_I_FLAG;
+}
+
+DWORD getDF()
+{
+	return CPU_D_FLAG;
+}
+
+DWORD getOF()
+{
+	return CPU_O_FLAG;
+}
+
+void setCF(DWORD val)
+{
+	CPU_SET_C_FLAG(val);
+}
+
+void setPF(DWORD val)
+{
+	CPU_SET_P_FLAG(val);
+}
+
+void setAF(DWORD val)
+{
+	CPU_SET_A_FLAG(val);
+}
+
+void setZF(DWORD val)
+{
+	CPU_SET_Z_FLAG(val);
+}
+
+void setSF(DWORD val)
+{
+	CPU_SET_S_FLAG(val);
+}
+
+void setIF(DWORD val)
+{
+	CPU_SET_I_FLAG(val);
+}
+
+void setDF(DWORD val)
+{
+	CPU_SET_D_FLAG(val);
+}
+
+void setOF(DWORD val)
+{
+	CPU_SET_O_FLAG(val);
+}
+
+DWORD getEFLAGS()
+{
+	return CPU_EFLAG;
+}
+
+void setEFLAGS(DWORD val)
+{
+	CPU_SET_EFLAG(val);
+}
+
+WORD getMSW()
+{
+	return CPU_CR0;
+}
+
+void setMSW(WORD val)
+{
+	CPU_SET_CR0((CPU_CR0 & ~0xffff) | val);
+}
+
+BOOL VDDInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange, PVDD_IO_HANDLERS IOhandler)
+{
+	int handle = (int)hvdd;
+	int found = -1;
+	for (int i = 0; i < 5; i++) {
+		if (!vdd_io[i].hvdd) {
+			found = i;
+		}
+		if (vdd_io[i].hvdd == hvdd) {
+			return FALSE;
+		}
+	}
+	if (found == -1 || !IOhandler->inb_handler || !IOhandler->outb_handler) {
+		return FALSE;
+	}
+	if ((vdd_io[found].io_range = (PVDD_IO_PORTRANGE)HeapAlloc(GetProcessHeap(), 0, cPortRange * sizeof(VDD_IO_PORTRANGE))) == NULL) {
+		return FALSE;
+	}
+	vdd_io[found].hvdd = hvdd;
+	memcpy(&vdd_io[found].io_funcs, IOhandler, sizeof(VDD_IO_HANDLERS));
+	vdd_io[found].io_range_len = cPortRange;
+	memcpy(&vdd_io[found].io_range, pPortRange, cPortRange * sizeof(VDD_IO_PORTRANGE));
+	return TRUE;
+}
+
+void VDDDeInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange)
+{
+	int handle = (int)hvdd;
+	int i;
+	for (i = 0; i < 5; i++) {
+		if (hvdd == vdd_io[i].hvdd) {
+			break;
+		}
+	}
+	if (i >= 5) {
+		return;
+	}
+	if (vdd_io[i].io_range) {
+		HeapFree(GetProcessHeap(), 0, vdd_io[i].io_range);
+		vdd_io[i].io_range = NULL;
+	}
+	vdd_io[i].hvdd = NULL;
+}
+
+BYTE *MGetVdmPointer(DWORD addr, DWORD size, BOOL protmode)
+{
+	DWORD offset = CPU_TRANS_CODE_ADDR(HIWORD(addr), LOWORD(addr));
+	
+	if (offset >= 0xfff80000) {
+		offset &= 0xfffff;
+	}
+	if (offset < MAX_MEM) {
+		return mem + offset;
+	}
+	return NULL;
+}
+
+BYTE *VdmMapFlat(WORD seg, DWORD ofs, VDM_MODE mode)
+{
+	DWORD offset = CPU_TRANS_CODE_ADDR(seg, ofs);
+	
+	if (offset >= 0xfff80000) {
+		offset &= 0xfffff;
+	}
+	if (offset < MAX_MEM) {
+		return mem + offset;
+	}
+	return NULL;
+}
+
+void VDDTerminateVDM(void)
+{
+	msdos_exit = 1;
+}
+
+BOOL vdd_io_read(int port, int size, void *val)
+{
+	for (int i = 0; i < 5; i++) {
+		if (vdd_io[i].hvdd) {
+			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
+				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+					switch (size) {
+						case 2:
+							if (vdd_io[i].io_funcs.inw_handler) {
+								vdd_io[i].io_funcs.inw_handler(port, (WORD *)val);
+							} else {
+								vdd_io[i].io_funcs.inb_handler(port, (BYTE *)val);
+								vdd_io[i].io_funcs.inb_handler(port + 1, ((BYTE *)val) + 1);
+							}
+							break;
+						case 1:
+							vdd_io[i].io_funcs.inb_handler(port, (BYTE *)val);
+							break;
+					}
+					return TRUE;
+				}
+			}
+		}
+	}
+	return FALSE;
+}
+
+BOOL vdd_io_write(int port, int size, WORD val)
+{
+	for (int i = 0; i < 5; i++) {
+		if (vdd_io[i].hvdd) {
+			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
+				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+					switch (size) {
+						case 2:
+							if (vdd_io[i].io_funcs.outw_handler) {
+								vdd_io[i].io_funcs.outw_handler(port, val);
+							} else {
+								vdd_io[i].io_funcs.outb_handler(port, val);
+								vdd_io[i].io_funcs.outb_handler(port + 1, val >> 8);
+							}
+							break;
+						case 1:
+							vdd_io[i].io_funcs.outb_handler(port, val);
+							break;
+					}
+					return TRUE;
+				}
+			}
+		}
+	}
+	return FALSE;
+}
+
+void vdd_init_table(PVDD_FUNC_TABLE ptr)
+{
+	ptr->getAL = getAL;
+	ptr->getAH = getAH;
+	ptr->getAX = getAX;
+	ptr->getEAX = getEAX;
+	ptr->getBL = getBL;
+	ptr->getBH = getBH;
+	ptr->getBX = getBX;
+	ptr->getEBX = getEBX;
+	ptr->getCL = getCL;
+	ptr->getCH = getCH;
+	ptr->getCX = getCX;
+	ptr->getECX = getECX;
+	ptr->getDL = getDL;
+	ptr->getDH = getDH;
+	ptr->getDX = getDX;
+	ptr->getEDX = getEDX;
+	ptr->getSP = getSP;
+	ptr->getESP = getESP;
+	ptr->getBP = getBP;
+	ptr->getEBP = getEBP;
+	ptr->getSI = getSI;
+	ptr->getESI = getESI;
+	ptr->getDI = getDI;
+	ptr->getEDI = getEDI;
+	ptr->setAL = setAL;
+	ptr->setAH = setAH;
+	ptr->setAX = setAX;
+	ptr->setEAX = setEAX;
+	ptr->setBL = setBL;
+	ptr->setBH = setBH;
+	ptr->setBX = setBX;
+	ptr->setEBX = setEBX;
+	ptr->setCL = setCL;
+	ptr->setCH = setCH;
+	ptr->setCX = setCX;
+	ptr->setECX = setECX;
+	ptr->setDL = setDL;
+	ptr->setDH = setDH;
+	ptr->setDX = setDX;
+	ptr->setEDX = setEDX;
+	ptr->setSP = setSP;
+	ptr->setESP = setESP;
+	ptr->setBP = setBP;
+	ptr->setEBP = setEBP;
+	ptr->setSI = setSI;
+	ptr->setESI = setESI;
+	ptr->setDI = setDI;
+	ptr->setEDI = setEDI;
+	ptr->getDS = getDS;
+	ptr->getES = getES;
+	ptr->getCS = getCS;
+	ptr->getSS = getSS;
+	ptr->getFS = getFS;
+	ptr->getGS = getGS;
+	ptr->setDS = setDS;
+	ptr->setES = setES;
+	ptr->setCS = setCS;
+	ptr->setSS = setSS;
+	ptr->setFS = setFS;
+	ptr->setGS = setGS;
+	ptr->getIP = getIP;
+	ptr->getEIP = getEIP;
+	ptr->setIP = setIP;
+	ptr->setEIP = setEIP;
+	ptr->getCF = getCF;
+	ptr->getPF = getPF;
+	ptr->getAF = getAF;
+	ptr->getZF = getZF;
+	ptr->getSF = getSF;
+	ptr->getIF = getIF;
+	ptr->getDF = getDF;
+	ptr->getOF = getOF;
+	ptr->setCF = setCF;
+	ptr->setPF = setPF;
+	ptr->setAF = setAF;
+	ptr->setZF = setZF;
+	ptr->setSF = setSF;
+	ptr->setIF = setIF;
+	ptr->setDF = setDF;
+	ptr->setOF = setOF;
+	ptr->getEFLAGS = getEFLAGS;
+	ptr->setEFLAGS = setEFLAGS;
+	ptr->getMSW = getMSW;
+	ptr->setMSW = setMSW;
+	ptr->VDDInstallIOHook = VDDInstallIOHook;
+	ptr->VDDDeInstallIOHook = VDDDeInstallIOHook;
+	ptr->MGetVdmPointer = MGetVdmPointer;
+	ptr->VdmMapFlat = VdmMapFlat;
+	ptr->VDDTerminateVDM = VDDTerminateVDM;
 }
 #endif
