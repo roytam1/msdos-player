@@ -268,21 +268,6 @@ int_break_point_t int_break_point = {0};
 
 FILE *fp_debugger = NULL;
 FILE *fi_debugger = NULL;
-
-// these read/write interfaces do not check break points,
-// debugger should use them not to hit any break point mistakely
-UINT8 debugger_read_byte(UINT32 byteaddress);
-UINT16 debugger_read_word(UINT32 byteaddress);
-UINT32 debugger_read_dword(UINT32 byteaddress);
-void debugger_write_byte(UINT32 byteaddress, UINT8 data);
-void debugger_write_word(UINT32 byteaddress, UINT16 data);
-void debugger_write_dword(UINT32 byteaddress, UINT32 data);
-UINT8 debugger_read_io_byte(UINT32 addr);
-UINT16 debugger_read_io_word(UINT32 addr);
-UINT32 debugger_read_io_dword(UINT32 addr);
-void debugger_write_io_byte(UINT32 addr, UINT8 val);
-void debugger_write_io_word(UINT32 addr, UINT16 val);
-void debugger_write_io_dword(UINT32 addr, UINT32 val);
 #endif
 
 /* ----------------------------------------------------------------------------
@@ -682,6 +667,10 @@ static void vga_write(UINT32 addr, UINT32 data, int size);
 #if defined(HAS_I286) || defined(HAS_I386)
 #define SUPPORT_XMS
 //#define SUPPORT_HMA
+#endif
+#if defined(HAS_I386) && (defined(__i386__) || defined(_M_IX86))
+// VDDs could work on x86-64 but none exist
+#define SUPPORT_VDD
 #endif
 //#define SUPPORT_MSCDEX
 
@@ -1200,14 +1189,20 @@ typedef struct {
 } dtainfo_t;
 
 #if 1
-#define TRUE_MAJOR_VERSION 7	// Windows 98 Second Edition
-#define TRUE_MINOR_VERSION 10
+// NTVDM
+#define TRUE_MAJOR_VERSION	5	// 5.50
+#define TRUE_MINOR_VERSION	50
+#define DOS_MAJOR_VERSION	5	// 5.00
+#define DOS_MINOR_VERSION	0
 #else
-#define TRUE_MAJOR_VERSION 5	// NTVDM
-#define TRUE_MINOR_VERSION 50
+// Windows 98
+#define TRUE_MAJOR_VERSION	7	// 7.10
+#define TRUE_MINOR_VERSION	10
+#define DOS_MAJOR_VERSION	7	// 7.10
+#define DOS_MINOR_VERSION	10
 #endif
-UINT8 dos_major_version = TRUE_MAJOR_VERSION;
-UINT8 dos_minor_version = TRUE_MINOR_VERSION;
+UINT8 dos_major_version = DOS_MAJOR_VERSION;
+UINT8 dos_minor_version = DOS_MINOR_VERSION;
 bool dos_version_specified = false;
 UINT8 win_major_version = 4;
 UINT8 win_minor_version = 10;
@@ -1390,6 +1385,37 @@ void msdos_xms_split_emb_handle(emb_handle_t *emb_handle, int size_kb);
 void msdos_xms_combine_emb_handles(emb_handle_t *emb_handle);
 emb_handle_t *msdos_xms_alloc_emb_handle(int size_kb);
 void msdos_xms_free_emb_handle(emb_handle_t *emb_handle);
+#endif
+
+// VDD
+
+#ifdef SUPPORT_VDD
+#include "ntvdm.h"
+
+typedef struct {
+	HMODULE hvdd;
+	FARPROC dispatch;
+} vdd_module_t;
+
+static vdd_module_t vdd_modules[5] = {0};
+
+typedef struct {
+	HANDLE hvdd;
+	VDD_IO_HANDLERS io_funcs;
+	WORD io_range_len;
+	PVDD_IO_PORTRANGE io_range;
+} vdd_io_t;
+
+static vdd_io_t vdd_io[5] = {0};
+
+HMODULE hNTVDM = NULL;
+
+void vdd_init();
+void vdd_finish();
+void vdd_req(char func);
+BOOL vdd_io_read(int port, int size, void *val);
+BOOL vdd_io_write(int port, int size, WORD val);
+void vdd_init_table(PVDD_FUNC_TABLE ptr);
 #endif
 
 /* ----------------------------------------------------------------------------
