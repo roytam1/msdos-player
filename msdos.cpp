@@ -24632,13 +24632,7 @@ PBYTE MGetVdmPointer(DWORD addr, DWORD size, BOOL protmode)
 	} else {
 		addr = (HIWORD(addr) << 4) + LOWORD(addr);
 	}
-	if (addr >= 0xfff80000) {
-		addr &= 0xfffff;
-	}
-	if (addr < MAX_MEM) {
-		return mem + addr;
-	}
-	return NULL;
+	return mem + addr;
 }
 
 PBYTE VdmMapFlat(WORD seg, DWORD ofs, VDM_MODE mode)
@@ -24652,13 +24646,7 @@ PBYTE VdmMapFlat(WORD seg, DWORD ofs, VDM_MODE mode)
 	} else {
 		addr = (seg << 4) + (ofs & 0xffff);
 	}
-	if (addr >= 0xfff80000) {
-		addr &= 0xfffff;
-	}
-	if (addr < MAX_MEM) {
-		return mem + addr;
-	}
-	return NULL;
+	return mem + addr;
 }
 
 BOOL VDDInstallMemoryHook(HANDLE hvdd, PVOID addr, DWORD size, PVDD_MEMORY_HANDLER handler)
@@ -24667,9 +24655,6 @@ BOOL VDDInstallMemoryHook(HANDLE hvdd, PVOID addr, DWORD size, PVDD_MEMORY_HANDL
 	DWORD first = offset >> 12;
 	DWORD last = (offset + size - 1) >> 12;
 	
-	if (offset < MAX_MEM) {
-		return FALSE;
-	}
 	if (!vdd_mem) {
 		vdd_mem = (vdd_mem_t *)calloc(MAX_MEM_PAGE, sizeof(vdd_mem_t));
 	}
