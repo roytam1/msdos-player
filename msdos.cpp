@@ -20696,7 +20696,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 #if 0
 	memset(mem, 0, sizeof(mem));
 #endif
-	mem[MAX_MEM + 1] = mem[MAX_MEM + 2] = mem[MAX_MEM + 3] = 0xff;
+	mem[MAX_MEM] = mem[MAX_MEM + 1] = mem[MAX_MEM + 2] = 0xff;
 	
 	// BIOS data area
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
