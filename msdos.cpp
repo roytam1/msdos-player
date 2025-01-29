@@ -24746,22 +24746,9 @@ BOOL VDDFreeMem(HANDLE hvdd, PVOID addr, DWORD size)
 
 void VDDSimulateInterrupt(int ms, BYTE line, int count)
 {
+	// protected mode programs need the isr bit set to avoid confusing irqs with faults in irq 8-f
 	if ((ms == 0 || ms == 1) && (line >= 0 && line < 8) && (count > 0)) {
-		UINT16 tmp_cs = CPU_CS;
-		UINT32 tmp_eip = CPU_EIP;
-		int vector = (pic[ms].icw2 & 0xf8) | line;
-		
-		for (int i = 0; i < count; i++) {
-			CPU_SOFT_INTERRUPT(vector);
-			
-			// run cpu until interrupt routine is done
-			while (!msdos_exit && !(tmp_cs == CPU_CS && tmp_eip == CPU_EIP)) {
-				try {
-					hardware_run_cpu();
-				} catch(...) {
-				}
-			}
-		}
+		pic_req(ms, line, 1);
 	}
 }
 
@@ -24786,7 +24773,7 @@ BOOL VDDInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange
 	vdd_io[found].hvdd = hvdd;
 	memcpy(&vdd_io[found].io_funcs, IOhandler, sizeof(VDD_IO_HANDLERS));
 	vdd_io[found].io_range_len = cPortRange;
-	memcpy(&vdd_io[found].io_range, pPortRange, cPortRange * sizeof(VDD_IO_PORTRANGE));
+	memcpy(vdd_io[found].io_range, pPortRange, cPortRange * sizeof(VDD_IO_PORTRANGE));
 	return TRUE;
 }
 
@@ -25010,7 +24997,7 @@ BOOL vdd_io_read(int port, int size, void *val)
 	for (int i = 0; i < 5; i++) {
 		if (vdd_io[i].hvdd) {
 			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
-				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+				if ((vdd_io[i].io_range[j].First <= port) && (vdd_io[i].io_range[j].Last >= port)) {
 					switch (size) {
 						case 2:
 							if (vdd_io[i].io_funcs.inw_handler) {
@@ -25037,7 +25024,7 @@ BOOL vdd_io_write(int port, int size, WORD val)
 	for (int i = 0; i < 5; i++) {
 		if (vdd_io[i].hvdd) {
 			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
-				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+				if ((vdd_io[i].io_range[j].First <= port) && (vdd_io[i].io_range[j].Last >= port)) {
 					switch (size) {
 						case 2:
 							if (vdd_io[i].io_funcs.outw_handler) {
