@@ -1134,10 +1134,101 @@ __declspec(dllexport) void WINAPI VDDTerminateVDM(void)
 
 __declspec(dllexport) BOOL WINAPI VDDInstallUserHook(HANDLE hvdd, PFNVDD_UCREATE ucr_Handler, PFNVDD_UTERMINATE uterm_Handler, PFNVDD_UBLOCK ublock_handler, PFNVDD_URESUME uresume_handler)
 {
-	return FALSE;
+	return func.VDDInstallUserHook(hvdd, ucr_Handler, uterm_Handler, ublock_handler, uresume_handler);
 }
 
 __declspec(dllexport) BOOL WINAPI VDDDeInstallUserHook(HANDLE hvdd)
 {
-	return FALSE;
+	return func.VDDDeInstallUserHook(hvdd);
+}
+
+enum btnmask
+{
+	kBtnOk = 1,
+	kBtnCancel = 2,
+	kBtnYes = 3,
+	kBtnNo = 4,
+	kBtnRetry = 5,
+	kBtnAbort = 6,
+	kBtnIgnore = 7,
+	kBtnClose = 8,
+	kBtnHelp = 9
+};
+
+__declspec(dllexport) DWORD WOWSysErrorBox(LPCSTR title, LPCSTR message, ULONG btn1, ULONG btn2, ULONG btn3)
+{
+	ULONG mbbtn = MB_DEFBUTTON1;
+	ULONG btn;
+	int ret;
+	
+	if(btn2 & 0x8000) {
+		mbbtn = MB_DEFBUTTON2;
+	} else if(btn3 & 0x8000) {
+		mbbtn = MB_DEFBUTTON3;
+	}
+	btn = (1 << (btn1 & 0xf)) | (1 << (btn2 & 0xf)) | (1 << (btn3 & 0xf));  // try to convert buttons into MB_*
+	
+	switch(btn)
+	{
+		case (1 << kBtnOk) | (1 << kBtnCancel):
+		case (1 << kBtnOk) | (1 << kBtnClose):
+			mbbtn |= MB_OKCANCEL;
+			break;
+		case (1 << kBtnAbort) | (1 << kBtnRetry) | (1 << kBtnIgnore):
+			mbbtn |= MB_ABORTRETRYIGNORE;
+			break;
+		case (1 << kBtnCancel) | (1 << kBtnRetry) | (1 << kBtnClose):
+			mbbtn |= MB_CANCELTRYCONTINUE;
+			break;
+		case (1 << kBtnYes) | (1 << kBtnNo):
+			mbbtn |= MB_YESNO;
+			break;
+		case (1 << kBtnYes) | (1 << kBtnNo) | (1 << kBtnCancel):
+		case (1 << kBtnYes) | (1 << kBtnNo) | (1 << kBtnClose):
+			mbbtn |= MB_YESNOCANCEL;
+			break;
+		case (1 << kBtnRetry) | (1 << kBtnCancel):
+		case (1 << kBtnRetry) | (1 << kBtnClose):
+			mbbtn |= MB_RETRYCANCEL;
+			break;
+		default:
+			mbbtn |= MB_OK;
+			break;
+	}
+	ret = MessageBoxA(NULL, title, message, mbbtn);
+	switch(ret) {
+		case IDOK:
+			ret = kBtnOk;
+			break;
+		case IDCANCEL:
+			ret = kBtnCancel; // kBtnClose
+			break;
+		case IDABORT:
+			ret = kBtnAbort;
+			break;
+		case IDRETRY:
+		case IDTRYAGAIN:
+			ret = kBtnRetry;
+			break;
+		case IDIGNORE:
+			ret = kBtnIgnore;
+			break;
+		case IDYES:
+			ret = kBtnYes;
+			break;
+		case IDNO:
+			ret = kBtnNo;
+			break;
+		case IDCONTINUE:
+			ret = kBtnClose;
+			break;
+	}
+	if((btn1 == ret) || ((btn1 == kBtnClose) && (ret == IDCANCEL))) {
+		return 1;
+	} else if((btn2 == ret) || ((btn2 == kBtnClose) && (ret == IDCANCEL))) {
+		return 2;
+	} else if((btn3 == ret) || ((btn3 == kBtnClose) && (ret == IDCANCEL))) {
+		return 3;
+	}
+	return 1;
 }

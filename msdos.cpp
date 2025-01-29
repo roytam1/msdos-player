@@ -665,7 +665,7 @@ UINT8 read_byte(UINT32 byteaddress)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM) {
 			return mem[byteaddress];
-		} else if(byteaddress >= 0xfff80000) {
+		} else if(byteaddress >= 0xffff8000) {
 			return mem[byteaddress & 0xfffff];
 #ifdef SUPPORT_VDD
 		} else if(vdd_mem) {
@@ -715,14 +715,14 @@ UINT16 read_word(UINT32 byteaddress)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM - 1) {
 			return *(UINT16 *)(mem + byteaddress);
+		} else if(byteaddress >= 0xffff8000) {
+			return *(UINT16 *)(mem + (byteaddress & 0xfffff));
 		} else if(byteaddress & 1) {
 			// if the bp hit above now_suspended will be true so it won't hit again in read_byte
 			UINT16 value;
 			value  = read_byte(byteaddress    );
 			value |= read_byte(byteaddress + 1) << 8;
 			return value;
-		} else if(byteaddress >= 0xfff80000) {
-			return *(UINT16 *)(mem + (byteaddress & 0xfffff));
 #ifdef SUPPORT_VDD
 		} else if(vdd_mem) {
 			// call VirtualAlloc automatically instead of page-fault handler
@@ -732,9 +732,6 @@ UINT16 read_word(UINT32 byteaddress)
 		}
 		return 0xffff;
 #else
-		if(byteaddress == MAX_MEM - 1) {
-			mem[MAX_MEM] = 0xff;
-		}
 		return *(UINT16 *)(mem + byteaddress);
 #endif
 	} else if(byteaddress & 1) {
@@ -771,6 +768,8 @@ UINT32 read_dword(UINT32 byteaddress)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM - 3) {
 			return *(UINT32 *)(mem + byteaddress);
+		} else if(byteaddress >= 0xffff8000) {
+			return *(UINT32 *)(mem + (byteaddress & 0xfffff));
 		} else if(byteaddress & 3) {
 			// if the bp hit above now_suspended will be true so it won't hit again in read_byte
 			UINT32 value;
@@ -783,8 +782,6 @@ UINT32 read_dword(UINT32 byteaddress)
 				value |= read_word(byteaddress + 2) << 16;
 			}
 			return value;
-		} else if(byteaddress >= 0xfff80000) {
-			return *(UINT32 *)(mem + (byteaddress & 0xfffff));
 #ifdef SUPPORT_VDD
 		} else if(vdd_mem) {
 			// call VirtualAlloc automatically instead of page-fault handler
@@ -794,9 +791,6 @@ UINT32 read_dword(UINT32 byteaddress)
 		}
 		return 0xffffffff;
 #else
-		if(byteaddress >= MAX_MEM - 3) {
-			mem[MAX_MEM] = mem[MAX_MEM + 1] = mem[MAX_MEM + 2] = 0xff;
-		}
 		return *(UINT32 *)(mem + byteaddress);
 #endif
 	} else if(byteaddress & 3) {
@@ -1066,6 +1060,8 @@ void write_byte(UINT32 byteaddress, UINT8 data)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM) {
 			mem[byteaddress] = data;
+		} else if(byteaddress >= 0xffff8000) {
+			// read only
 #ifdef SUPPORT_VDD
 		} else if(vdd_mem) {
 			// call VirtualAlloc automatically instead of page-fault handler
@@ -1116,6 +1112,8 @@ void write_word(UINT32 byteaddress, UINT16 data)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM - 1) {
 			*(UINT16 *)(mem + byteaddress) = data;
+		} else if(byteaddress >= 0xffff8000) {
+			// read only
 		} else if(byteaddress & 1) {
 			// if the bp hit above now_suspended will be true so it won't hit again in write_byte
 			write_byte(byteaddress    , (data     ) & 0xff);
@@ -1180,6 +1178,8 @@ void write_dword(UINT32 byteaddress, UINT32 data)
 #if defined(HAS_I386)
 		if(byteaddress < MAX_MEM - 3) {
 			*(UINT32 *)(mem + byteaddress) = data;
+		} else if(byteaddress >= 0xffff8000) {
+			// read only
 		} else if(byteaddress & 3) {
 			// if the bp hit above now_suspended will be true so it won't hit again in write_byte/word
 			if(byteaddress & 1) {
@@ -8561,6 +8561,14 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 		*(UINT16 *)(mem + (ss << 4) + sp) = 0;
 		CPU_JMP_FAR(cs, ip);
 		MySetConsoleTitleA(process->module_path);
+		
+#ifdef SUPPORT_VDD
+		for(int i = 0; i < 5; i++) {
+			if(vdd_modules[i].hvdd && vdd_modules[i].ucr_Handler) {
+				vdd_modules[i].ucr_Handler(psp_seg);
+			}
+		}
+#endif
 	} else if(al == 0x01) {
 		// copy ss:sp and cs:ip to param block
 		param->sp = sp;
@@ -8638,6 +8646,14 @@ void msdos_process_terminate(int psp_seg, int ret, int mem_free)
 	
 	current_psp = psp->parent_psp;
 	msdos_sda_update(current_psp);
+	
+#ifdef SUPPORT_VDD
+	for(int i = 0; i < 5; i++) {
+		if(vdd_modules[i].hvdd && vdd_modules[i].uterm_Handler) {
+			vdd_modules[i].uterm_Handler(psp_seg);
+		}
+	}
+#endif
 }
 
 // drive
@@ -20676,10 +20692,11 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	// init DTA info
 	msdos_dta_info_init();
 	
-#if 0
 	// init memory
+#if 0
 	memset(mem, 0, sizeof(mem));
 #endif
+	mem[MAX_MEM] = mem[MAX_MEM + 1] = mem[MAX_MEM + 2] = 0xff;
 	
 	// BIOS data area
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -24746,22 +24763,9 @@ BOOL VDDFreeMem(HANDLE hvdd, PVOID addr, DWORD size)
 
 void VDDSimulateInterrupt(int ms, BYTE line, int count)
 {
+	// protected mode programs need the isr bit set to avoid confusing irqs with faults in int 8-f
 	if ((ms == 0 || ms == 1) && (line >= 0 && line < 8) && (count > 0)) {
-		UINT16 tmp_cs = CPU_CS;
-		UINT32 tmp_eip = CPU_EIP;
-		int vector = (pic[ms].icw2 & 0xf8) | line;
-		
-		for (int i = 0; i < count; i++) {
-			CPU_SOFT_INTERRUPT(vector);
-			
-			// run cpu until interrupt routine is done
-			while (!msdos_exit && !(tmp_cs == CPU_CS && tmp_eip == CPU_EIP)) {
-				try {
-					hardware_run_cpu();
-				} catch(...) {
-				}
-			}
-		}
+		pic_req(ms, line, 1);
 	}
 }
 
@@ -24786,7 +24790,7 @@ BOOL VDDInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange
 	vdd_io[found].hvdd = hvdd;
 	memcpy(&vdd_io[found].io_funcs, IOhandler, sizeof(VDD_IO_HANDLERS));
 	vdd_io[found].io_range_len = cPortRange;
-	memcpy(&vdd_io[found].io_range, pPortRange, cPortRange * sizeof(VDD_IO_PORTRANGE));
+	memcpy(vdd_io[found].io_range, pPortRange, cPortRange * sizeof(VDD_IO_PORTRANGE));
 	return TRUE;
 }
 
@@ -25005,12 +25009,40 @@ void VDDTerminateVDM(void)
 	msdos_stat |= REQ_EXIT;
 }
 
+BOOL VDDInstallUserHook(HANDLE hvdd, PFNVDD_UCREATE ucr_Handler, PFNVDD_UTERMINATE uterm_Handler, PFNVDD_UBLOCK ublock_handler, PFNVDD_URESUME uresume_handler)
+{
+	for (int i = 0; i < 5; i++) {
+		if (vdd_modules[i].hvdd == hvdd) {
+			vdd_modules[i].ucr_Handler = ucr_Handler;
+			vdd_modules[i].uterm_Handler = uterm_Handler;
+			vdd_modules[i].ublock_handler = ublock_handler;
+			vdd_modules[i].uresume_handler = uresume_handler;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+BOOL VDDDeInstallUserHook(HANDLE hvdd)
+{
+	for (int i = 0; i < 5; i++) {
+		if (vdd_modules[i].hvdd == hvdd) {
+			vdd_modules[i].ucr_Handler = NULL;
+			vdd_modules[i].uterm_Handler = NULL;
+			vdd_modules[i].ublock_handler = NULL;
+			vdd_modules[i].uresume_handler = NULL;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 BOOL vdd_io_read(int port, int size, void *val)
 {
 	for (int i = 0; i < 5; i++) {
 		if (vdd_io[i].hvdd) {
 			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
-				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+				if ((vdd_io[i].io_range[j].First <= port) && (vdd_io[i].io_range[j].Last >= port)) {
 					switch (size) {
 						case 2:
 							if (vdd_io[i].io_funcs.inw_handler) {
@@ -25037,7 +25069,7 @@ BOOL vdd_io_write(int port, int size, WORD val)
 	for (int i = 0; i < 5; i++) {
 		if (vdd_io[i].hvdd) {
 			for (int j = 0; j < vdd_io[i].io_range_len; j++) {
-				if ((vdd_io[i].io_range[j].First >= port) && (vdd_io[i].io_range[j].Last <= port)) {
+				if ((vdd_io[i].io_range[j].First <= port) && (vdd_io[i].io_range[j].Last >= port)) {
 					switch (size) {
 						case 2:
 							if (vdd_io[i].io_funcs.outw_handler) {
@@ -25160,5 +25192,7 @@ void vdd_init_table(PVDD_FUNC_TABLE ptr)
 	ptr->VDDSetDMA = VDDSetDMA;
 	ptr->VDDSimulate16 = VDDSimulate16;
 	ptr->VDDTerminateVDM = VDDTerminateVDM;
+	ptr->VDDInstallUserHook = VDDInstallUserHook;
+	ptr->VDDDeInstallUserHook = VDDDeInstallUserHook;
 }
 #endif
