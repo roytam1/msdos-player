@@ -9503,6 +9503,7 @@ inline void pcbios_int_10h_12h()
 //			break;
 		}
 		mem[0x489] = (mem[0x489] & ~0x90) | modebits;
+		CPU_AL = 0x12; // success
 		break;
 	}
 }
