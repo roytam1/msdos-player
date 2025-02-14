@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								2/7/2025
+								2/12/2025
 
 ----- What's This
 
@@ -479,6 +479,11 @@ INT 10H		PC BIOS - Video
 	0DH	Read Graphics Pixel
 	0EH	Teletype Output
 	0FH	Get Current Video Mode
+	1001H	Set Overscan Register
+	1002H	Set All Palette Registers and Overscan Register
+	1003H	Toggle Intensity/Blinking Bit
+	1008H	Read Overscan Register
+	1009H	Read All Palette Registers and Overscan Register
 	1100H	Load User-Specified Patterns
 	1101H	Load ROM 8x14 Monochrome Patterns
 	1102H	Load ROM 8x8 Dbl-Dot Patterns
@@ -489,7 +494,8 @@ INT 10H		PC BIOS - Video
 	1114H	Load ROM 8x16 Character Set
 	1118H	Set V-TEXT Vertically Long Mode
 	1130H	Get Font Information
-	12H	Alternate Function Select (BL=10H)
+	12H	Alternate Function Select - Get EGA Info (BL=10H)
+	12H	Alternate Function Select - Select Vertical Resolution (BL=30H)
 	130*H	Write String
 	1310H	Read Characters And Standard Attributes
 	1311H	Read Characters And Extended Attributes
@@ -508,6 +514,7 @@ INT 10H		PC BIOS - Video
 	90H	Get Physical Workstation Display Mode
 	91H	Get Physical Workstation Adapter Type
 	EFH	Get Video Adapter Type And Mode (*1)
+	FAH	EGA Register Interface Library - Interrogate Driver
 	FEH	Get Shadow Buffer
 	FFH	Update Screen From Shadow Buffer
 
