@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								2/15/2025
+								2/16/2025
 
 ----- What's This
 
@@ -880,6 +880,9 @@ INT 2FH		Multiplex Interrupt
 	1600H	Windows - Windows Enhanced Mode Installation Check (*6)
 	1605H	Windows - Windows Enhanced Mode & 286 DOSX Init Broadcast
 	160AH	Windows - Identify Windows Version And Type (*6)
+	1611H	MS-DOS 7 kernel - Get Shell Parameter
+	1613H	MS-DOS 7 kernel - Get SYSTEM.DAT (Registry File) PathName
+	1614H	MS-DOS 7 kernel - Get SYSTEM.DAT (Registry File) PathName
 	1680H	Windows, DPMI - Release Current Virtual Machine Time-Slice
 	1683H	Windows 3+ - Get Current Virtual Machine ID
 	1689H	Windows 3+ - Kernel Idle Call
@@ -1226,6 +1229,11 @@ and some DOS info block improvements are based on DOSBox.
 INT 16H, AX=1300H (Set Double-Byte Character Set Shift Control)
 INT 16H, AX=1301H (Get Double-Byte Character Set Shift Control)
 and some FEP control improvements are based on DOSVAXJ3.
+
+INT 2FH AX=1611H (MS-DOS 7 kernel - Get Shell Parameter)
+INT 2FH AX=1613H (MS-DOS 7 kernel - Get SYSTEM.DAT PathName)
+INT 2FH AX=1614H (MS-DOS 7 kernel - Set SYSTEM.DAT PathName)
+are based on DOSBox-X.
 
 VDD are based on Mr.cracyc's fork and ReactOS.
 

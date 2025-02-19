@@ -16406,6 +16406,9 @@ inline void msdos_int_24h()
 		}
 	}
 	fprintf(stderr, "%c\n", key);
+	
+	// clear indos flag
+	((sda_t *)(mem + SDA_TOP))->indos_flag = 0;
 }
 
 inline void msdos_int_25h()
@@ -17078,6 +17081,8 @@ inline void msdos_int_2fh_15h()
 
 inline void msdos_int_2fh_16h()
 {
+	static char reg_file_path[MAX_PATH] = "C:\\WINDOWS\\SYSTEM.DAT";
+	
 	switch(CPU_AL) {
 	case 0x00:
 		if(no_windows) {
@@ -17113,10 +17118,7 @@ inline void msdos_int_2fh_16h()
 	case 0x0e:
 	case 0x0f:
 	case 0x10:
-	case 0x11:
 	case 0x12:
-	case 0x13:
-	case 0x14:
 	case 0x15:
 	case 0x81:
 	case 0x82:
@@ -17126,6 +17128,21 @@ inline void msdos_int_2fh_16h()
 	case 0x87:
 	case 0x8a:
 		// function not supported, do not clear AX
+		break;
+	case 0x11:
+		strcpy((char *)(mem + CPU_DS_BASE + CPU_DX), "COMMAND.COM");
+		strcpy((char *)(mem + CPU_DS_BASE + CPU_SI + 1), "/P");
+		mem[CPU_DS_BASE + CPU_SI] = (UINT8)strlen((char *)(mem + CPU_DS_BASE + CPU_SI + 1));
+		CPU_AX = CPU_BX = 0x0000;
+		break;
+	case 0x13:
+		strcpy((char *)(mem + CPU_ES_BASE + CPU_SI), reg_file_path);
+		CPU_AX = 0x0000;
+		CPU_CX = (UINT16)strlen(reg_file_path);
+		break;
+	case 0x14:
+		strcpy(reg_file_path, (char *)(mem + CPU_ES_BASE + CPU_SI));
+		CPU_AX = 0x0000;
 		break;
 	case 0x80:
 	case 0x89:
@@ -19909,6 +19926,20 @@ UINT16 msdos_get_equipment()
 	return(equip);
 }
 
+inline void msdos_inc_indos()
+{
+	if(((sda_t *)(mem + SDA_TOP))->indos_flag != 0xff) {
+		((sda_t *)(mem + SDA_TOP))->indos_flag++;
+	}
+}
+
+inline void msdos_dec_indos()
+{
+	if(((sda_t *)(mem + SDA_TOP))->indos_flag != 0) {
+		((sda_t *)(mem + SDA_TOP))->indos_flag--;
+	}
+}
+
 void msdos_syscall(unsigned num)
 {
 #ifdef ENABLE_DEBUG_SYSCALL
@@ -20278,6 +20309,7 @@ void msdos_syscall(unsigned num)
 //		}
 	case 0x21:
 		// MS-DOS System Call
+		msdos_inc_indos();
 		CPU_SET_C_FLAG(0);
 		try {
 			switch(num == 0x21 ? CPU_AH : CPU_CL) {
@@ -20471,6 +20503,7 @@ void msdos_syscall(unsigned num)
 			// raise int 23h
 			CPU_SOFT_INTERRUPT(0x23);
 		}
+		msdos_dec_indos();
 		break;
 	case 0x22:
 		fatalerror("int 22h (terminate address)\n");
@@ -20492,10 +20525,14 @@ void msdos_syscall(unsigned num)
 		msdos_int_24h();
 		break;
 	case 0x25:
+		msdos_inc_indos();
 		msdos_int_25h();
+		msdos_dec_indos();
 		break;
 	case 0x26:
+		msdos_inc_indos();
 		msdos_int_26h();
+		msdos_dec_indos();
 		break;
 	case 0x27:
 		try {
