@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								2/12/2025
+								2/15/2025
 
 ----- What's This
 
@@ -431,12 +431,13 @@ This emulator provides a very simple IBM PC-like hardware emulation:
 CPU 8086/286/386/486/Pentium4, RAM 1MB/16MB/32MB, LIM EMS 32MB (Hardware EMS),
 PC BIOS, DMA Controller (dummy), Interrupt Controller, System Timer,
 Parallel I/O (LPT1-3), Serial I/O (COM1-4), Real Time Clock + CMOS Memory,
-MDA/CGA CRTC + Status Register, Keyboard Controller (A20 Line Mask, CPU Reset),
-and 2-Button Mouse
+MDA/CGA CRTC + Status Register, EGA/VGA Registers (dummy),
+Keyboard Controller (A20 Line Mask, CPU Reset), and 2-Button Mouse
 
 NOTE:
 - Graphic/Sound hardwares are NOT implemented.
 - DMA Controller is implemented, but FDC and HDC are not connected.
+- EGA/VGA Registers are implemented, but they affects nothing to text screen.
 - Parallel I/O is implemented and the output data is written to the file
   "Year-Month-Day_Hour-Minute-Second.PRN" created in the TEMP directory.
 - Serial I/O is implemented and can be connected to the host's COM ports.
@@ -514,6 +515,12 @@ INT 10H		PC BIOS - Video
 	90H	Get Physical Workstation Display Mode
 	91H	Get Physical Workstation Adapter Type
 	EFH	Get Video Adapter Type And Mode (*1)
+	F0H	EGA Register Interface Library - Read One Register
+	F1H	EGA Register Interface Library - Write One Register
+	F2H	EGA Register Interface Library - Read Register Range
+	F3H	EGA Register Interface Library - Write Register Range
+	F4H	EGA Register Interface Library - Read Register Set
+	F5H	EGA Register Interface Library - Write Register Set
 	FAH	EGA Register Interface Library - Interrogate Driver
 	FEH	Get Shadow Buffer
 	FFH	Update Screen From Shadow Buffer
