@@ -1357,6 +1357,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\lang_cn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_tw.h"
+				>
+			</File>
+			<File
 				RelativePath=".\msdos.h"
 				>
 			</File>
