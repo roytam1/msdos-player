@@ -8369,14 +8369,7 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 	// check COMMAND.COM version
 	if(first_process && !dos_version_specified && _stricmp(msdos_file_name(path), "COMMAND.COM") == 0) {
 		for(int p = 0; p < length; p++) {
-			const BYTE msdos_version_kana1[] = {
-				0xCF,0xB2,0xB8,0xDB,0xBF,0xCC,0xC4,0x20,
-				0x4D,0x53,0x2D,0x44,0x4F,0x53,0x20,
-				0xCA,0xDE,0xB0,0xBC,0xDE,0xAE,0xDD,0x20
-			};
-			const BYTE msdos_version_kana2[] = {
-				0x4D,0x69,0x63,0x72,0x6F,0x73,0x6F,0x66,0x74,0x28,0x52,0x29,0x20,
-				0x4D,0x53,0x2D,0x44,0x4F,0x53,0x28,0x52,0x29,0x20,
+			const BYTE version_kana[] = {
 				0xCA,0xDE,0xB0,0xBC,0xDE,0xAE,0xDD,0x20
 			};
 			char *s = (char *)&file_buffer[p];
@@ -8393,23 +8386,33 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				dos_major_version = 8;
 				dos_minor_version = 0;
 				break;
-			} else if(strncmp(s, "Microsoft(R) MS-DOS(R) Ver", 26) == 0) {
-				s += 26;
-				while((*s++) != ' ');
-				found = true;
-			} else if(strncmp(s, "Microsoft(R) MS-DOS(R)  Ver", 27) == 0) {
-				s += 27;
-				while((*s++) != ' ');
-				found = true;
-			} else if(memcmp(s, msdos_version_kana1, sizeof(msdos_version_kana1)) == 0) {
-				s += sizeof(msdos_version_kana1);
-				found = true;
-			} else if(memcmp(s, msdos_version_kana2, sizeof(msdos_version_kana2)) == 0) {
-				s += sizeof(msdos_version_kana2);
-				found = true;
+			} else if(strncmp(s, "MS-DOS", 6) == 0) {
+				s += 6;
+				if(strncmp(s, "(R)", 3) == 0) {
+					s += 3;
+				}
+				if(strncmp(s, " ROM", 4) == 0) {
+					s += 4;
+				}
+				if((*s++) == ' ') {
+					if(*s == ' ') s++;
+					if(strncmp(s, "Ver", 3) == 0 || strncmp(s, "ver", 3) == 0) {
+						while((*s++) != ' ');
+						found = true;
+					} else if(memcmp(s, version_kana, sizeof(version_kana)) == 0) {
+						s += sizeof(version_kana);
+						found = true;
+					}
+				}
 			} else if(strncmp(s, "IBM Personal Computer DOS\r\nVer", 30) == 0) {
 				s += 30;
 				while((*s++) != ' ');
+				if(strncmp(s, "3.22", 4) == 0) {
+					// IBM JX PC-DOS Version 3.22
+					dos_major_version = 3;
+					dos_minor_version = 20;
+					break;
+				}
 				if(*s == 'H' || *s == 'J' || *s == 'K' || *s == 'P' || *s == 'T') s++;
 				found = true;
 			} else if(strncmp(s, "IBM DOS Ver", 11) == 0) {
@@ -8421,6 +8424,20 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				s += 10;
 				while((*s++) != ' ');
 				if(*s == 'H' || *s == 'J' || *s == 'K' || *s == 'P' || *s == 'T') s++;
+				found = true;
+			} else if(strncmp(s, "Japanese DOS Version ", 21) == 0) {
+				s += 21;
+				if(strncmp(s, "2.22", 4) == 0) {
+					// IBM JX PC-DOS Version 2.22
+					dos_major_version = 2;
+					dos_minor_version = 1;
+					break;
+				}
+				if(*s == 'J' || *s == 'K') s++;
+				found = true;
+			} else if(strncmp(s, "Kanji DOS Version ", 18) == 0) {
+				s += 18;
+				if(*s == 'J' || *s == 'K') s++;
 				found = true;
 			}
 			if(found && *s >= '1' && *s <= '9') {
