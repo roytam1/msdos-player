@@ -7284,7 +7284,7 @@ void msdos_env_set_argv(int env_seg, const char *argv)
 	*dst++ = 0;
 	
 	if(dst - env > env_size) {
-		fatalerror("not enough variable table size (size:%d written:%d)\n", env_size, (int)(dst - env));
+		fatalerror("not enough variable table size (size:%d written:%d)\nspecify /E:nnnn option to COMMAND.COM to make the table enlarge\n", env_size, (int)(dst - env));
 	}
 }
 
@@ -7368,7 +7368,7 @@ void msdos_env_set(int env_seg, const char *name, const char *value)
 	free(buf);
 	
 	if(dst - env > env_size) {
-		fatalerror("not enough variable table size (size:%d written:%d)\n", env_size, (int)(dst - env));
+		fatalerror("not enough variable table size (size:%d written:%d)\nspecify /E:nnnn option to COMMAND.COM to make the table enlarge\n", env_size, (int)(dst - env));
 	}
 }
 
@@ -21655,7 +21655,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	int env_size = (ofs + 1) + (2 + MAX_PATH + 1);
 	env_size = ((env_size + 15) >> 4) << 4;
 	if(env_size > 32768) {
-		fatalerror("too many environments\n");
+		fatalerror("too many environment variables (size:%d max:32768)\nspecify -e option to load minimum environment variables\n", env_size);
 	}
 	if(standard_env) {
 		env_size = max(env_size + 128, 1024);
@@ -24903,11 +24903,21 @@ void vdd_req(char func)
 		FARPROC pfnInit = GetProcAddress(hVdd, init);
 		FARPROC pfnDispatch = GetProcAddress(hVdd, dispatch);
 		int i;
+		// Try to locate the handle in case it was already added to the list during DLL initialisation
 		for (i = 0; i < 5; i++) {
-			if (!vdd_modules[i].hvdd) {
-				vdd_modules[i].hvdd = hVdd;
+			if (vdd_modules[i].hvdd == hVdd) {
 				vdd_modules[i].dispatch = pfnDispatch;
 				break;
+			}
+		}
+		// If not found, try to add it
+		if (i == 5) {
+			for (i = 0; i < 5; i++) {
+				if (!vdd_modules[i].hvdd) {
+					vdd_modules[i].hvdd = hVdd;
+					vdd_modules[i].dispatch = pfnDispatch;
+					break;
+				}
 			}
 		}
 		if (i == 5) {
@@ -25789,8 +25799,20 @@ void VDDTerminateVDM(void)
 
 BOOL VDDInstallUserHook(HANDLE hvdd, PFNVDD_UCREATE ucr_Handler, PFNVDD_UTERMINATE uterm_Handler, PFNVDD_UBLOCK ublock_handler, PFNVDD_URESUME uresume_handler)
 {
+	// Try to locate the handle
 	for (int i = 0; i < 5; i++) {
 		if (vdd_modules[i].hvdd == hvdd) {
+			vdd_modules[i].ucr_Handler = ucr_Handler;
+			vdd_modules[i].uterm_Handler = uterm_Handler;
+			vdd_modules[i].ublock_handler = ublock_handler;
+			vdd_modules[i].uresume_handler = uresume_handler;
+			return TRUE;
+		}
+	}
+	// If not found, try to add it
+	for (int i = 0; i < 5; i++) {
+		if (!vdd_modules[i].hvdd) {
+			vdd_modules[i].hvdd = (HMODULE)hvdd;
 			vdd_modules[i].ucr_Handler = ucr_Handler;
 			vdd_modules[i].uterm_Handler = uterm_Handler;
 			vdd_modules[i].ublock_handler = ublock_handler;
