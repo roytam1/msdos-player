@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								3/27/2025
+								5/2/2025
 
 ----- What's This
 
@@ -89,15 +89,13 @@ Or if you want to pretend that Windows is not running, specify the option '-d'.
 	> msdos -d command.com
 
 "Get Version Number" API (INT 21H, AH=30H) returns the version number 5.00.
+"Get True Version Number" API (INT 21H, AX=3306H) returns 5.50.
 If you want to change the version number, please specify the option '-vX.XX'.
 
 	> msdos -v3.30 command.com
 
 If '-vX.XX' option is missing and you start COMMAND.COM, MS-DOS Player tries
 to get DOS version from COMMAND.COM of MS-DOS, PC-DOS, or Windows 95/98/Me.
-
-NOTE: "Get True Version Number" API (INT 21H, AX=3306H) always returns
-the version number 5.50 and '-v' option is not affected.
 
 NOTE: Windows version 4.10 is same as Windows 98.
 NOTE: DOS version 5.00 and true DOS version 5.50 are same as NTVDM.
