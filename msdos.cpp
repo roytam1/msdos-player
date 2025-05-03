@@ -206,7 +206,7 @@ inline char *my_strupr(char *str)
 #else
 #define my_strchr(str, chr) strchr((str), (chr))
 #define my_strrchr(str, chr) strrchr((str), (chr))
-#defube my_strstr(str, search) strstr((str), (search))
+#define my_strstr(str, search) strstr((str), (search))
 #define my_strtok(tok, del) strtok((tok), (del))
 #define my_strtok_s(tok, del, context) strtok_s((tok), (del), (context))
 #define my_strupr(str) _strupr((str))
@@ -451,6 +451,8 @@ bool ansi_sys = true;
 bool box_line = false;
 bool hide_cursor = false;
 
+char devices_to_load[MAX_PATH]= {0};
+
 #define UPDATE_OPS 16384
 #define REQUEST_HARDWRE_UPDATE() { \
 	update_ops = UPDATE_OPS - 1; \
@@ -670,7 +672,7 @@ static BYTE *get_virtual_memory(UINT32 byteaddress)
 
 void vram_flush();
 
-UINT8 read_text_vram_byte(UINT32 offset)
+UINT32 read_text_vram_byte(UINT32 offset)
 {
 	short co_X;
 	COORD co;
@@ -686,14 +688,14 @@ UINT8 read_text_vram_byte(UINT32 offset)
 	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	if(offset & 1) {
 		ReadConsoleOutputAttribute(hStdout, scr_attr, scr_width, co, &num);
-		return (UINT8)(scr_attr[co_X] & 0xff);
+		return (UINT32)(scr_attr[co_X] & 0xff);
 	} else {
 		ReadConsoleOutputCharacterA(hStdout, scr_char, scr_width, co, &num);
-		return (UINT8)scr_char[co_X];
+		return (UINT32)scr_char[co_X];
 	}
 }
 
-UINT16 read_text_vram_word(UINT32 offset)
+UINT32 read_text_vram_word(UINT32 offset)
 {
 	short co_X;
 	COORD co;
@@ -717,7 +719,7 @@ UINT16 read_text_vram_word(UINT32 offset)
 }
 
 // read accessors
-UINT8 read_byte(UINT32 byteaddress)
+UINT32 read_byte(UINT32 byteaddress)
 {
 	check_bp(byteaddress, &rd_break_point, 1);
 	if(byteaddress < MEMORY_END) {
@@ -758,7 +760,7 @@ UINT8 read_byte(UINT32 byteaddress)
 	}
 }
 
-UINT16 read_word(UINT32 byteaddress)
+UINT32 read_word(UINT32 byteaddress)
 {
 	check_bp(byteaddress, &rd_break_point, 2);
 	if(byteaddress < MEMORY_END - 1) {
@@ -780,7 +782,7 @@ UINT16 read_word(UINT32 byteaddress)
 			return *(UINT16 *)(mem + (byteaddress & 0xfffff));
 		} else if(byteaddress & 1) {
 			// if the bp hit above now_suspended will be true so it won't hit again in read_byte
-			UINT16 value;
+			UINT32 value;
 			value  = read_byte(byteaddress    );
 			value |= read_byte(byteaddress + 1) << 8;
 			return value;
@@ -797,7 +799,7 @@ UINT16 read_word(UINT32 byteaddress)
 #endif
 	} else if(byteaddress & 1) {
 		// if the bp hit above now_suspended will be true so it won't hit again in read_byte
-		UINT16 value;
+		UINT32 value;
 		value  = read_byte(byteaddress    );
 		value |= read_byte(byteaddress + 1) << 8;
 		return value;
@@ -3582,7 +3584,7 @@ int main(int argc, char *argv[], char *envp[])
 		FILE* fp = fopen(full, "rb");
 		long offset = get_section_in_exec_file(fp, ".msdos");
 		if(offset != 0) {
-			UINT8 buffer[18];
+			UINT8 buffer[20];
 			fseek(fp, offset, SEEK_SET);
 			fread(buffer, sizeof(buffer), 1, fp);
 			
@@ -3612,8 +3614,8 @@ int main(int argc, char *argv[], char *envp[])
 				buf_height = buffer[4] | (buffer[5] << 8);
 			}
 			if(buffer[6] != 0) {
-				dos_major_version = buffer[6];
-				dos_minor_version = buffer[7];
+				dos_major_version = true_major_version = buffer[6];
+				dos_minor_version = true_minor_version = buffer[7];
 				dos_version_specified = true;
 			}
 			if(buffer[8] != 0) {
@@ -3626,8 +3628,14 @@ int main(int argc, char *argv[], char *envp[])
 			if(buffer[12] != 0) {
 				max_files = buffer[12];
 			}
-			int name_len = buffer[13];
-			int file_len = buffer[14] | (buffer[15] << 8) | (buffer[16] << 16) | (buffer[17] << 24);
+			int devices_len = buffer[13] | (buffer[14] << 8);
+			int name_len = buffer[15];
+			int file_len = buffer[16] | (buffer[17] << 8) | (buffer[18] << 16) | (buffer[19] << 24);
+			
+			// restore devices to load
+			if(devices_len) {
+				fread(devices_to_load, devices_len, 1, fp);
+			}
 			
 			// restore command file name
 			memset(dummy_argv_1, 0, sizeof(dummy_argv_1));
@@ -3754,8 +3762,8 @@ int main(int argc, char *argv[], char *envp[])
 			arg_offset++;
 		} else if(_strnicmp(argv[i], "-v", 2) == 0) {
 			if(strlen(argv[i]) >= 5 && IS_NUMERIC(argv[i][2]) && argv[i][3] == '.' && IS_NUMERIC(argv[i][4]) && (argv[i][5] == '\0' || IS_NUMERIC(argv[i][5]))) {
-				dos_major_version = argv[i][2] - '0';
-				dos_minor_version = (argv[i][4] - '0') * 10 + (argv[i][5] ? (argv[i][5] - '0') : 0);
+				dos_major_version = true_major_version = argv[i][2] - '0';
+				dos_minor_version = true_minor_version = (argv[i][4] - '0') * 10 + (argv[i][5] ? (argv[i][5] - '0') : 0);
 				dos_version_specified = true;
 			}
 			arg_offset++;
@@ -3774,6 +3782,9 @@ int main(int argc, char *argv[], char *envp[])
 			arg_offset++;
 		} else if(_strnicmp(argv[i], "-a", 2) == 0) {
 			ansi_sys = false;
+			arg_offset++;
+		} else if(_strnicmp(argv[i], "-ld", 3) == 0) {
+			strcpy_s(devices_to_load, MAX_PATH, &argv[i][3]);
 			arg_offset++;
 		} else if(_strnicmp(argv[i], "-l", 2) == 0) {
 			box_line = true;
@@ -3802,8 +3813,8 @@ int main(int argc, char *argv[], char *envp[])
 		fprintf(stderr,
 			"Usage:\n\n"
 			"MSDOS [-b] [-c[(new exec file)] [-p[P]]] [-d] [-e] [-fN] [-i] [-m] [-n[L[,C]]]\n"
-			"      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a] [-l] [-h]\n"
-			"      (command) [options]\n"
+			"      [-s[P1[,P2[,P3[,P4]]]]] [-sd] [-sc] [-vX.XX] [-wX.XX] [-x] [-a]\n"
+			"      [-ld[(drivers)]] [-l] [-h] (command) [options]\n"
 			"\n"
 			"\t-b\tstay busy during keyboard polling\n"
 #ifdef _WIN64
@@ -3831,6 +3842,7 @@ int main(int argc, char *argv[], char *envp[])
 			"\t-x\tenable LIM EMS\n"
 #endif
 			"\t-a\tdisable ANSI.SYS\n"
+			"\t-ld\tload device drivers\n"
 			"\t-l\tdraw box lines with ank characters\n"
 			"\t-h\tallow making cursor invisible\n"
 		);
@@ -3965,6 +3977,11 @@ int main(int argc, char *argv[], char *envp[])
 					fputc((code_page >> 8) & 0xff, fo);
 					fputc(max_files, fo);
 					
+					// store devices to load
+					int devices_len = (int)strlen(devices_to_load);
+					fputc((devices_len >>  0) & 0xff, fo);
+					fputc((devices_len >>  8) & 0xff, fo);
+					
 					// store command file info
 					GetFullPathNameA(argv[arg_offset + 1], MAX_PATH, full, &name);
 					int name_len = (int)strlen(name);
@@ -3976,6 +3993,10 @@ int main(int argc, char *argv[], char *envp[])
 					fputc((file_size >>  8) & 0xff, fo);
 					fputc((file_size >> 16) & 0xff, fo);
 					fputc((file_size >> 24) & 0xff, fo);
+					
+					if(devices_len) {
+						fwrite(devices_to_load, devices_len, 1, fo);
+					}
 					fwrite(name, name_len, 1, fo);
 					
 					// store command file
@@ -5577,6 +5598,10 @@ bool msdos_is_device_path(const char *path)
 			   _stricmp(name, "FP$ATOK6") == 0) {
 				return(true);
 			}
+			// search in the device_t linked list
+			if(dos_get_device(name).dw){
+				return(true);
+			}
 		}
 	}
 	return(false);
@@ -5979,6 +6004,9 @@ int msdos_open_device(const char *path, int oflag, int *sio_port, int *lpt_port)
 		msdos_set_comm_params(*sio_port, path);
 	} else if((*lpt_port = msdos_is_prn_path(path)) != 0) {
 		fd = msdos_open("NUL", oflag);
+	} else if(dos_get_device(path).dw) {
+		// create a temporary file to get a valid file descriptor for the device
+		fd = _open(path, _O_CREAT | _O_TEMPORARY, _S_IREAD | _S_IWRITE);
 	} else if(msdos_is_device_path(path)) {
 		fd = msdos_open("NUL", oflag);
 //	} else if(oflag & _O_CREAT) {
@@ -5991,6 +6019,9 @@ int msdos_open_device(const char *path, int oflag, int *sio_port, int *lpt_port)
 
 UINT16 msdos_device_info(const char *path)
 {
+	PAIR32 device;
+	device_t *device_header;
+	
 	if(!strnicmp(path, "\\DEV\\", 5)) {
 		path += 5;
 	}
@@ -6015,6 +6046,12 @@ UINT16 msdos_device_info(const char *path)
 //			return(0xc080);
 			return(0x0080);
 		}
+		// search in the device_t linked list
+		device = dos_get_device(path);
+		if(device.dw){
+			device_header = (device_t*)FAR_POINTER(device);
+			return(device_header->attributes);
+		}
 		return(0x8084);
 	} else {
 		return(msdos_drive_number(path));
@@ -6026,7 +6063,7 @@ void msdos_file_handler_open(int fd, const char *path, int atty, int mode, UINT1
 	static int id = 0;
 	char full[MAX_PATH], *name;
 	
-	if(GetFullPathNameA(path, MAX_PATH, full, &name) != 0) {
+	if(GetFullPathNameA(path, MAX_PATH, full, &name) != 0 && !(info & DOS_DEVATTR_IOCTL)) {
 		strcpy(file_handler[fd].path, full);
 	} else {
 		strcpy(file_handler[fd].path, path);
@@ -7645,6 +7682,7 @@ psp_t *msdos_psp_create(int psp_seg, UINT16 mcb_seg, UINT16 parent_seg, UINT16 e
 	} else {
 		psp_t *parent_psp = (psp_t *)(mem + (parent_seg << 4));
 		memcpy(psp->file_table, parent_psp->file_table, 20);
+		psp->interim_console_flag = parent_psp->interim_console_flag;
 		psp->dos_major_version = parent_psp->dos_major_version;
 		psp->dos_minor_version = parent_psp->dos_minor_version;
 	}
@@ -8418,16 +8456,16 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 			char *s = (char *)&file_buffer[p];
 			bool found = false;
 			if(strncmp(s, "Microsoft(R) Windows 95", 23) == 0) {
-				parent_psp->dos_major_version = 7;
-				parent_psp->dos_minor_version = 0;
+				dos_major_version = true_major_version = 7;
+				dos_minor_version = true_minor_version = 0;
 				break;
 			} else if(strncmp(s, "Microsoft(R) Windows 98", 23) == 0) {
-				parent_psp->dos_major_version = 7;
-				parent_psp->dos_minor_version = 10;
+				dos_major_version = true_major_version = 7;
+				dos_minor_version = true_minor_version = 10;
 				break;
 			} else if(strncmp(s, "Microsoft(R) Windows Millennium", 31) == 0) {
-				parent_psp->dos_major_version = 8;
-				parent_psp->dos_minor_version = 0;
+				dos_major_version = true_major_version = 8;
+				dos_minor_version = true_minor_version = 0;
 				break;
 			} else if(strncmp(s, "MS-DOS", 6) == 0) {
 				s += 6;
@@ -8448,8 +8486,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 					}
 					if(found && strncmp(s, "6.21", 4) == 0) {
 						// MS-DOS Version 6.21
-						parent_psp->dos_major_version = 6;
-						parent_psp->dos_minor_version = 20;
+						dos_major_version = true_major_version = 6;
+						dos_minor_version = true_minor_version = 20;
 						break;
 					}
 				}
@@ -8458,8 +8496,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				while((*s++) != ' ');
 				if(strncmp(s, "3.22", 4) == 0) {
 					// IBM JX PC-DOS Version 3.22
-					parent_psp->dos_major_version = 3;
-					parent_psp->dos_minor_version = 20;
+					dos_major_version = true_major_version = 3;
+					dos_minor_version = true_minor_version = 20;
 					break;
 				}
 				if(*s == 'H' || *s == 'J' || *s == 'K' || *s == 'P' || *s == 'T') s++;
@@ -8475,8 +8513,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				if(*s == 'H' || *s == 'J' || *s == 'K' || *s == 'P' || *s == 'T') s++;
 				if(strncmp(s, "6.10", 4) == 0) {
 					// PC-DOS Version 6.10
-					parent_psp->dos_major_version = 6;
-					parent_psp->dos_minor_version = 0;
+					dos_major_version = true_major_version = 6;
+					dos_minor_version = true_minor_version = 0;
 					break;
 				}
 				found = true;
@@ -8484,8 +8522,8 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				s += 21;
 				if(strncmp(s, "2.22", 4) == 0) {
 					// IBM JX PC-DOS Version 2.22
-					parent_psp->dos_major_version = 2;
-					parent_psp->dos_minor_version = 1;
+					dos_major_version = true_major_version = 2;
+					dos_minor_version = true_minor_version = 1;
 					break;
 				}
 				if(*s == 'J' || *s == 'K') s++;
@@ -8496,23 +8534,27 @@ int msdos_process_exec(const char *cmd, param_block_t *param, UINT8 al, bool fir
 				found = true;
 			}
 			if(found && *s >= '1' && *s <= '9') {
-				parent_psp->dos_major_version = (*s++) - '0';
-				parent_psp->dos_minor_version = 0;
+				dos_major_version = (*s++) - '0';
+				dos_minor_version = 0;
 				if(*s++ == '.') {
 					if(*s >= '0' && *s <= '9') {
-						parent_psp->dos_minor_version = ((*s++) - '0') * 10;
+						dos_minor_version = ((*s++) - '0') * 10;
 						if(*s >= '0' && *s <= '9') {
-							parent_psp->dos_minor_version += *s - '0';
+							dos_minor_version += *s - '0';
 						}
 					}
 				}
 				// 4.01 -> 4.00
-				if(parent_psp->dos_major_version == 4 && parent_psp->dos_minor_version == 1) {
-					parent_psp->dos_minor_version = 0;
+				if(dos_major_version == 4 && dos_minor_version == 1) {
+					dos_minor_version = 0;
 				}
+				true_major_version = dos_major_version;
+				true_minor_version = dos_minor_version;
 				break;
 			}
 		}
+		parent_psp->dos_major_version = dos_major_version;
+		parent_psp->dos_minor_version = dos_minor_version;
 	}
 	
 	// check if this is Win32 program
@@ -13464,8 +13506,8 @@ inline void msdos_int_21h_33h()
 		break;
 	case 0x06:
 		// True MS-DOS version
-		CPU_BL = TRUE_MAJOR_VERSION;
-		CPU_BH = TRUE_MINOR_VERSION;
+		CPU_BL = true_major_version;
+		CPU_BH = true_minor_version;
 		CPU_DL = 0;
 #ifdef SUPPORT_HMA
 		CPU_DH = 0x00;
@@ -14220,6 +14262,7 @@ inline void msdos_int_21h_44h()
 	process_t *process;
 	int fd = 0, drv = 0;
 	CPINFO info;
+	PAIR32 device;
 	
 	switch(CPU_AL) {
 	case 0x00:
@@ -14360,9 +14403,28 @@ inline void msdos_int_21h_44h()
 		}
 		break;
 	case 0x03: // Write To Character Device Control Channel
-//		CPU_AX = 0x05;
-//		CPU_SET_C_FLAG(1);
-		CPU_AX = 0x00; // success
+		// if installed device, send driver request
+		device = dos_get_device(file_handler[fd].path);
+		if(device.dw && (file_handler[fd].info & DOS_DEVATTR_IOCTL)){
+			PAIR32 buffer;
+			WORD length = CPU_CX;
+			buffer.w.h = CPU_DS;
+			buffer.w.l = CPU_DX;
+			WORD status = DosDriverRequest(device, buffer, &length, DOS_DEVCMD_IOCTL_WRITE);
+			if(status & DOS_DEVSTAT_ERROR){
+				CPU_AX = status & 0xff;
+				CPU_SET_C_FLAG(1);
+			}
+			else{
+				CPU_AX = length;
+			}
+		}
+		else{
+			// if dummy device, return success
+//			CPU_AX = 0x05;
+//			CPU_SET_C_FLAG(1);
+			CPU_AX = 0x00; // success
+		}
 		break;
 	case 0x04: // Read From Block Device Control Channel
 	case 0x05: // Write To Block Device Control Channel
@@ -17254,10 +17316,10 @@ inline void msdos_int_2fh_12h()
 			((psp_t *)(mem + (current_psp << 4)))->dos_major_version = CPU_DL;
 			((psp_t *)(mem + (current_psp << 4)))->dos_minor_version = CPU_DH;
 		} else {
-//			((psp_t *)(mem + (current_psp << 4)))->dos_major_version = TRUE_MAJOR_VERSION;
-//			((psp_t *)(mem + (current_psp << 4)))->dos_minor_version = TRUE_MINOR_VERSION;
-			((psp_t *)(mem + (current_psp << 4)))->dos_major_version = DOS_MAJOR_VERSION;
-			((psp_t *)(mem + (current_psp << 4)))->dos_minor_version = DOS_MINOR_VERSION;
+//			((psp_t *)(mem + (current_psp << 4)))->dos_major_version = true_major_version;
+//			((psp_t *)(mem + (current_psp << 4)))->dos_minor_version = true_minor_version;
+			((psp_t *)(mem + (current_psp << 4)))->dos_major_version = dos_major_version;
+			((psp_t *)(mem + (current_psp << 4)))->dos_minor_version = dos_minor_version;
 		}
 		break;
 //	case 0x30: // Windows95 - Find SFT Entry in Internal File Tables
@@ -22131,6 +22193,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	// NLS stuff
 	msdos_nls_tables_init();
 	
+	// load device drivers specified with -ld
+	load_devices(devices_to_load, env_seg);
+	
 	// execute command
 	try {
 		if(msdos_process_exec(argv[0], param, 0, true)) {
@@ -26082,3 +26147,333 @@ void vdd_init_table(PVDD_FUNC_TABLE ptr)
 	ptr->VDDDeInstallUserHook = VDDDeInstallUserHook;
 }
 #endif
+
+// Load device drivers from a list delimited by ";"
+void load_devices(char *device_list, int env_seg)
+{
+	char *token;
+	DWORD dwAttrib;
+
+	// Parse device_list
+	if(device_list && device_list[0] != '\0'){
+		token = my_strtok(device_list, ";");
+		while(token) {
+			// Check if valid file path		
+			dwAttrib = GetFileAttributesA(token);
+			if((dwAttrib != INVALID_FILE_ATTRIBUTES && 
+				!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY))){
+				// Handle .sys files only
+				if(check_file_extension(token, ".SYS"))
+				{
+					DosLoadDriver(token, env_seg);
+				}
+			}
+			token = my_strtok(NULL, ";");
+		}
+	}
+}
+
+// Load a .sys file into memory and install it
+DWORD DosLoadDriver(LPCSTR DriverFile, int env_seg)
+{
+	DWORD Result = ERROR_SUCCESS;
+	char DriveFilePath[MAX_PATH];
+	HANDLE FileHandle = INVALID_HANDLE_VALUE, FileMapping = NULL;
+	LPBYTE Address = NULL;
+	PAIR32 Driver;
+	device_t *DriverHeader;
+	WORD seg = 0;
+	DWORD FileSize;
+	DOS_INIT_REQUEST Request;
+	sda_t *sda = (sda_t *)(mem + SDA_TOP);
+	mcb_t *mcb_driver, *mcb_driver_config;
+	const char *tmp;
+
+	strcpy(DriveFilePath, DriverFile);
+	if(_access(DriveFilePath, 0) != 0 && my_strchr(DriverFile, ':') == NULL && my_strchr(DriverFile, '\\') == NULL) {
+		// Search path in parent environments
+		const char *env = msdos_env_get(env_seg, "PATH");
+		char token[MAX_PATH];
+		while(env != NULL && *env != '\0') {
+			if((tmp = my_strchr(env, ';')) != NULL) {
+				int len = tmp - env;
+				memcpy(token, env, len);
+				token[len] = '\0';
+				env = tmp + 1;
+			} else {
+				strcpy(token, env);
+				env += strlen(env);
+			}
+			if(token[0] != '\0') {
+				strcpy(DriveFilePath, msdos_combine_path(token, DriverFile));
+				if(_access(DriveFilePath, 0) == 0) {
+					break;
+				}
+			}
+		}
+	}
+
+	/* Open a handle to the driver file */
+	FileHandle = CreateFileA(DriveFilePath,
+	                         GENERIC_READ,
+	                         FILE_SHARE_READ,
+	                         NULL,
+	                         OPEN_EXISTING,
+	                         FILE_ATTRIBUTE_NORMAL,
+	                         NULL);
+	if (FileHandle == INVALID_HANDLE_VALUE)
+	{
+		Result = GetLastError();
+		goto Cleanup;
+	}
+
+	/* Get the file size */
+	FileSize = GetFileSize(FileHandle, NULL);
+
+	/* Allocate DOS memory for the driver. Add one paragraph for driver config MCB and one more for rounding paragraph. */
+	if((seg = msdos_mem_alloc(first_mcb, (FileSize >> 4) + 2)) == -1)
+	{
+		Result = sda->extended_error_code;
+		goto Cleanup;
+	}
+
+	/* Set the MCB so MEM.exe will show the driver */
+	mcb_driver = (mcb_t *)(mem + ((seg - 1) << 4));
+	mcb_driver->psp = PSP_SYSTEM;
+	mcb_driver->prog_name[0] = 'S';
+	mcb_driver->prog_name[1] = 'D';
+	mcb_driver->prog_name[2] = '\0';
+
+	/* Add Driver Config subsequent MCB */
+	mcb_driver_config = msdos_mcb_create(seg, 'D', seg + 1, mcb_driver->paragraphs - 1);
+	tmp = msdos_file_name(DriverFile);
+	for(int i = 0; i < 8; i++) {
+		if(tmp[i] == '.') {
+			mcb_driver_config->prog_name[i] = '\0';
+			break;
+		} else if(i < 7 && msdos_lead_byte_check(tmp[i])) {
+			mcb_driver_config->prog_name[i] = tmp[i];
+			i++;
+			mcb_driver_config->prog_name[i] = tmp[i];
+		} else if(tmp[i] >= 'a' && tmp[i] <= 'z') {
+			mcb_driver_config->prog_name[i] = tmp[i] - 'a' + 'A';
+		} else {
+			mcb_driver_config->prog_name[i] = tmp[i];
+		}
+	}
+	seg++;
+
+	/* Create a mapping object for the file */
+	FileMapping = CreateFileMappingA(FileHandle,
+	                                NULL,
+	                                PAGE_READONLY,
+	                                0,
+	                                0,
+	                                NULL);
+	if (FileMapping == NULL)
+	{
+		Result = GetLastError();
+		goto Cleanup;
+	}
+
+	/* Map the file into memory */
+	Address = (LPBYTE)MapViewOfFile(FileMapping, FILE_MAP_READ, 0, 0, 0);
+	if (Address == NULL)
+	{
+		Result = GetLastError();
+		goto Cleanup;
+	}
+
+	/* Copy the entire file to the DOS memory */
+	Driver.w.l = 0;
+	Driver.w.h = seg;
+	DriverHeader = (device_t*)FAR_POINTER(Driver);
+	memcpy(DriverHeader, Address, FileSize);
+
+	/* Loop through all the drivers in this file */
+	while (TRUE)
+	{
+		if (DriverHeader->attributes & DOS_DEVATTR_CHARACTER)
+		{
+			/* Send the driver an init request */
+			memset(&Request, 0, sizeof(Request));
+			Request.Header.RequestLength = sizeof(DOS_INIT_REQUEST);
+			Request.Header.CommandCode = DOS_DEVCMD_INIT;
+			DosCallDriver(Driver, &Request.Header);
+
+			/* If init was successful, link the driver block */
+			if (!(Request.Header.Status & DOS_DEVSTAT_ERROR))
+			{
+				DosAddDriver(Driver);
+			}
+			else
+			{
+			fprintf(stderr, "Error loading driver at %04X:%04X: "
+					"Initialization routine returned error %u.\n",
+					Driver.w.h,
+					Driver.w.l,
+					Request.Header.Status & 0x7F);
+			}
+		}
+		else
+		{
+			fprintf(stderr, "Error loading driver at %04X:%04X: "
+				"Block device drivers are not supported.\n",
+				Driver.w.h,
+				Driver.w.l);
+		}
+
+		/* Check if this .sys file has more drivers to load */
+		if (DriverHeader->next_driver.w.l == 0xFFFF) break;
+		Driver = DriverHeader->next_driver;
+		DriverHeader = (device_t*)FAR_POINTER(Driver);
+	}
+
+Cleanup:
+	if (Result != ERROR_SUCCESS)
+	{
+		/* It was not successful, cleanup the DOS memory */
+		if (seg) msdos_mem_free(seg, false);
+	}
+
+	/* Unmap the file */
+	if (Address != NULL) UnmapViewOfFile(Address);
+
+	/* Close the file mapping object */
+	if (FileMapping != NULL) CloseHandle(FileMapping);
+
+	/* Close the file handle */
+	if (FileHandle != INVALID_HANDLE_VALUE) CloseHandle(FileHandle);
+
+	return Result;
+}
+
+// Add a driver to the device_t linked list
+static VOID DosAddDriver(PAIR32 Driver)
+{
+	dos_info_t *dos_info = (dos_info_t *)(mem + DOS_INFO_TOP);
+	device_t *LastDriver = (device_t *)&dos_info->nul_device;
+
+	/* Find the last driver in the list */
+	while (LastDriver->next_driver.w.l != 0xFFFF)
+	{
+		LastDriver = (device_t *)FAR_POINTER(LastDriver->next_driver);
+	}
+
+	/* Add the new driver to the list */
+	LastDriver->next_driver = Driver;
+	LastDriver = (device_t *)FAR_POINTER(Driver);
+}
+
+// Create a request structure and call the driver
+static inline WORD DosDriverRequest(PAIR32 Driver, PAIR32 Buffer, PWORD Length, BYTE CommandCode)
+{
+	DOS_RW_REQUEST Request;
+	Request.Header.RequestLength = sizeof(DOS_RW_REQUEST);
+	Request.Header.CommandCode = CommandCode;
+	Request.BufferPointer = Buffer;
+	Request.Length = *Length;
+
+	DosCallDriver(Driver, &Request.Header);
+
+	*Length = Request.Length;
+	return Request.Header.Status;
+}
+
+// Call a device driver using a request structure
+static VOID DosCallDriver(PAIR32 Driver, DOS_REQUEST_HEADER *Request)
+{
+	device_t *DriverBlock = (device_t*)FAR_POINTER(Driver);
+	sda_t *sda = (sda_t *)(mem + SDA_TOP);
+
+	UINT16 tmp_AX = CPU_AX;
+	UINT16 tmp_CX = CPU_CX;
+	UINT16 tmp_DX = CPU_DX;
+	UINT16 tmp_BX = CPU_BX;
+	UINT16 tmp_BP = CPU_BP;
+	UINT16 tmp_SI = CPU_SI;
+	UINT16 tmp_DI = CPU_DI;
+	UINT16 tmp_DS = CPU_DS;
+	UINT16 tmp_ES = CPU_ES;
+
+	// Copy the request structure to the sda
+	memmove(&sda->Request, Request, Request->RequestLength);
+
+	// Set ES:BX to the location of the request 
+	CPU_LOAD_SREG(CPU_ES_INDEX, SDA_TOP >> 4);
+	CPU_BX = offsetof(sda_t, Request);
+
+	// Call the strategy routine, and then the interrupt routine
+	RunCallback16(Driver.w.h, DriverBlock->strategy);
+	RunCallback16(Driver.w.h, DriverBlock->interrupt);
+ 
+	// Get the request structure from ES:BX
+	memmove(Request, &sda->Request, Request->RequestLength);
+ 
+	// Restore the registers
+	CPU_AX = tmp_AX;
+	CPU_CX = tmp_CX;
+	CPU_DX = tmp_DX;
+	CPU_BX = tmp_BX;
+	CPU_BP = tmp_BP;
+	CPU_SI = tmp_SI;
+	CPU_DI = tmp_DI;
+	CPU_LOAD_SREG(CPU_DS_INDEX, tmp_DS);
+	CPU_LOAD_SREG(CPU_ES_INDEX, tmp_ES);
+}
+
+void RunCallback16(UINT16 segment, UINT16 offset)
+{
+	UINT16 tmp_cs = CPU_CS;
+	UINT32 tmp_eip = CPU_EIP;
+
+	// Set instruction pointer
+	CPU_CALL_FAR(segment, offset);
+	// Run cpu until routine is done
+	while(!msdos_exit && !(tmp_cs == CPU_CS && tmp_eip == CPU_EIP)) {
+		try {
+			hardware_run_cpu();
+		} catch(...) {
+		}
+	}
+}
+
+// Get the PAIR32 address of a device by name
+PAIR32 dos_get_device(const char* name)
+{
+	dos_info_t *dos_info = (dos_info_t *)(mem + DOS_INFO_TOP);
+	PAIR32 Driver = dos_info->nul_device.next_driver;
+	device_t *DriverHeader;
+
+	// Skip dummy devices, return 0
+	if(_stricmp(name, "CLOCK$"  ) == 0 ||
+	   _stricmp(name, "CONFIG$" ) == 0 ||
+	   _stricmp(name, "EMMXXXX0") == 0 ||
+	   _stricmp(name, "$IBMAFNT") == 0 ||
+	   _stricmp(name, "$IBMADSP") == 0 ||
+	   _stricmp(name, "$IBMAIAS") == 0 ||
+	   _stricmp(name, "FP$ATOK6") == 0) {
+		Driver.dw = 0;
+		return(Driver);
+	}
+
+	if(strlen(name) <= MAX_DEVICE_NAME){
+		// Search in the device_t linked list
+		while (Driver.w.l != 0xFFFF)
+		{
+			DriverHeader = (device_t*)FAR_POINTER(Driver);
+			// Compare both strings and consider space ' ' as string termination
+			for(int i = 0; i < MAX_DEVICE_NAME; i++){
+				if((i != 0) && (name[i] == '\0' || name[i] == ' ') && (DriverHeader->dev_name[i] == '\0' || DriverHeader->dev_name[i] == ' ')){
+					return(Driver);
+				}
+				if((name[i] != DriverHeader->dev_name[i]) || name[i] == '\0' || DriverHeader->dev_name[i] == '\0'){
+					break;
+				}
+			}
+			Driver = DriverHeader->next_driver;
+		}
+	}
+	Driver.dw = 0;
+	return(Driver);
+}
