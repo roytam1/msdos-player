@@ -9242,6 +9242,8 @@ inline void pcbios_int_10h_00h()
 		pcbios_set_font_size(font_width, font_height);
 		pcbios_set_console_size(40, 25, !(CPU_AL & 0x80));
 		break;
+	default:
+		return;
 	}
 	if(CPU_AL & 0x80) {
 		mem[0x487] |= 0x80;
@@ -9769,10 +9771,18 @@ inline void pcbios_int_10h_12h()
 	UINT8 modebits;
 	
 	switch(CPU_BL) {
+#ifdef SUPPORT_GRAPHIC_SCREEN
 	case 0x10:
-		CPU_BX = 0x0003;
-		CPU_CX = 0x0009;
+		if((CPU_AL & 0x7f) == 0x07) {
+			CPU_BH = 0x01;
+		} else {
+			CPU_BH = 0x00;
+		}
+		CPU_BL = 0x03;
+		CPU_CH = mem[0x488] >> 4;
+		CPU_CL = mem[0x488] & 0x0f;
 		break;
+#endif
 	case 0x30:
 		modebits = mem[0x489] & 0x90;
 		switch(CPU_AL) {
@@ -9961,7 +9971,13 @@ inline void pcbios_int_10h_1ah()
 	switch(CPU_AL) {
 	case 0x00:
 		CPU_AL = 0x1a;
-		CPU_BL = 0x08;
+#ifdef SUPPORT_GRAPHIC_SCREEN
+//		CPU_BL = 0x04; // EGA
+		CPU_BL = 0x08; // VGA
+#else
+//		CPU_BL = 0x01; // MDA
+		CPU_BL = 0x02; // CGA
+#endif
 		CPU_BH = 0x00;
 		break;
 	default:
@@ -14103,7 +14119,12 @@ inline void msdos_int_21h_43h(int lfn)
 		}
 		break;
 	case 0x01:
-		if(!SetFileAttributesA(path, msdos_file_attribute_create(CPU_CX))) {
+		if(SetFileAttributesA(path, msdos_file_attribute_create(CPU_CX))) {
+			// from DOSBox, AX should be destroyed
+			if(!lfn) {
+				CPU_AX = 0x0202;
+			}
+		} else {
 			CPU_AX = msdos_error_code(GetLastError());
 			CPU_SET_C_FLAG(1);
 		}
@@ -14923,6 +14944,7 @@ inline void msdos_int_21h_47h(int lfn)
 		} else {
 			strcpy((char *)(mem + CPU_DS_BASE + CPU_SI), path);
 		}
+		CPU_AX = 0x0100; // undocumented
 	} else {
 		CPU_AX = msdos_error_code(_doserrno);
 		CPU_SET_C_FLAG(1);
@@ -15504,8 +15526,13 @@ inline void msdos_int_21h_5ch()
 		if(CPU_AL == 0 || CPU_AL == 1) {
 			static const int modes[2] = {_LK_LOCK, _LK_UNLCK};
 			UINT32 pos = _tell(fd);
+			UINT32 len = (CPU_SI << 16) | CPU_DI;
+			if(CPU_SI == 0xffff && CPU_DI == 0xffff) {
+				_lseek(fd, 0, SEEK_END);
+				len = _tell(fd) - ((CPU_CX << 16) | CPU_DX);
+			}
 			_lseek(fd, (CPU_CX << 16) | CPU_DX, SEEK_SET);
-			if(_locking(fd, modes[CPU_AL], (CPU_SI << 16) | CPU_DI)) {
+			if(_locking(fd, modes[CPU_AL], len)) {
 				CPU_AX = msdos_error_code(_doserrno);
 				CPU_SET_C_FLAG(1);
 			}
@@ -21469,7 +21496,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT16 *)(mem + 0x413) = MEMORY_END >> 10;
 	*(UINT16 *)(mem + 0x41a) = 0x1e;
 	*(UINT16 *)(mem + 0x41c) = 0x1e;
-	*(UINT8  *)(mem + 0x449) = 0x03;//0x73;
+//	*(UINT8  *)(mem + 0x449) = 0x07; // MDA Text Mode
+	*(UINT8  *)(mem + 0x449) = 0x03; // CGA Text Mode
 	*(UINT16 *)(mem + 0x44a) = csbi.dwSize.X;
 	*(UINT16 *)(mem + 0x44c) = regen;
 	*(UINT16 *)(mem + 0x44e) = 0;
@@ -21478,7 +21506,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT8  *)(mem + 0x460) = 7;
 	*(UINT8  *)(mem + 0x461) = 7;
 	*(UINT8  *)(mem + 0x462) = 0;
-	*(UINT16 *)(mem + 0x463) = 0x3d4;
+//	*(UINT16 *)(mem + 0x463) = 0x3b4; // MDA
+	*(UINT16 *)(mem + 0x463) = 0x3d4; // CGA/EGA/VGA
 	*(UINT8  *)(mem + 0x465) = 0x09;
 	*(UINT32 *)(mem + 0x46c) = get_ticks_since_midnight(timeGetTime());
 	*(UINT16 *)(mem + 0x472) = 0x4321; // preserve memory in cpu reset
@@ -21494,6 +21523,9 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	*(UINT8  *)(mem + 0x484) = csbi.srWindow.Bottom - csbi.srWindow.Top;
 	*(UINT16 *)(mem + 0x485) = font_height;
 	*(UINT8  *)(mem + 0x487) = 0x60;
+#ifdef SUPPORT_GRAPHIC_SCREEN
+	*(UINT8  *)(mem + 0x488) = 0xf9; // EGA/VGA
+#endif
 	*(UINT8  *)(mem + 0x489) = 0x10; // 400 line mode
 	*(UINT8  *)(mem + 0x496) = 0x10; // enhanced keyboard installed
 	// put ROM configuration table for INT 15h, AH=C0h (Get Configuration) in reserved area
@@ -24560,22 +24592,28 @@ UINT8 vga_read_status0()
 UINT8 mda_read_status()
 {
 	// 50Hz
+	static int hblank = 0;
 	UINT32 time = timeGetTime() % 20;
 	
+	hblank = (hblank + 1) & 7;
+	
 	vga_attrib_mode = 0;
-	return((time < 4 ? 0x08 : 0) | (time == 0 ? 0 : 0x01));
+	return((time < 4 ? 0x09 : 0) | (hblank < 6 ? 0 : 0x01));
 }
 
 UINT8 vga_read_status()
 {
 	// 60Hz
-	static const int period[3] = {16, 17, 17};
-	static int index = 0;
-	UINT32 time = timeGetTime() % period[index];
+	static int hblank = 0;
+	UINT32 time = timeGetTime() % (17 + 17 + 16); // 1000/60=16.67
 	
-	index = (index + 1) % 3;
+	while(time >= 17) {
+		time -= 17;
+	}
+	hblank = (hblank + 1) & 7;
+	
 	vga_attrib_mode = 0;
-	return((time < 4 ? 0x08 : 0) | (time == 0 ? 0 : 0x01));
+	return((time < 4 ? 0x09 : 0) | (hblank < 6 ? 0 : 0x01));
 }
 
 // I/O bus
