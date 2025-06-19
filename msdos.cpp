@@ -3244,10 +3244,10 @@ HWND get_console_window_handle()
 		
 		GetConsoleTitleA(pszOldWindowTitle, 1024);
 		wsprintfA(pszNewWindowTitle, "%d/%d", GetTickCount(), GetCurrentProcessId());
-		MySetConsoleTitleA(pszNewWindowTitle);
+		SetConsoleTitleA(pszNewWindowTitle);
 		Sleep(100);
 		hwndFound = FindWindowA(NULL, pszNewWindowTitle);
-		MySetConsoleTitleA(pszOldWindowTitle);
+		SetConsoleTitleA(pszOldWindowTitle);
 	}
 	return hwndFound;
 }
