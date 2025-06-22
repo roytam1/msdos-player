@@ -1289,7 +1289,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lang_fr.h"
+				RelativePath=".\lang_br.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_cn.h"
 				>
 			</File>
 			<File
@@ -1297,15 +1301,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lang_sp.h"
+				RelativePath=".\lang_fr.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lang_pt.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lang_br.h"
+				RelativePath=".\lang_it.h"
 				>
 			</File>
 			<File
@@ -1317,7 +1317,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lang_cn.h"
+				RelativePath=".\lang_nl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_pt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_sp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_sw.h"
 				>
 			</File>
 			<File
