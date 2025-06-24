@@ -28,6 +28,12 @@
     <ClInclude Include="lang_de.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="lang_dk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lang_fi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="lang_fr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -44,6 +50,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lang_pt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lang_ru.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lang_sp.h">

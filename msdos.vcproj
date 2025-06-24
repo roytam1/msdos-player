@@ -5017,6 +5017,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\lang_dk.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_fi.h"
+				>
+			</File>
+			<File
 				RelativePath=".\lang_fr.h"
 				>
 			</File>
@@ -5038,6 +5046,10 @@
 			</File>
 			<File
 				RelativePath=".\lang_pt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\lang_ru.h"
 				>
 			</File>
 			<File
