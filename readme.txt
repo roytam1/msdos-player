@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								5/31/2025
+								8/28/2025
 
 ----- What's This
 
@@ -409,7 +409,8 @@ I recommend i86_x86 or i86_x64 binary.
 NEC V30 binaries support 8080 emulation mode.
 If you try CP/M-80 emulator using 8080 emulation mode, use these binaries.
 
-IA32 binaries include Neko Project 21/W i386c core and support FPU/MMX/SSE/2/3.
+IA32 binaries include Neko Project 21/W i386c core and support FPU, MMX,
+SSE2, SSE3, SSSE3, SSE4, and SSE4a instructions.
 These binaries will emulate the protected mode more correctly.
 
 i386_x86, i486_x86, pentium4_x86, and ia32_x86 folders contain ntvdm.exe.

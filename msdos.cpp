@@ -8077,14 +8077,14 @@ int win32_exec(char *command)
 {
 	HANDLE hstdout_r;
 	HANDLE hstdout_w;
-	STARTUPINFO si = {0};
+	STARTUPINFOA si = {0};
 	SECURITY_ATTRIBUTES sa = {0};
 	PROCESS_INFORMATION pi = {0};
 	DWORD retcode = 0;
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.bInheritHandle = TRUE;
 	if(CreatePipe(&hstdout_r, &hstdout_w, &sa, 0)) {
-		si.cb = sizeof(STARTUPINFO);
+		si.cb = sizeof(STARTUPINFOA);
 		si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 		si.hStdOutput = hstdout_w;
 		si.hStdError = hstdout_w;
