@@ -30,16 +30,16 @@ these four paragraphs for those parts of this code that are retained.
 #include "softfloat.h"
 #include "fpu_constant.h"
 
-//#define packFloat_128(zHi, zLo) {(zHi), (zLo)}
+#define packFloat_128(zHi, zLo) {(zHi), (zLo)}
 //#define PACK_FLOAT_128(hi,lo) packFloat_128(LIT64(hi),LIT64(lo))
 
-static const floatx80 floatx80_negone  = packFloatx80(1, 0x3fff, 0x8000000000000000U);
-static const floatx80 floatx80_neghalf = packFloatx80(1, 0x3ffe, 0x8000000000000000U);
+static const floatx80 floatx80_negone  = packFloatx80(1, 0x3fff, U64(0x8000000000000000));
+static const floatx80 floatx80_neghalf = packFloatx80(1, 0x3ffe, U64(0x8000000000000000));
 static const float128 float128_ln2     =
-    packFloat_128(0x3ffe62e42fefa39eU, 0xf35793c7673007e6U);
+    packFloat_128(U64(0x3ffe62e42fefa39e), U64(0xf35793c7673007e6));
 
-#define LN2_SIG_HI 0xb17217f7d1cf79abU
-#define LN2_SIG_LO 0xc000000000000000U  /* 67-bit precision */
+#define LN2_SIG_HI U64(0xb17217f7d1cf79ab)
+#define LN2_SIG_LO U64(0xc000000000000000)  /* 67-bit precision */
 
 #define EXP_ARR_SIZE 15
 
@@ -63,6 +63,7 @@ static float128 exp_arr[EXP_ARR_SIZE] =
 };
 
 #define EXP_BIAS 0x3FFF
+
 #if 0
 /*----------------------------------------------------------------------------
 | Returns the fraction bits of the extended double-precision floating-point
@@ -104,30 +105,31 @@ INLINE flag extractFloatx80Sign( floatx80 a )
 | `zSigPtr', respectively.
 *----------------------------------------------------------------------------*/
 
-INLINE void normalizeFloatx80Subnormal(uint64_t aSig, int32_t *zExpPtr, uint64_t *zSigPtr)
+INLINE void normalizeFloatx80Subnormal(UINT64 aSig, INT32 *zExpPtr, UINT64 *zSigPtr)
 {
 	int shiftCount = countLeadingZeros64(aSig);
 	*zSigPtr = aSig<<shiftCount;
 	*zExpPtr = 1 - shiftCount;
 }
-
 #endif
+
+
 /*----------------------------------------------------------------------------
 | Takes extended double-precision floating-point  NaN  `a' and returns the
 | appropriate NaN result. If `a' is a signaling NaN, the invalid exception
 | is raised.
 *----------------------------------------------------------------------------*/
 
-INLINE floatx80 propagateFloatx80NaN1(floatx80 a)
+INLINE floatx80 propagateFloatx80NaN(floatx80 a)
 {
     if (floatx80_is_signaling_nan(a))
         float_raise(float_flag_invalid);
 
-    a.low |= 0xC000000000000000U;
+    a.low |= U64(0xC000000000000000);
 
     return a;
 }
-#if 0
+
 //                            2         3         4               n
 // f(x) ~ C + (C * x) + (C * x) + (C * x) + (C * x) + ... + (C * x)
 //         0    1         2         3         4               n
@@ -139,6 +141,7 @@ INLINE floatx80 propagateFloatx80NaN1(floatx80 a)
 //   f(x) ~ [ p(x) + x * q(x) ]
 //
 
+#if 0
 static float128 EvalPoly(float128 x, float128 *arr, unsigned n)
 {
 	float128 x2 = float128_mul(x, x);
@@ -167,6 +170,7 @@ static float128 EvalPoly(float128 x, float128 *arr, unsigned n)
 	return float128_add(r1, r2);
 }
 #endif
+
 /* required -1 < x < 1 */
 static float128 poly_exp(float128 x)
 {
@@ -224,7 +228,7 @@ floatx80 f2xm1(floatx80 a)
 
     if (aExp == 0x7FFF) {
         if ((bits64) (aSig<<1))
-            return propagateFloatx80NaN1(a);
+            return propagateFloatx80NaN(a);
 
         return (aSign) ? floatx80_negone : a;
     }

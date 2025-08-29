@@ -33,15 +33,16 @@ these four paragraphs for those parts of this code that are retained.
 
 /* XXX: These are common w/ fsincos/fyl2x; should be moved to common header? */
 #define packFloat_128(zHi, zLo) {(zHi), (zLo)}
-//#define packFloat2x128m(zHi, zLo) {(zHi), (zLo)}
+#define packFloat2x128m(zHi, zLo) {(zHi), (zLo)}
 #define PACK_FLOAT_128(hi,lo) packFloat2x128m(LIT64(hi),LIT64(lo))
 #define EXP_BIAS 0x3FFF
 
+#if 0
 /*----------------------------------------------------------------------------
 | Returns the fraction bits of the extended double-precision floating-point
 | value `a'.
 *----------------------------------------------------------------------------*/
-#if 0
+
 INLINE bits64 extractFloatx80Frac( floatx80 a )
 {
 	return a.low;
@@ -77,7 +78,7 @@ INLINE flag extractFloatx80Sign( floatx80 a )
 | `zSigPtr', respectively.
 *----------------------------------------------------------------------------*/
 
-INLINE void normalizeFloatx80Subnormal(uint64_t aSig, int32_t *zExpPtr, uint64_t *zSigPtr)
+INLINE void normalizeFloatx80Subnormal(UINT64 aSig, INT32 *zExpPtr, UINT64 *zSigPtr)
 {
 	int shiftCount = countLeadingZeros64(aSig);
 	*zSigPtr = aSig<<shiftCount;
@@ -91,7 +92,7 @@ INLINE void normalizeFloatx80Subnormal(uint64_t aSig, int32_t *zExpPtr, uint64_t
 
 INLINE int floatx80_is_nan(floatx80 a)
 {
-	return ((a.high & 0x7FFF) == 0x7FFF) && (int64_t) (a.low<<1);
+	return ((a.high & 0x7FFF) == 0x7FFF) && (INT64) (a.low<<1);
 }
 
 /*----------------------------------------------------------------------------
@@ -131,24 +132,25 @@ INLINE int32 extractFloat128Exp( float128 a )
 
 }
 #endif
+
 /* end copied */
 
 #define FPATAN_ARR_SIZE 11
 
 static const float128 float128_one =
-        packFloat_128(0x3fff000000000000U, 0x0000000000000000U);
+        packFloat_128(U64(0x3fff000000000000), U64(0x0000000000000000));
 static const float128 float128_sqrt3 =
-        packFloat_128(0x3fffbb67ae8584caU, 0xa73b25742d7078b8U);
-//static const floatx80 floatx80_one = packFloatx80(0, 0x3fff, 0x8000000000000000U);
+        packFloat_128(U64(0x3fffbb67ae8584ca), U64(0xa73b25742d7078b8));
+//static const floatx80 floatx80_one = packFloatx80(0, 0x3fff, U64(0x8000000000000000));
 static const floatx80 floatx80_pi  =
-        packFloatx80(0, 0x4000, 0xc90fdaa22168c235U);
+        packFloatx80(0, 0x4000, U64(0xc90fdaa22168c235));
 
 static const float128 float128_pi2 =
-        packFloat_128(0x3fff921fb54442d1U, 0x8469898CC5170416U);
+        packFloat_128(U64(0x3fff921fb54442d1), U64(0x8469898CC5170416));
 static const float128 float128_pi4 =
-        packFloat_128(0x3ffe921fb54442d1U, 0x8469898CC5170416U);
+        packFloat_128(U64(0x3ffe921fb54442d1), U64(0x8469898CC5170416));
 static const float128 float128_pi6 =
-        packFloat_128(0x3ffe0c152382d736U, 0x58465BB32E0F580FU);
+        packFloat_128(U64(0x3ffe0c152382d736), U64(0x58465BB32E0F580F));
 
 static float128 atan_arr[FPATAN_ARR_SIZE] =
 {
@@ -241,22 +243,22 @@ static float128 poly_atan(float128 x1)
 
 floatx80 floatx80_fpatan(floatx80 a, floatx80 b)
 {
-    uint64_t aSig = extractFloatx80Frac(a);
-    int32_t aExp = extractFloatx80Exp(a);
+    UINT64 aSig = extractFloatx80Frac(a);
+    INT32 aExp = extractFloatx80Exp(a);
     int aSign = extractFloatx80Sign(a);
-    uint64_t bSig = extractFloatx80Frac(b);
-    int32_t bExp = extractFloatx80Exp(b);
+    UINT64 bSig = extractFloatx80Frac(b);
+    INT32 bExp = extractFloatx80Exp(b);
     int bSign = extractFloatx80Sign(b);
 
     int zSign = aSign ^ bSign;
 
     if (bExp == 0x7FFF)
     {
-        if ((uint64_t) (bSig<<1))
+        if ((UINT64) (bSig<<1))
             return propagateFloatx80NaN(a, b);
 
         if (aExp == 0x7FFF) {
-            if ((uint64_t) (aSig<<1))
+            if ((UINT64) (aSig<<1))
                 return propagateFloatx80NaN(a, b);
 
             if (aSign) {   /* return 3PI/4 */
@@ -277,7 +279,7 @@ floatx80 floatx80_fpatan(floatx80 a, floatx80 b)
     }
     if (aExp == 0x7FFF)
     {
-        if ((uint64_t) (aSig<<1))
+        if ((UINT64) (aSig<<1))
             return propagateFloatx80NaN(a, b);
 
         if (bSig && (bExp == 0))
@@ -324,6 +326,7 @@ return_PI_or_ZERO:
     float128 b128 = normalizeRoundAndPackFloat128(0, bExp-0x10, bSig, 0);
     float128 x;
     int swap = 0, add_pi6 = 0, add_pi4 = 0;
+
     if (aExp > bExp || (aExp == bExp && aSig > bSig))
     {
         x = float128_div(b128, a128);
@@ -333,12 +336,12 @@ return_PI_or_ZERO:
         swap = 1;
     }
 
-    int32_t xExp = extractFloat128Exp(x);
+    INT32 xExp = extractFloat128Exp(x);
 
     if (xExp <= EXP_BIAS-40)
         goto approximation_completed;
 
-    if (x.high >= 0x3ffe800000000000U)        // 3/4 < x < 1
+    if (x.high >= U64(0x3ffe800000000000))        // 3/4 < x < 1
     {
         /*
         arctan(x) = arctan((x-1)/(x+1)) + pi/4
