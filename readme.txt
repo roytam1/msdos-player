@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								8/28/2025
+								8/31/2025
 
 ----- What's This
 
@@ -90,8 +90,13 @@ Or if you want to pretend that Windows is not running, specify the option '-d'.
 
 	> msdos -d command.com
 
+On 32bit versions of MS-DOS Player,
 "Get Version Number" API (INT 21H, AH=30H) returns the version number 5.00.
 "Get True Version Number" API (INT 21H, AX=3306H) returns 5.50.
+This is to pretend to be running on NTVDM because VDD is supported.
+
+On 64bit versions of MS-DOS Player both services return 7.10.
+
 If you want to change the version number, please specify the option '-vX.XX'.
 
 	> msdos -v3.30 command.com
@@ -101,6 +106,7 @@ to get DOS version from COMMAND.COM of MS-DOS, PC-DOS, or Windows 95/98/Me.
 
 NOTE: Windows version 4.10 is same as Windows 98.
 NOTE: DOS version 5.00 and true DOS version 5.50 are same as NTVDM.
+NOTE: DOS version 7.10 is same as Windows 98.
 
 To set the limit on number of files process can open (this is same as FILES=
 in COFIG.SYS), please specify the option '-f'. The limit must be 20 to 128.
@@ -1252,9 +1258,9 @@ See also COPYING.txt for more details about the license.
 
 ----- Thanks
 
-8086/80286 code is based on MAME 0.149 and applied fixes in MAME 0.150-0.185.
+8086/80286 code is based on MAME 0.149 and applied fixes in MAME 0.150-0.279.
 NEC V30 instructions code is based on MAME 0.128.
-8038/80486 code is based on MAME 0.152 and applied fixes in MAME 0.154-0.185.
+8038/80486 code is based on MAME 0.152 and applied fixes in MAME 0.154-0.279.
 IA32 code is based on Neko Project 21/W.
 
 INT 15H AH=84H (Joystick Support),
