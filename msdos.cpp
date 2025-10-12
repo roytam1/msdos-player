@@ -22352,6 +22352,8 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	const char *path, *short_path;
 	wchar_t wc_path[ENV_SIZE];
 	
+	env_size = standard_env ? 2048 : 8192;
+	
 	if(argc > 1 && (_stricmp(argv[0], "COMMAND.COM") == 0 || _stricmp(argv[0], "COMMAND") == 0)) {
 		for(int i = 1; i < argc; i++) {
 			if(_strnicmp(argv[i], "/E:", 3) == 0) {
