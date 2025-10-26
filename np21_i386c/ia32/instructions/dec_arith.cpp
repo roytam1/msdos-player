@@ -119,6 +119,8 @@ DAA(void)
 void
 DAS(void)
 {
+	UINT32 OLD_AL = CPU_AL;
+	UINT32 OLD_C_FLAG = CPU_FLAGL & C_FLAG;
 #if defined(IA32_CPU_ENABLE_XC)
 	UINT8 __s = CPU_AL;
 	UINT8 __r = __s;
@@ -134,7 +136,7 @@ DAS(void)
 		CPU_FLAGL |= (((UINT16)CPU_AL - 6) >> 8) & 1; /* C_FLAG */
 		CPU_AL -= 6;
 	}
-	if ((CPU_FLAGL & C_FLAG) || CPU_AL > 0x9f) {
+	if (OLD_C_FLAG || OLD_AL > 0x99) {
 		CPU_FLAGL |= C_FLAG;
 		CPU_AL -= 0x60;
 	}
@@ -215,7 +217,7 @@ AAA(void)
 	CPU_WORKCLOCK(3);
 #if 0
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
-		CPU_AL += 6;
+		CPU_AX += 6;
 		CPU_AH++;
 		CPU_FLAGL |= (A_FLAG | C_FLAG);
 	} else {
@@ -300,7 +302,7 @@ AAS(void)
 	CPU_WORKCLOCK(3);
 #if 0
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
-		CPU_AL -= 6;
+		CPU_AX -= 6;
 		CPU_AH--;
 		CPU_FLAGL |= (A_FLAG | C_FLAG);
 	} else {
@@ -381,7 +383,9 @@ AAM(void)
 		al = CPU_AL;
 		CPU_AH = al / base;
 		CPU_AL = al % base;
-		CPU_FLAGL = szpcflag[CPU_AL];
+		// A_FLAG is undefined, but real i386 may clear this flag.
+		CPU_FLAGL &= ~(A_FLAG | S_FLAG | Z_FLAG | P_FLAG);
+		CPU_FLAGL |= szpcflag[CPU_AL];
 #else
 		// from DOSBox
 		CPU_AH = CPU_AL / base;
@@ -408,7 +412,8 @@ AAD(void)
 #if 0
 	CPU_AL += (UINT8)(CPU_AH * base);
 	CPU_AH = 0;
-	CPU_FLAGL &= ~(S_FLAG | Z_FLAG | P_FLAG);
+	// A_FLAG is undefined, but real i386 may clear this flag.
+	CPU_FLAGL &= ~(A_FLAG | S_FLAG | Z_FLAG | P_FLAG);
 	CPU_FLAGL |= szpcflag[CPU_AL];
 #else
 	// from DOSBox
