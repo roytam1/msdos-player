@@ -48,7 +48,7 @@ DAA(void)
 #endif
 
 	CPU_WORKCLOCK(3);
-#if 0
+#if 1
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
 		CPU_FLAGL |= A_FLAG;
 		CPU_FLAGL |= (((UINT16)CPU_AL + 6) >> 8) & 1; /* C_FLAG */
@@ -130,7 +130,7 @@ DAS(void)
 #endif
 
 	CPU_WORKCLOCK(3);
-#if 0
+#if 1
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
 		CPU_FLAGL |= A_FLAG;
 		CPU_FLAGL |= (((UINT16)CPU_AL - 6) >> 8) & 1; /* C_FLAG */
@@ -215,7 +215,7 @@ AAA(void)
 #endif
 
 	CPU_WORKCLOCK(3);
-#if 0
+#if 1
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
 		CPU_AX += 6;
 		CPU_AH++;
@@ -300,7 +300,7 @@ AAS(void)
 #endif
 
 	CPU_WORKCLOCK(3);
-#if 0
+#if 1
 	if ((CPU_FLAGL & A_FLAG) || (CPU_AL & 0x0f) > 9) {
 		CPU_AX -= 6;
 		CPU_AH--;
@@ -374,12 +374,12 @@ void
 AAM(void)
 {
 	UINT8 base;
-//	UINT8 al;
+	UINT8 al;
 
 	CPU_WORKCLOCK(16);
 	GET_MODRM_PCBYTE(base);
 	if (base != 0) {
-#if 0
+#if 1
 		al = CPU_AL;
 		CPU_AH = al / base;
 		CPU_AL = al % base;
@@ -409,7 +409,7 @@ AAD(void)
 
 	CPU_WORKCLOCK(14);
 	GET_MODRM_PCBYTE(base);
-#if 0
+#if 1
 	CPU_AL += (UINT8)(CPU_AH * base);
 	CPU_AH = 0;
 	// A_FLAG is undefined, but real i386 may clear this flag.

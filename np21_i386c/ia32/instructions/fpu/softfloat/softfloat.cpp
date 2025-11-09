@@ -105,7 +105,7 @@ static int16 roundAndPackInt16_np2(flag zSign, bits64 absZ)
     roundBits = absZ & 0x7F;
     absZ = (absZ + roundIncrement) >> 7;
     absZ &= ~(((roundBits ^ 0x40) == 0) & roundNearestEven);
-    z = absZ;
+    z = (int16)absZ;
     if (zSign) z = -z;
     z = (sbits16)z;
     if ((absZ >> 16) || (z && ((z < 0) ^ zSign))) {
@@ -155,7 +155,7 @@ static int32 roundAndPackInt32_np2(flag zSign, bits64 absZ)
     roundBits = absZ & 0x7F;
     absZ = (absZ + roundIncrement) >> 7;
     absZ &= ~(((roundBits ^ 0x40) == 0) & roundNearestEven);
-    z = absZ;
+    z = (int32)absZ;
     if (zSign) z = -z;
     z = (sbits32)z;
     if ((absZ >> 32) || (z && ((z < 0) ^ zSign))) {

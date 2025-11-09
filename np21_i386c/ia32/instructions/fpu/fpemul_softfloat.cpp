@@ -234,7 +234,7 @@ static void FPU_FST_F80(UINT32 addr) {
 
 static void FPU_FST_I16(UINT32 addr) {
 	float_exception_flags = (FPU_STATUSWORD & 0x3f);
-#if 1
+#if 0
 	// from mame i386 core
 	floatx80 fx80 = floatx80_round_to_int(FPU_STAT.reg[FPU_STAT_TOP].d);
 	floatx80 lowerLim = int32_to_floatx80(-32768);
@@ -253,7 +253,7 @@ static void FPU_FST_I16(UINT32 addr) {
 
 static void FPU_FST_I32(UINT32 addr) {
 	float_exception_flags = (FPU_STATUSWORD & 0x3f);
-#if 1
+#if 0
 	// from mame i386 core
 	floatx80 fx80 = floatx80_round_to_int(FPU_STAT.reg[FPU_STAT_TOP].d);
 	floatx80 lowerLim = int32_to_floatx80(0x80000000);
@@ -272,7 +272,7 @@ static void FPU_FST_I32(UINT32 addr) {
 
 static void FPU_FST_I64(UINT32 addr) {
 	float_exception_flags = (FPU_STATUSWORD & 0x3f);
-#if 1
+#if 0
 	// from mame i386 core
 	floatx80 fx80 = floatx80_round_to_int(FPU_STAT.reg[FPU_STAT_TOP].d);
 	floatx80 lowerLim = int64_to_floatx80((UINT64)0x8000000000000000);
