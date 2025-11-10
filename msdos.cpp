@@ -4790,7 +4790,70 @@ bool update_console_input()
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {0};
 	bool result = false;
 	
-	if(GetNumberOfConsoleInputEvents(hStdin, &dwNumberOfEvents) && dwNumberOfEvents != 0) {
+	if(GetNumberOfConsoleInputEvents(hStdin, &dwNumberOfEvents) == 0) {
+		// win32 pipe connected to stdin?
+		static BYTE prev_state[256] = {0};
+		BYTE state[256];
+		if(GetLastError() == 6 && GetKeyboardState(state)) {
+			for(int vk = 0; vk < 256; vk++) {
+				// ignore Shift, Ctrl, Alt, Win, and Menu keys
+				if((vk >= 0x10 && vk <= 0x12) || (vk >= 0x5b && vk <= 0x5d) || (vk >= 0xa0 && vk <= 0xa5)) {
+					continue;
+				}
+				if((prev_state[vk] & 0x80) == (state[vk] & 0x80)) {
+					continue;
+				}
+				UINT chr = MapVirtualKeyA(vk, MAPVK_VK_TO_CHAR);
+				UINT scn = MapVirtualKeyA(vk, MAPVK_VK_TO_VSC);
+				if(!(chr == 0 && scn == 0)) {
+					if(state[vk] & 0x80) {
+						enter_key_buf_lock();
+						if(chr == 0) {
+							if(   scn == 0x47 // Home
+							   || scn == 0x48 // Arrow Up
+							   || scn == 0x49 // Page Up
+							   || scn == 0x4b // Arrow Left
+							   || scn == 0x4d // ArrowRight
+							   || scn == 0x4f // End
+							   || scn == 0x50 // Arrow Down
+							   || scn == 0x51 // Page Down
+							   || scn == 0x52 // Insert
+							   || scn == 0x53 // Delete
+							) {
+								pcbios_set_key_buffer(0x00, 0xe0);
+							} else {
+								pcbios_set_key_buffer(0x00, 0x00);
+							}
+						}
+						pcbios_set_key_buffer(chr, scn);
+						leave_key_buf_lock();
+						scn &= 0x7f; // make
+					}else {
+						scn |= 0x80; // break
+					}
+					if(!(kbd_status & 1)) {
+						kbd_data = scn;
+						kbd_status |= 1;
+					} else {
+						if(key_buf_data != NULL) {
+							enter_key_buf_lock();
+							key_buf_data->write(scn);
+							leave_key_buf_lock();
+						}
+					}
+					result = key_changed = true;
+					// IME may be on and it may causes screen scroll up and cursor position change
+					cursor_moved = true;
+				}
+			}
+			if(result) {
+				while(kbhit()) {
+					getch();
+				}
+			}
+			memcpy(prev_state, state, 256);
+		}
+	} else if(dwNumberOfEvents != 0) {
 		if(ReadConsoleInputA(hStdin, ir, 16, &dwRead)) {
 			for(int i = 0; i < dwRead; i++) {
 				if(ir[i].EventType & MOUSE_EVENT) {
