@@ -4792,66 +4792,34 @@ bool update_console_input()
 	
 	if(GetNumberOfConsoleInputEvents(hStdin, &dwNumberOfEvents) == 0) {
 		// win32 pipe connected to stdin?
-		static BYTE prev_state[256] = {0};
-		BYTE state[256];
-		if(GetLastError() == 6 && GetKeyboardState(state)) {
-			for(int vk = 0; vk < 256; vk++) {
-				// ignore Shift, Ctrl, Alt, Win, and Menu keys
-				if((vk >= 0x10 && vk <= 0x12) || (vk >= 0x5b && vk <= 0x5d) || (vk >= 0xa0 && vk <= 0xa5)) {
-					continue;
-				}
-				if((prev_state[vk] & 0x80) == (state[vk] & 0x80)) {
-					continue;
-				}
-				UINT chr = MapVirtualKeyA(vk, MAPVK_VK_TO_CHAR);
-				UINT scn = MapVirtualKeyA(vk, MAPVK_VK_TO_VSC);
-				if(!(chr == 0 && scn == 0)) {
-					if(state[vk] & 0x80) {
-						enter_key_buf_lock();
-						if(chr == 0) {
-							if(   scn == 0x47 // Home
-							   || scn == 0x48 // Arrow Up
-							   || scn == 0x49 // Page Up
-							   || scn == 0x4b // Arrow Left
-							   || scn == 0x4d // ArrowRight
-							   || scn == 0x4f // End
-							   || scn == 0x50 // Arrow Down
-							   || scn == 0x51 // Page Down
-							   || scn == 0x52 // Insert
-							   || scn == 0x53 // Delete
-							) {
-								pcbios_set_key_buffer(0x00, 0xe0);
-							} else {
-								pcbios_set_key_buffer(0x00, 0x00);
-							}
-						}
-						pcbios_set_key_buffer(chr, scn);
-						leave_key_buf_lock();
-						scn &= 0x7f; // make
-					}else {
-						scn |= 0x80; // break
-					}
-					if(!(kbd_status & 1)) {
-						kbd_data = scn;
-						kbd_status |= 1;
-					} else {
-						if(key_buf_data != NULL) {
-							enter_key_buf_lock();
-							key_buf_data->write(scn);
-							leave_key_buf_lock();
-						}
-					}
-					result = key_changed = true;
-					// IME may be on and it may causes screen scroll up and cursor position change
-					cursor_moved = true;
-				}
-			}
-			if(result) {
+		if(GetLastError() == 6) {
+			static BOOL initialized = FALSE;
+			if(!initialized) {
 				while(kbhit()) {
-					getch();
+					_getch();
 				}
+				initialized = TRUE;
 			}
-			memcpy(prev_state, state, 256);
+			while(kbhit()) {
+				int chr1 = _getch();
+				int chr2 = 0;
+				if(chr1 == 0x00 || chr1 == 0xe0) {
+					chr2 = _getch();
+				}
+				if(key_buf_char != NULL && key_buf_scan != NULL) {
+					enter_key_buf_lock();
+					if(chr1 == 0x00 || chr1 == 0xe0) {
+						pcbios_set_key_buffer(0x00, chr1);
+						pcbios_set_key_buffer(0x00, chr2);
+					} else {
+						pcbios_set_key_buffer(chr1, 0x00);
+					}
+					leave_key_buf_lock();
+				}
+				result = key_changed = true;
+				// IME may be on and it may causes screen scroll up and cursor position change
+				cursor_moved = true;
+			}
 		}
 	} else if(dwNumberOfEvents != 0) {
 		if(ReadConsoleInputA(hStdin, ir, 16, &dwRead)) {
@@ -6868,9 +6836,19 @@ retry:
 			if(!(fd < process->max_files && file_handler[fd].valid && file_handler[fd].atty && file_mode[file_handler[fd].mode].in)) {
 				// NOTE: stdin is redirected to stderr when we do "type (file) | more" on freedos's command.com
 				if(_kbhit()) {
+					int chr1 = _getch();
+					int chr2 = 0;
+					if(chr1 == 0x00 || chr1 == 0xe0) {
+						chr2 = _getch();
+					}
 					if(key_buf_char != NULL && key_buf_scan != NULL) {
 						enter_key_buf_lock();
-						pcbios_set_key_buffer(_getch(), 0x00);
+						if(chr1 == 0x00 || chr1 == 0xe0) {
+							pcbios_set_key_buffer(0x00, chr1);
+							pcbios_set_key_buffer(0x00, chr2);
+						} else {
+							pcbios_set_key_buffer(chr1, 0x00);
+						}
 						leave_key_buf_lock();
 					}
 				} else {
@@ -17575,7 +17553,9 @@ inline void msdos_int_24h()
 		}
 		key = _getch();
 		
-		if(key == 'I' || key == 'i') {
+		if(key == 0x00 || key == 0xe0) {
+			_getch();
+		} else if(key == 'I' || key == 'i') {
 			if(CPU_AH & 0x20) {
 				CPU_AL = 0;
 				break;
