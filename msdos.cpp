@@ -264,6 +264,25 @@ UINT GetFileApisCP()
 #define GetFileApisCP() CP_OEMCP
 #endif
 
+int MyWideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWCH lpWideCharStr, int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCCH lpDefaultChar, LPBOOL lpUsedDefaultChar)
+{
+	int nResult = 0;
+	if(dwFlags & WC_NO_BEST_FIT_CHARS) {
+		if(is_win2k_or_later) {
+			if((nResult = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar)) != 0) {
+				return nResult;
+			}
+			if(GetLastError() != ERROR_INVALID_FLAGS) {
+				return 0;
+			}
+		}
+		dwFlags &= ~WC_NO_BEST_FIT_CHARS;
+		lpDefaultChar = NULL;
+		lpUsedDefaultChar = NULL;
+	}
+	return WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar, lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
+}
+
 UINT MyGetDriveType(int drv)
 {
 	if(drv >= 0 && drv < 26) {
@@ -313,48 +332,33 @@ BOOL MyDeleteFileA(LPCSTR lpFileName)
 HANDLE MyFindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	HANDLE hFind = INVALID_HANDLE_VALUE;
-	
-#ifdef USE_ACTIVE_CP_TO_FILE_APIS
-	wchar_t wcFileName[MAX_PATH];
 	WIN32_FIND_DATAW fd;
+	wchar_t wcFileName[MAX_PATH];
 	UINT uCodePage = GetFileApisCP();
-	BOOL bInvalidFlags = FALSE;
 	
-	if(uCodePage != uCodePageOEM) {
-		MultiByteToWideChar(uCodePage, 0, lpFileName, -1, wcFileName, MAX_PATH);
+	MultiByteToWideChar(uCodePage, 0, lpFileName, -1, wcFileName, MAX_PATH);
+	
+	if((hFind = FindFirstFileW(wcFileName, &fd)) != INVALID_HANDLE_VALUE) {
+		lpFindFileData->dwFileAttributes = fd.dwFileAttributes;
+		lpFindFileData->ftCreationTime = fd.ftCreationTime;
+		lpFindFileData->ftLastAccessTime = fd.ftLastAccessTime;
+		lpFindFileData->ftLastWriteTime = fd.ftLastWriteTime;
+		lpFindFileData->nFileSizeHigh = fd.nFileSizeHigh;
+		lpFindFileData->nFileSizeLow = fd.nFileSizeLow;
+		lpFindFileData->cFileName[0] = lpFindFileData->cAlternateFileName[0] = '\0';
 		
-		if((hFind = FindFirstFileW(wcFileName, &fd)) != INVALID_HANDLE_VALUE) {
-			lpFindFileData->dwFileAttributes = fd.dwFileAttributes;
-			lpFindFileData->ftCreationTime = fd.ftCreationTime;
-			lpFindFileData->ftLastAccessTime = fd.ftLastAccessTime;
-			lpFindFileData->ftLastWriteTime = fd.ftLastWriteTime;
-			lpFindFileData->nFileSizeHigh = fd.nFileSizeHigh;
-			lpFindFileData->nFileSizeLow = fd.nFileSizeLow;
-			lpFindFileData->cFileName[0] = lpFindFileData->cAlternateFileName[0] = '\0';
-			
-			if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-				bInvalidFlags = TRUE;
-				WideCharToMultiByte(uCodePage, 0, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL);
-			}
-			if(fd.cAlternateFileName[0]) {
-				if(!bInvalidFlags) {
-					WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
-				} else {
-					WideCharToMultiByte(uCodePage, 0, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
-				}
-			}
+		MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL);
+		if(fd.cAlternateFileName[0]) {
+			MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
 		}
-	} else
-#endif
-	hFind = FindFirstFileA(lpFileName, lpFindFileData);
-	
-	if(hFind != INVALID_HANDLE_VALUE) {
+#ifdef USE_ACTIVE_CP_TO_FILE_APIS
 		// Check if cFileName contains non-ANSI characters
-		if(lpFindFileData->cAlternateFileName[0]) {
+		if(uCodePage != uCodePageOEM && lpFindFileData->cAlternateFileName[0]) {
 			if(my_strchr(lpFindFileData->cFileName, '?') && my_strchr(lpFindFileData->cAlternateFileName, '?') == NULL) {
 				strcpy(lpFindFileData->cFileName, lpFindFileData->cAlternateFileName);
 			}
 		}
+#endif
 	}
 	return hFind;
 }
@@ -362,47 +366,50 @@ HANDLE MyFindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 BOOL MyFindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
 	BOOL bResult = FALSE;
-	
-#ifdef USE_ACTIVE_CP_TO_FILE_APIS
 	WIN32_FIND_DATAW fd;
 	UINT uCodePage = GetFileApisCP();
-	BOOL bInvalidFlags = FALSE;
 	
-	if(uCodePage != uCodePageOEM) {
-		if((bResult = FindNextFileW(hFindFile, &fd)) != 0) {
-			lpFindFileData->dwFileAttributes = fd.dwFileAttributes;
-			lpFindFileData->ftCreationTime = fd.ftCreationTime;
-			lpFindFileData->ftLastAccessTime = fd.ftLastAccessTime;
-			lpFindFileData->ftLastWriteTime = fd.ftLastWriteTime;
-			lpFindFileData->nFileSizeHigh = fd.nFileSizeHigh;
-			lpFindFileData->nFileSizeLow = fd.nFileSizeLow;
-			lpFindFileData->cFileName[0] = lpFindFileData->cAlternateFileName[0] = '\0';
-			
-			if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-				bInvalidFlags = TRUE;
-				WideCharToMultiByte(uCodePage, 0, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL);
-			}
-			if(fd.cAlternateFileName[0]) {
-				if(!bInvalidFlags) {
-					WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
-				} else {
-					WideCharToMultiByte(uCodePage, 0, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
-				}
-			}
+	if((bResult = FindNextFileW(hFindFile, &fd)) != 0) {
+		lpFindFileData->dwFileAttributes = fd.dwFileAttributes;
+		lpFindFileData->ftCreationTime = fd.ftCreationTime;
+		lpFindFileData->ftLastAccessTime = fd.ftLastAccessTime;
+		lpFindFileData->ftLastWriteTime = fd.ftLastWriteTime;
+		lpFindFileData->nFileSizeHigh = fd.nFileSizeHigh;
+		lpFindFileData->nFileSizeLow = fd.nFileSizeLow;
+		lpFindFileData->cFileName[0] = lpFindFileData->cAlternateFileName[0] = '\0';
+		
+		MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cFileName, -1, lpFindFileData->cFileName, MAX_PATH, NULL, NULL);
+		if(fd.cAlternateFileName[0]) {
+			MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, fd.cAlternateFileName, -1, lpFindFileData->cAlternateFileName, 14, NULL, NULL);
 		}
-	} else
-#endif
-	bResult = FindNextFileA(hFindFile, lpFindFileData);
-	
-	if(bResult) {
+		
+#ifdef USE_ACTIVE_CP_TO_FILE_APIS
 		// Check if cFileName contains non-ANSI characters
-		if(lpFindFileData->cAlternateFileName[0]) {
+		if(uCodePage != uCodePageOEM && lpFindFileData->cAlternateFileName[0]) {
 			if(my_strchr(lpFindFileData->cFileName, '?') && my_strchr(lpFindFileData->cAlternateFileName, '?') == NULL) {
 				strcpy(lpFindFileData->cFileName, lpFindFileData->cAlternateFileName);
 			}
 		}
+#endif
 	}
 	return bResult;
+}
+
+BOOL MyGetSingleLevelLongName(LPCSTR lpszShortPath, LPSTR lpszLongName, DWORD ccBuffer)
+{
+	if(lpszShortPath[0] != '\0' && lpszShortPath[1] == ':') {
+		if(lpszShortPath[2] == '\0' || (lpszShortPath[2] == '\\' && lpszShortPath[3] == '\0')) {
+			return FALSE;
+		}
+	}
+	HANDLE hFind;
+	WIN32_FIND_DATAA ffd;
+	if((hFind = MyFindFirstFileA(lpszShortPath, &ffd)) != INVALID_HANDLE_VALUE) {
+		my_strlcpy(lpszLongName, ffd.cFileName, ccBuffer);
+		FindClose(hFind);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 DWORD MyOldGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchBuffer)
@@ -410,13 +417,13 @@ DWORD MyOldGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchB
 	// Windows NT 4 does not support GetLongPathNameA
 	// http://www.expertmg.co.jp/html/cti/vctips/file.htm
 	
-	HANDLE hFind;
-	WIN32_FIND_DATAA ffd;
+	char szTempLongName[1024];
 	char szTempShortPath[1024];
 	char szLongPath[1024] = {0};
 	char szTempPath[1024];
 	LPSTR lpSeparator = NULL;
 	DWORD dwLength;
+	int nPos;
 	
 	my_strlcpy(szTempShortPath, lpszShortPath, sizeof(szTempShortPath));
 	
@@ -424,27 +431,36 @@ DWORD MyOldGetLongPathNameA(LPCSTR lpszShortPath, LPSTR lpszLongPath, DWORD cchB
 		strcpy(szTempPath, lpSeparator + 2);
 		strcpy(lpSeparator, szTempPath);
 	}
-	if((hFind = MyFindFirstFileA(szTempShortPath, &ffd)) == INVALID_HANDLE_VALUE) {
-		return 0;
-	}
 	do {
-		if((lpSeparator = my_strrchr(szTempShortPath, '\\')) != NULL) {
-			int nPos = lpSeparator - szTempShortPath;
-			if(strlen(szLongPath) == 0) {
-				my_strlcpy(szLongPath, ffd.cFileName, sizeof(szLongPath));
-			} else {
-				_snprintf(szTempPath, sizeof(szTempPath), "%s\\%s", ffd.cFileName, szLongPath);
-				my_strlcpy(szLongPath, szTempPath, sizeof(szLongPath));
-			}
-			szTempShortPath[nPos] = '\0';
-			MyFindFirstFileA(szTempShortPath ,&ffd);
+		lpSeparator = my_strrchr(szTempShortPath, '\\');
+		
+		if(!MyGetSingleLevelLongName(szTempShortPath, szTempLongName, sizeof(szTempLongName))) {
+			LPCSTR lpLastPart = (lpSeparator != NULL) ? (lpSeparator + 1) : szTempShortPath;
+			my_strlcpy(szTempLongName, lpLastPart, sizeof(szTempLongName));
+		}
+		if(strlen(szLongPath) == 0) {
+			my_strlcpy(szLongPath, szTempLongName, sizeof(szLongPath));
 		} else {
-			_snprintf(szTempPath, sizeof(szTempPath), "%s\\%s", szTempShortPath, szLongPath);
+			if(my_str_endswith(szTempLongName, '\\')) {
+				_snprintf(szTempPath, sizeof(szTempPath), "%s%s", szTempLongName, szLongPath);
+			} else {
+				_snprintf(szTempPath, sizeof(szTempPath), "%s\\%s", szTempLongName, szLongPath);
+			}
 			my_strlcpy(szLongPath, szTempPath, sizeof(szLongPath));
 		}
+		if(lpSeparator != NULL) {
+			if((nPos = lpSeparator - szTempShortPath) == 0) {
+				break;
+			}
+			if(nPos == 2 && szTempShortPath[1] == ':') {
+				szTempShortPath[nPos] = '\0';
+				_snprintf(szTempPath, sizeof(szTempPath), "%s\\%s", szTempShortPath, szLongPath);
+				my_strlcpy(szLongPath, szTempPath, sizeof(szLongPath));
+				break; 
+			}
+			szTempShortPath[nPos] = '\0';
+		}
 	} while(lpSeparator != NULL);
-	
-	FindClose(hFind);
 	
 	if((dwLength = (DWORD)strlen(szLongPath)) >= cchBuffer) {
 		return dwLength + 1;
@@ -497,9 +513,7 @@ DWORD MyGetShortPathNameA(LPCSTR lpszLongPath, LPSTR lpszShortPath, DWORD cchBuf
 		MultiByteToWideChar(uCodePage, 0, lpszLongPath, -1, wcLongPath, 1024);
 		
 		if((res = MyGetShortPathNameW(wcLongPath, wcShortPath, 1024)) != 0) {
-			if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, lpszShortPath, cchBuffer, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-				WideCharToMultiByte(uCodePage, 0, wcShortPath, -1, lpszShortPath, cchBuffer, NULL, NULL);
-			}
+			MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, lpszShortPath, cchBuffer, NULL, NULL);
 			return res;
 		}
 	}
@@ -519,15 +533,21 @@ DWORD MyGetShortPathNameA(LPCSTR lpszLongPath, LPSTR lpszShortPath, DWORD cchBuf
 		*lpTemp = '\\';
 	}
 	if(lpSeparator != NULL) {
+		int nPos = lpSeparator - szTempPath;
+		if(nPos == 0 || (nPos == 2 && szTempPath[1] == ':')) {
+			return GetShortPathNameA(lpszLongPath, lpszShortPath, cchBuffer);
+		}
 		*lpSeparator = '\0';
-		if(MyGetShortPathNameA(szTempPath, szShortPath, 1024)) {
+		DWORD dwResult = MyGetShortPathNameA(szTempPath, szShortPath, 1024);
+		*lpSeparator = '\\';
+		if(dwResult) {
 			my_strcpy_s(lpszShortPath, cchBuffer, szShortPath);
 			my_strcat_s(lpszShortPath, cchBuffer, "\\");
 			my_strcat_s(lpszShortPath, cchBuffer, lpSeparator + 1);
 			return (DWORD)strlen(lpszShortPath);
 		}
 	}
-	return 0;
+	return GetShortPathNameA(lpszLongPath, lpszShortPath, cchBuffer);
 }
 
 DWORD MyGetShortPathNameW(LPCWSTR lpszLongPath, LPWSTR lpszShortPath, DWORD cchBuffer)
@@ -547,15 +567,21 @@ DWORD MyGetShortPathNameW(LPCWSTR lpszLongPath, LPWSTR lpszShortPath, DWORD cchB
 		*lpTemp = L'\\';
 	}
 	if(lpSeparator != NULL) {
+		int nPos = lpSeparator - szTempPath;
+		if(nPos == 0 || (nPos == 2 && szTempPath[1] == L':')) {
+			return GetShortPathNameW(lpszLongPath, lpszShortPath, cchBuffer);
+		}
 		*lpSeparator = L'\0';
-		if(MyGetShortPathNameW(szTempPath, szShortPath, 1024)) {
+		DWORD dwResult = MyGetShortPathNameW(szTempPath, szShortPath, 1024);
+		*lpSeparator = L'\\';
+		if(dwResult) {
 			my_wcscpy_s(lpszShortPath, cchBuffer, szShortPath);
 			my_wcscat_s(lpszShortPath, cchBuffer, L"\\");
 			my_wcscat_s(lpszShortPath, cchBuffer, lpSeparator + 1);
 			return (DWORD)wcslen(lpszShortPath);
 		}
 	}
-	return 0;
+	return GetShortPathNameW(lpszLongPath, lpszShortPath, cchBuffer);
 }
 
 DWORD MyGetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR *lpFilePart)
@@ -578,15 +604,18 @@ DWORD MyGetFullPathNameA(LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer,
 	
 	MultiByteToWideChar(uCodePage, 0, lpFileName, -1, wcFileName, MAX_PATH);
 	if(GetFullPathNameW(wcFileName, MAX_PATH, wcBuffer, NULL) != 0 && MyGetShortPathNameW(wcBuffer, wcShortPath, MAX_PATH) != 0) {
-		if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-			WideCharToMultiByte(uCodePage, 0, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
-		}
+		MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
 		if((dwResult = MyOldGetLongPathNameA(szShortPath, lpBuffer, nBufferLength)) == 0) {
 			my_strlcpy(lpBuffer, szShortPath, nBufferLength);
 			dwResult = (DWORD)strlen(lpBuffer);
 		}
 		if(lpFilePart) {
-			*lpFilePart = my_strrchr(lpBuffer, '\\') + 1;
+			LPSTR lpLastSlash = my_strrchr(lpBuffer, '\\');
+			if(lpLastSlash && *(lpLastSlash + 1) != '\0') {
+				*lpFilePart = lpLastSlash + 1;
+			} else {
+				*lpFilePart = NULL; // no file part
+			}
 		}
 		return dwResult;
 	}
@@ -622,9 +651,7 @@ DWORD MyGetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 			wcscpy(p, wcShortPath);
 		}
 		if(MyGetShortPathNameW(wcFilename, wcShortPath, MAX_PATH) != 0) {
-			if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-				WideCharToMultiByte(uCodePage, 0, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
-			}
+			MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
 			if((dwResult = MyOldGetLongPathNameA(szShortPath, lpFilename, nSize)) == 0) {
 				my_strlcpy(lpFilename, szShortPath, nSize);
 				dwResult = (DWORD)strlen(lpFilename);
@@ -648,9 +675,7 @@ UINT MyGetTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, 
 		MultiByteToWideChar(uCodePage, 0, lpPathName, -1, wcPathName, MAX_PATH);
 		MultiByteToWideChar(uCodePage, 0, lpPrefixString, -1, wcPrefixString, MAX_PATH);
 		if((uResult = GetTempFileNameW(wcPathName, wcPrefixString, uUnique, wcTempFileName)) != 0) {
-			if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcTempFileName, -1, lpTempFileName, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-				WideCharToMultiByte(uCodePage, 0, wcTempFileName, -1, lpTempFileName, MAX_PATH, NULL, NULL);
-			}
+			MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcTempFileName, -1, lpTempFileName, MAX_PATH, NULL, NULL);
 		}
 		return uResult;
 	}
@@ -686,25 +711,65 @@ BOOL MySetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 	return SetFileAttributesA(lpFileName, dwFileAttributes);
 }
 
-BOOL MyGetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
+BOOL MyGetVolumePathNameW(LPCWSTR lpszFileName, LPWSTR lpszVolumePathName, DWORD cchBufferLength)
 {
-#ifdef USE_ACTIVE_CP_TO_FILE_APIS
-	char szFilePath[MAX_PATH], *lpFilePart;
-	char szVolume[] = "A:\\";
-	
-	if(uCodePageOEM != GetFileApisCP()) {
-		if(lpRootPathName[0] >= 'A' && lpRootPathName[0] <= 'Z' && lpRootPathName[1] == ':') {
-			szVolume[0] = lpRootPathName[0];
-		} else if(lpRootPathName[0] >= 'a' && lpRootPathName[0] <= 'z' && lpRootPathName[1] == ':') {
-			szVolume[0] = (lpRootPathName[0] - 'a') + 'A';
-		} else {
-			MyGetFullPathNameA(lpRootPathName, MAX_PATH, szFilePath, &lpFilePart);
-			szVolume[0] = szFilePath[0];
+	HMODULE hLibrary = LoadLibraryA("Kernel32.dll");
+	if(hLibrary) {
+		typedef BOOL(WINAPI *GetVolumePathNameWFunction)(LPCWSTR, LPWSTR, DWORD);
+		GetVolumePathNameWFunction lpfnGetVolumePathNameW = reinterpret_cast<GetVolumePathNameWFunction>(::GetProcAddress(hLibrary, "GetVolumePathNameW"));
+		BOOL result = FALSE;
+		if(lpfnGetVolumePathNameW) {
+			result = lpfnGetVolumePathNameW(lpszFileName, lpszVolumePathName, cchBufferLength);
 		}
-		return GetDiskFreeSpaceA(szVolume, lpSectorsPerCluster, lpBytesPerSector, lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+		FreeLibrary(hLibrary);
+		return result;
 	}
-#endif
-	return GetDiskFreeSpaceA(lpRootPathName, lpSectorsPerCluster, lpBytesPerSector, lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+	return FALSE;
+}
+
+BOOL MyGetVolumePathNameA(LPCSTR lpszFileName, LPSTR lpszVolumePathName, DWORD cchBufferLength)
+{
+	UINT uCodePage = GetFileApisCP();
+	wchar_t wcFileName[MAX_PATH];
+	wchar_t wcVolumePathName[MAX_PATH];
+	
+	MultiByteToWideChar(uCodePage, 0, lpszFileName, -1, wcFileName, MAX_PATH);
+	
+	if(MyGetVolumePathNameW(wcFileName, wcVolumePathName, MAX_PATH)) {
+		WideCharToMultiByte(uCodePage, 0, wcVolumePathName, -1, lpszVolumePathName, cchBufferLength, NULL, NULL);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+const char *MyGetVolumePathNameA(LPCSTR lpRootPathName)
+{
+	static char szVolumePath[MAX_PATH];
+	
+	if(lpRootPathName[0] >= 'A' && lpRootPathName[0] <= 'Z' && lpRootPathName[1] == ':') {
+		sprintf(szVolumePath, "%c:\\", lpRootPathName[0]);
+	} else if(lpRootPathName[0] >= 'a' && lpRootPathName[0] <= 'z' && lpRootPathName[1] == ':') {
+		sprintf(szVolumePath, "%c:\\", (lpRootPathName[0] - 'a') + 'A');
+	} else if(MyGetFullPathNameA(lpRootPathName, MAX_PATH, szVolumePath, NULL) >= 3 && szVolumePath[1] == ':' && szVolumePath[2] == '\\') {
+		// Just in case...
+		if(szVolumePath[0] >= 'a' && szVolumePath[0] <= 'z') {
+			szVolumePath[0] = (szVolumePath[0] - 'a') + 'A';
+		}
+		szVolumePath[3] = '\0';
+	} else if(MyGetVolumePathNameA(lpRootPathName, szVolumePath, MAX_PATH)) {
+		// Just in case...
+		if(strlen(szVolumePath) >= 3 && szVolumePath[1] == ':' && szVolumePath[2] == '\\') {
+			if(szVolumePath[0] >= 'a' && szVolumePath[0] <= 'z') {
+				szVolumePath[0] = (szVolumePath[0] - 'a') + 'A';
+			}
+		}
+		if(!my_str_endswith(szVolumePath, '\\')) {
+			my_strcat_s(szVolumePath, MAX_PATH, "\\");
+		}
+	} else {
+		sprintf(szVolumePath, "%c:\\", 'A' + _getdrive() - 1);
+	}
+	return szVolumePath;
 }
 
 int my_access(const char *path, int mode)
@@ -754,9 +819,7 @@ char *my_getdcwd(int drive, char *buffer, int maxlen)
 	char szShortPath[MAX_PATH];
 	
 	if(_wgetdcwd(drive, wcBuffer, MAX_PATH) != NULL && MyGetShortPathNameW(wcBuffer, wcShortPath, MAX_PATH) != 0) {
-		if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-			WideCharToMultiByte(uCodePage, 0, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
-		}
+		MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
 		if(MyOldGetLongPathNameA(szShortPath, buffer, maxlen) == 0) {
 			my_strlcpy(buffer, szShortPath, maxlen);
 		}
@@ -782,9 +845,7 @@ char *my_getcwd(char *buffer,int maxlen)
 	char szShortPath[MAX_PATH];
 	
 	if(_wgetcwd(wcBuffer, MAX_PATH) != NULL && MyGetShortPathNameW(wcBuffer, wcShortPath, MAX_PATH) != 0) {
-		if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-			WideCharToMultiByte(uCodePage, 0, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
-		}
+		MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wcShortPath, -1, szShortPath, MAX_PATH, NULL, NULL);
 		if(MyOldGetLongPathNameA(szShortPath, buffer, maxlen) == 0) {
 			my_strlcpy(buffer, szShortPath, maxlen);
 		}
@@ -2223,8 +2284,8 @@ void debugger_regs_info(char *buffer, int r32)
 	
 #if defined(HAS_I386)
 	if(r32) {
-		sprintf(buffer, "EAX=%08X  EBX=%08X  ECX=%08X  EDX=%08X\nESP=%08X  EBP=%08X  ESI=%08X  EDI=%08X\nEIP=%08X  DS=%04X  ES=%04X  SS=%04X  CS=%04X  FLAG=[%s %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c]\n",
-		CPU_EAX, CPU_EBX, CPU_ECX, CPU_EDX, CPU_ESP, CPU_EBP, CPU_ESI, CPU_EDI, CPU_EIP, CPU_DS, CPU_ES, CPU_SS, CPU_CS,
+		sprintf(buffer, "EAX=%08X  EBX=%08X  ECX=%08X  EDX=%08X\nESP=%08X  EBP=%08X  ESI=%08X  EDI=%08X\nEIP=%08X  DS=%04X  ES=%04X  SS=%04X  CS=%04X  FS=%04x  GS=%04X  FLAG=[%s %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c]\n",
+		CPU_EAX, CPU_EBX, CPU_ECX, CPU_EDX, CPU_ESP, CPU_EBP, CPU_ESI, CPU_EDI, CPU_EIP, CPU_DS, CPU_ES, CPU_SS, CPU_CS, CPU_FS, CPU_GS,
 		CPU_STAT_PM ? "PE" : "--",
 		(flags & 0x40000) ? 'A' : '-',
 		(flags & 0x20000) ? 'V' : '-',
@@ -2727,6 +2788,33 @@ void debugger_main()
 			} else if(_stricmp(params[0], "TRANS") == 0) {
 				if(num == 2) {
 					telnet_printf("%08x\n", CPU_TRANS_PAGING_ADDR(debugger_get_val(params[1])));
+				} else {
+					telnet_printf("invalid parameter number\n");
+				}
+			} else if(_stricmp(params[0], "CR") == 0) {
+				if(num == 2) {
+					uint32_t val;
+					switch (debugger_get_val(params[1])) {
+					case 0:
+						val = CPU_CR0;
+						break;
+					case 2:
+						val = CPU_CR2;
+						break;
+					case 3:
+						val = CPU_CR3;
+						break;
+					case 4:
+						val = CPU_CR4;
+						break;
+					default:
+						val = -1;
+						telnet_printf("invalid CR reg\n");
+						break;
+					}
+					if(val != -1) {
+						telnet_printf("%08x\n", val);
+					}
 				} else {
 					telnet_printf("invalid parameter number\n");
 				}
@@ -3448,6 +3536,7 @@ void debugger_main()
 				telnet_printf("GDTBASE - show gdt base\n");
 				telnet_printf("IDTBASE - show idt base\n");
 				telnet_printf("TRANS <address> - show translated address\n");
+				telnet_printf("CR <n> - show CRn\n");
 #endif
 				
 				telnet_printf("> <filename> - output logfile\n");
@@ -6320,9 +6409,7 @@ const char *msdos_short_path(const wchar_t *path)
 	if(MyGetShortPathNameW(path, wc_tmp, MAX_PATH) == 0) {
 		wcscpy(wc_tmp, path);
 	}
-	if(!(is_win2k_or_later && WideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wc_tmp, -1, tmp, MAX_PATH, NULL, NULL) != ERROR_INVALID_FLAGS)) {
-		WideCharToMultiByte(uCodePage, 0, wc_tmp, -1, tmp, MAX_PATH, NULL, NULL);
-	}
+	MyWideCharToMultiByte(uCodePage, WC_NO_BEST_FIT_CHARS, wc_tmp, -1, tmp, MAX_PATH, NULL, NULL);
 	msdos_strupr(tmp);
 	return(tmp);
 }
@@ -6343,10 +6430,10 @@ const char *msdos_short_name(WIN32_FIND_DATAA *fd)
 const char *msdos_short_full_path(const char *path)
 {
 	static char tmp[MAX_PATH];
-	char full[MAX_PATH], *name = NULL;
+	char full[MAX_PATH];
 	
 	// Full works with non-existent files, but Short does not
-	if(MyGetFullPathNameA(path, MAX_PATH, full, &name) != 0) {
+	if(MyGetFullPathNameA(path, MAX_PATH, full, NULL) != 0) {
 		if(MyGetShortPathNameA(full, tmp, MAX_PATH) == 0) {
 			strcpy(tmp, full);
 		}
@@ -6479,9 +6566,9 @@ bool msdos_is_device_path(const char *path)
 
 bool msdos_is_con_path(const char *path)
 {
-	char full[MAX_PATH], *name;
+	char full[MAX_PATH];
 	
-	if(GetFullPathNameA(path, MAX_PATH, full, &name) != 0) {
+	if(GetFullPathNameA(path, MAX_PATH, full, NULL) != 0) {
 		return(_stricmp(full, "\\\\.\\CON") == 0);
 	}
 	return(false);
@@ -6489,9 +6576,9 @@ bool msdos_is_con_path(const char *path)
 
 int msdos_is_comm_path(const char *path)
 {
-	char full[MAX_PATH], *name;
+	char full[MAX_PATH];
 	
-	if(GetFullPathNameA(path, MAX_PATH, full, &name) != 0) {
+	if(GetFullPathNameA(path, MAX_PATH, full, NULL) != 0) {
 		if(_stricmp(full, "\\\\.\\COM1") == 0) {
 			return(1);
 		} else if(_stricmp(full, "\\\\.\\COM2") == 0) {
@@ -6561,9 +6648,9 @@ void msdos_set_comm_params(int sio_port, const char *path)
 
 int msdos_is_prn_path(const char *path)
 {
-	char full[MAX_PATH], *name;
+	char full[MAX_PATH];
 	
-	if(GetFullPathNameA(path, MAX_PATH, full, &name) != 0) {
+	if(GetFullPathNameA(path, MAX_PATH, full, NULL) != 0) {
 		if(_stricmp(full, "\\\\.\\PRN") == 0) {
 			return(1);
 		} else if(_stricmp(full, "\\\\.\\LPT1") == 0) {
@@ -6689,9 +6776,9 @@ const char *msdos_search_command_com(const char *command_path, const char *env_p
 
 int msdos_drive_number(const char *path)
 {
-	char tmp[MAX_PATH], *name;
+	const char *tmp = MyGetVolumePathNameA(path);
 	
-	if(MyGetFullPathNameA(path, MAX_PATH, tmp, &name) >= 2 && tmp[1] == ':') {
+	if(strlen(tmp) >= 2 && tmp[1] == ':') {
 		if(tmp[0] >= 'a' && tmp[0] <= 'z') {
 			return(tmp[0] - 'a');
 		} else if(tmp[0] >= 'A' && tmp[0] <= 'Z') {
@@ -6705,14 +6792,8 @@ int msdos_drive_number(const char *path)
 const char *msdos_volume_label(const char *path)
 {
 	static char tmp[MAX_PATH];
-	char volume[] = "A:\\";
 	
-	if(path[1] == ':') {
-		volume[0] = path[0];
-	} else {
-		volume[0] = 'A' + _getdrive() - 1;
-	}
-	if(!GetVolumeInformationA(volume, tmp, MAX_PATH, NULL, NULL, NULL, NULL, 0)) {
+	if(!GetVolumeInformationA(MyGetVolumePathNameA(path), tmp, MAX_PATH, NULL, NULL, NULL, NULL, 0)) {
 		memset(tmp, 0, sizeof(tmp));
 	}
 	return(tmp);
@@ -14866,7 +14947,8 @@ inline void msdos_int_21h_3bh(int lfn)
 		CPU_SET_C_FLAG(1);
 	} else {
 		int drv = _getdrive() - 1;
-		if(path[1] == ':') {
+		path = MyGetVolumePathNameA(path);
+		if(strlen(path) >= 2 && path[1] == ':') {
 			if(path[0] >= 'A' && path[0] <= 'Z') {
 				drv = path[0] - 'A';
 			} else if(path[0] >= 'a' && path[0] <= 'z') {
@@ -15284,7 +15366,7 @@ inline void msdos_int_21h_43h(int lfn)
 					if(compressed_size == file_size) {
 						DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;
 						// this isn't correct if the file is in the NTFS MFT
-						if(MyGetDiskFreeSpaceA(path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters)) {
+						if(GetDiskFreeSpaceA(MyGetVolumePathNameA(path), &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters)) {
 							compressed_size = ((compressed_size - 1) | (sectors_per_cluster * bytes_per_sector - 1)) + 1;
 						}
 					}
@@ -16342,7 +16424,7 @@ inline void msdos_int_21h_50h()
 inline void msdos_int_21h_51h()
 {
 	process_t *process = msdos_process_info_get(current_psp, false);
-	if (process) {
+	if(process) {
 		MySetConsoleTitleA(process->module_path);
 	}
 	CPU_BX = current_psp;
@@ -17488,9 +17570,11 @@ inline void msdos_int_21h_714fh()
 
 inline void msdos_int_21h_71a0h()
 {
+	const char *path = (const char *)(mem + CPU_DS_BASE + CPU_DX);
 	DWORD max_component_len, file_sys_flag;
 	
-	if(GetVolumeInformationA((char *)(mem + CPU_DS_BASE + CPU_DX), NULL, 0, NULL, &max_component_len, &file_sys_flag, CPU_CX == 0 ? NULL : (char *)(mem + CPU_ES_BASE + CPU_DI), CPU_CX)) {
+	if(GetVolumeInformationA(MyGetVolumePathNameA(path), NULL, 0, NULL, &max_component_len, &file_sys_flag, CPU_CX == 0 ? NULL : (char *)(mem + CPU_ES_BASE + CPU_DI), CPU_CX)) {
+		CPU_AX = 0x0000; // AX is destroyed
 		CPU_BX = (UINT16)file_sys_flag & (FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES | FILE_UNICODE_ON_DISK | FILE_VOLUME_IS_COMPRESSED);
 		CPU_BX |= 0x4000;				// supports LFN functions
 		CPU_CX = (UINT16)max_component_len;		// 255
@@ -17534,12 +17618,7 @@ inline void msdos_int_21h_71a6h()
 #else
 		if(_fstat64(fd, &status) == 0) {
 #endif
-			if(file_handler[fd].path[1] == ':') {
-				// NOTE: we need to consider the network file path "\\host\share\"
-				char volume[] = "A:\\";
-				volume[0] = file_handler[fd].path[1];
-				GetVolumeInformationA(volume, NULL, 0, &serial_number, NULL, NULL, NULL, 0);
-			}
+			GetVolumeInformationA(MyGetVolumePathNameA(file_handler[fd].path), NULL, 0, &serial_number, NULL, NULL, NULL, 0);
 			*(UINT32 *)(buffer + 0x00) = MyGetFileAttributesA(file_handler[fd].path);
 			*(UINT32 *)(buffer + 0x04) = (UINT32)(status.st_ctime & 0xffffffff);
 			*(UINT32 *)(buffer + 0x08) = (UINT32)((status.st_ctime >> 32) & 0xffffffff);
@@ -17614,7 +17693,6 @@ inline void msdos_int_21h_71a8h()
 inline void msdos_int_21h_71aah()
 {
 	char drv[] = "A:", path[MAX_PATH];
-	char *hoge=(char *)(mem + CPU_DS_BASE + CPU_DX);
 	
 	if(CPU_BL == 0) {
 		drv[0] = 'A' + _getdrive() - 1;
@@ -17686,11 +17764,11 @@ inline void msdos_int_21h_7302h()
 
 inline void msdos_int_21h_7303h()
 {
-	char *path = (char *)(mem + CPU_DS_BASE + CPU_DX);
+	const char *path = (char *)(mem + CPU_DS_BASE + CPU_DX);
 	ext_space_info_t *info = (ext_space_info_t *)(mem + CPU_ES_BASE + CPU_DI);
 	DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;
 	
-	if(MyGetDiskFreeSpaceA(path, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters)) {
+	if(GetDiskFreeSpaceA(MyGetVolumePathNameA(path), &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters)) {
 		info->size_of_structure = sizeof(ext_space_info_t);
 		info->structure_version = 0;
 		info->sectors_per_cluster = sectors_per_cluster;
@@ -18395,22 +18473,12 @@ inline void msdos_int_2fh_12h()
 //	case 0x19: // DOS 3.0+ internal - Set Drive???
 	case 0x1a:
 		{
-			char *path = (char *)(mem + CPU_DS_BASE + CPU_SI), full[MAX_PATH];
-			if(path[1] == ':') {
+			const char *path = MyGetVolumePathNameA((const char *)(mem + CPU_DS_BASE + CPU_SI));
+			if(strlen(path) >= 2 && path[1] == ':') {
 				if(path[0] >= 'a' && path[0] <= 'z') {
 					CPU_AL = path[0] - 'a' + 1;
 				} else if(path[0] >= 'A' && path[0] <= 'Z') {
 					CPU_AL = path[0] - 'A' + 1;
-				} else {
-					CPU_AL = 0xff; // invalid
-				}
-				strcpy(full, path);
-				strcpy(path, full + 2);
-			} else if(MyGetFullPathNameA(path, MAX_PATH, full, NULL) != 0 && full[1] == ':') {
-				if(full[0] >= 'a' && full[0] <= 'z') {
-					CPU_AL = full[0] - 'a' + 1;
-				} else if(full[0] >= 'A' && full[0] <= 'Z') {
-					CPU_AL = full[0] - 'A' + 1;
 				} else {
 					CPU_AL = 0xff; // invalid
 				}
