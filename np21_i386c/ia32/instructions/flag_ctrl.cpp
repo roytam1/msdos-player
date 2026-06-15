@@ -277,8 +277,12 @@ STI(void)
 		}
 	}
 	CPU_FLAG |= I_FLAG;
-	CPU_TRAP = (CPU_FLAG & (I_FLAG|T_FLAG)) == (I_FLAG|T_FLAG);
+	CPU_TRAP = (CPU_FLAG & (T_FLAG)) == (T_FLAG);
 	exec_1step();
+	if (CPU_TRAP) {
+		CPU_DR6 |= CPU_DR6_BS;
+		INTERRUPT(1, INTR_TYPE_EXCEPTION);
+	}
 	IRQCHECKTERM();
 }
 
