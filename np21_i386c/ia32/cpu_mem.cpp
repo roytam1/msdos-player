@@ -49,7 +49,12 @@ check_limit_upstairs(descriptor_t *sdp, UINT32 offset, UINT len, BOOL is32bit)
 
 	if (SEG_IS_DATA(sdp) && SEG_IS_EXPANDDOWN_DATA(sdp)) {
 		/* expand-down data segment */
-		limit = SEG_IS_32BIT(sdp) ? 0xffffffff : 0x0000ffff;
+		limit = is32bit ? 0xffffffff : 0x0000ffff;
+
+		if (sdp->u.seg.limit >= limit) {
+			goto exc; // 16bit範囲を超えていたら全範囲無効
+		}
+
 		if (sdp->u.seg.limit == 0) {
 			/*
 			 *   32bit       16bit
@@ -221,6 +226,7 @@ cpu_stack_push_check(UINT16 s, descriptor_t *sdp, UINT32 sp, UINT len,
     BOOL is32bit)
 {
 	UINT32 limit;
+	UINT32 seglimit;
 	UINT32 start;
 
 	__ASSERT(sdp != NULL);
@@ -250,6 +256,11 @@ cpu_stack_push_check(UINT16 s, descriptor_t *sdp, UINT32 sp, UINT len,
 				goto exc;
 			}
 		}
+
+		if (sdp->u.seg.limit >= limit) {
+			goto exc; // 16bit範囲を超えていたら全範囲無効
+		}
+
 		if (sdp->u.seg.limit == 0) {
 			/*
 			 *   32bit       16bit
@@ -289,7 +300,12 @@ cpu_stack_push_check(UINT16 s, descriptor_t *sdp, UINT32 sp, UINT len,
 		}
 	} else {
 		/* expand-up stack */
-		if (sdp->u.seg.limit == limit) {
+		seglimit = sdp->u.seg.limit;
+		if (seglimit > limit) {
+			seglimit = limit; // 16bit範囲を超えていたら全範囲有効
+		}
+
+		if (seglimit == limit) {
 			/*
 			 *   32bit       16bit
 			 * +-------+   +-------+ FFFFFFFFh
@@ -300,11 +316,7 @@ cpu_stack_push_check(UINT16 s, descriptor_t *sdp, UINT32 sp, UINT len,
 			 * |       |   |       |
 			 * +-------+   +-------+ 00000000h
 			 */
-			if (!SEG_IS_32BIT(sdp)) {
-				if (sp > limit) {		/* [1] */
-					goto exc;
-				}
-			} else {
+			if (sdp->u.seg.limit == 0xffffffff) {
 				sdp->flag |= CPU_DESC_FLAG_WHOLEADR;
 			}
 		} else {
@@ -322,9 +334,9 @@ cpu_stack_push_check(UINT16 s, descriptor_t *sdp, UINT32 sp, UINT len,
 			 *
 			 * [+]: wrap check
 			 */
-			if ((len > sdp->u.seg.limit)		/* len check */
+			if ((len > seglimit)			/* len check */
 			 || (start > sp)			/* wrap check */
-			 || (sp > sdp->u.seg.limit + 1)) {	/* [1] */
+			 || (sp > seglimit + 1)) {		/* [1] */
 				goto exc;
 			}
 		}
