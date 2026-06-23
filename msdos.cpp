@@ -7101,6 +7101,8 @@ int msdos_file_handler_close(int fd)
 #if 0
 	// don't close the standard streams even if a program wants to
 	if((fd > 2) || (file_handler[fd].valid > 1))
+#else
+	if(file_handler[fd].valid > 0)
 #endif 
 	{
 		file_handler[fd].valid--;
@@ -26327,6 +26329,7 @@ void vdd_init()
 /*
 	memset(vdd_modules, 0, sizeof(vdd_modules));
 	memset(vdd_io, 0, sizeof(vdd_io));
+	memset(vdd_irq_owner, 0, sizeof(vdd_irq_owner));
 	vdd_mem = NULL;
 	hNTVDM = NULL;
 */
@@ -26352,6 +26355,9 @@ void vdd_finish()
 				vdd_io[i].io_range = NULL;
 			}
 			vdd_io[i].hvdd = NULL;
+		}
+		for (int i = 0; i < 16; i++) {
+			vdd_irq_owner[i] = NULL;
 		}
 		for (int i = 0; i < 5; i++) {
 			if (vdd_modules[i].hvdd) {
@@ -26441,6 +26447,20 @@ void vdd_req(char func)
 		CPU_EIP += 4;
 		if ((handle > 5) || !vdd_modules[handle].hvdd) {
 			return; // ntvdm exits here
+		}
+		for (int i = 0; i < 5; i++) {
+			if (vdd_io[i].hvdd == vdd_modules[handle].hvdd) {
+				if (vdd_io[i].io_range) {
+					HeapFree(GetProcessHeap(), 0, vdd_io[i].io_range);
+					vdd_io[i].io_range = NULL;
+				}
+				vdd_io[i].hvdd = NULL;
+			}
+		}
+		for (int i = 0; i < 16; i++) {
+			if (vdd_irq_owner[i] == vdd_modules[handle].hvdd) {
+				vdd_irq_owner[i] = NULL;
+			}
 		}
 		FreeLibrary(vdd_modules[handle].hvdd);
 		vdd_modules[handle].hvdd = 0;
@@ -27060,6 +27080,45 @@ void VDDSimulateInterrupt(int ms, BYTE line, int count)
 	}
 }
 
+WORD VDDReserveIrqLine(HANDLE hvdd, WORD line)
+{
+	if (hvdd != NULL) {
+		if (line == 0xffff) {
+			// IRQ lines below are unsed in MS-DOS Player:
+			//	IRQ  0: System Timer
+			//	IRQ  1: Keyboard
+			//	IRQ  3: COM2 or COM4
+			//	IRQ  4: COM1 or COM3
+			//	IRQ 12: PS/2 Mouse
+			for (int i = 0; i < 16; i++) {
+				if (i == 0 || i == 1 || i == 3 || i == 4 || i == 12) {
+					continue;
+				}
+				if (vdd_irq_owner[i] == NULL) {
+					line = i;
+					break;
+				}
+			}
+		}
+		if (line < 16 && vdd_irq_owner[line] == NULL) {
+			vdd_irq_owner[line] = hvdd;
+			return line;
+		}
+	}
+	return 0xffff;
+}
+
+BOOL VDDReleaseIrqLine(HANDLE hvdd, WORD line)
+{
+	if (hvdd != NULL) {
+		if (line < 16 && vdd_irq_owner[line] == hvdd) {
+			vdd_irq_owner[line] = NULL;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 BOOL VDDInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange, PVDD_IO_HANDLERS IOhandler)
 {
 	int handle = (int)hvdd;
@@ -27087,7 +27146,6 @@ BOOL VDDInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange
 
 void VDDDeInstallIOHook(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange)
 {
-	int handle = (int)hvdd;
 	int i;
 	for (i = 0; i < 5; i++) {
 		if (hvdd == vdd_io[i].hvdd) {
@@ -27607,6 +27665,8 @@ void vdd_init_table(PVDD_FUNC_TABLE ptr)
 	ptr->VDDAllocMem = VDDAllocMem;
 	ptr->VDDFreeMem = VDDFreeMem;
 	ptr->VDDSimulateInterrupt = VDDSimulateInterrupt;
+	ptr->VDDReserveIrqLine = VDDReserveIrqLine;
+	ptr->VDDReleaseIrqLine = VDDReleaseIrqLine;
 	ptr->VDDInstallIOHook = VDDInstallIOHook;
 	ptr->VDDDeInstallIOHook = VDDDeInstallIOHook;
 	ptr->VDDRequestDMA = VDDRequestDMA;

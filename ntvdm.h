@@ -122,6 +122,8 @@ typedef BOOL (*funcVDDDeInstallMemoryHook)(HANDLE hvdd, PVOID addr, DWORD size);
 typedef BOOL (*funcVDDAllocMem)(HANDLE hvdd, PVOID addr, DWORD size);
 typedef BOOL (*funcVDDFreeMem)(HANDLE hvdd, PVOID addr, DWORD size);
 typedef void (*funcVDDSimulateInterrupt)(int ms, BYTE line, int count);
+typedef WORD (*funcVDDReserveIrqLine)(HANDLE hvdd, WORD line);
+typedef BOOL (*funcVDDReleaseIrqLine)(HANDLE hvdd, WORD line);
 typedef BOOL (*funcVDDInstallIOHook)(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange, PVDD_IO_HANDLERS IOhandler);
 typedef void (*funcVDDDeInstallIOHook)(HANDLE hvdd, WORD cPortRange, PVDD_IO_PORTRANGE pPortRange);
 typedef DWORD (*funcVDDRequestDMA)(HANDLE hvdd, WORD ch, PVOID buf, DWORD len);
@@ -229,6 +231,8 @@ typedef struct _VDD_FUNC_TABLE {
 	funcVDDAllocMem VDDAllocMem;
 	funcVDDFreeMem VDDFreeMem;
 	funcVDDSimulateInterrupt VDDSimulateInterrupt;
+	funcVDDReserveIrqLine VDDReserveIrqLine;
+	funcVDDReleaseIrqLine VDDReleaseIrqLine;
 	funcVDDInstallIOHook VDDInstallIOHook;
 	funcVDDDeInstallIOHook VDDDeInstallIOHook;
 	funcVDDRequestDMA VDDRequestDMA;

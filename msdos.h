@@ -1488,6 +1488,8 @@ typedef struct {
 
 static vdd_io_t vdd_io[5] = {0};
 
+static HANDLE vdd_irq_owner[16] = {0};
+
 HMODULE hNTVDM = NULL;
 
 void vdd_init();
