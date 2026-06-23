@@ -1227,27 +1227,27 @@ __declspec(dllexport) BOOL WINAPI VDDDeInstallUserHook(HANDLE hvdd)
 	return func.VDDDeInstallUserHook(hvdd);
 }
 
-// Unknown functions defined in NT_VDD.H
 __declspec(dllexport) SHORT WINAPI VDDAllocateDosHandle(ULONG pPDB, PVOID* ppSFT, PVOID* ppJFT)
 {
-	return 0;
+	return func.VDDAllocateDosHandle(pPDB, ppSFT, ppJFT);
 }
 
 __declspec(dllexport) BOOL WINAPI VDDReleaseDosHandle(ULONG pPDB, SHORT hFile)
 {
-	return FALSE;
+	return func.VDDReleaseDosHandle(pPDB, hFile);
 }
 
 __declspec(dllexport) void WINAPI VDDAssociateNtHandle(PVOID pSFT, HANDLE h32File, WORD wAccess)
 {
-	
+	func.VDDAssociateNtHandle(pSFT, h32File, wAccess);
 }
 
 __declspec(dllexport) HANDLE WINAPI VDDRetrieveNtHandle(ULONG pPDB, SHORT hFile, PVOID* ppSFT, PVOID* ppJFT)
 {
-	return NULL;
+	return func.VDDRetrieveNtHandle(pPDB, hFile, ppSFT, ppJFT);
 }
 
+// Unknown functions defined in NT_VDD.H
 __declspec(dllexport) VOID WINAPI VdmTraceEvent(USHORT Type, USHORT wData, ULONG  lData)
 {
 	

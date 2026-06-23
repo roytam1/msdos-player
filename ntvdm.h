@@ -131,6 +131,10 @@ typedef void (*funcVDDSimulate16)();
 typedef void (*funcVDDTerminateVDM)(void);
 typedef BOOL (*funcVDDInstallUserHook)(HANDLE hvdd, PFNVDD_UCREATE ucr_Handler, PFNVDD_UTERMINATE uterm_Handler, PFNVDD_UBLOCK ublock_handler, PFNVDD_URESUME uresume_handler);
 typedef BOOL (*funcVDDDeInstallUserHook)(HANDLE hvdd);
+typedef SHORT (*funcVDDAllocateDosHandle)(ULONG pPDB, PVOID* ppSFT, PVOID* ppJFT);
+typedef BOOL (*funcVDDReleaseDosHandle)(ULONG pPDB, SHORT hFile);
+typedef void (*funcVDDAssociateNtHandle)(PVOID pSFT, HANDLE h32File, WORD wAccess);
+typedef HANDLE (*funcVDDRetrieveNtHandle)(ULONG pPDB, SHORT hFile, PVOID* ppSFT, PVOID* ppJFT);
 
 typedef struct _VDD_FUNC_TABLE {
 	funcGetBYTE getAL;
@@ -234,6 +238,10 @@ typedef struct _VDD_FUNC_TABLE {
 	funcVDDTerminateVDM VDDTerminateVDM;
 	funcVDDInstallUserHook VDDInstallUserHook;
 	funcVDDDeInstallUserHook VDDDeInstallUserHook;
+	funcVDDAllocateDosHandle VDDAllocateDosHandle;
+	funcVDDReleaseDosHandle VDDReleaseDosHandle;
+	funcVDDAssociateNtHandle VDDAssociateNtHandle;
+	funcVDDRetrieveNtHandle VDDRetrieveNtHandle;
 } VDD_FUNC_TABLE, *PVDD_FUNC_TABLE;
 
 #endif

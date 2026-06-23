@@ -564,6 +564,38 @@ CALLfar_pm_call_gate_same_privilege(const selector_t *callgate_sel, selector_t *
 	CPU_EIP = callgate_sel->desc.u.gate.offset;
 }
 
+static void
+callgate_stack_push16(selector_t* ss_sel, UINT32* sp, UINT16 value, BOOL ss32, int ucrw)
+{
+	UINT32 mask;
+	UINT32 new_sp;
+	UINT32 laddr;
+
+	mask = ss32 ? 0xffffffff : 0x0000ffff;
+	new_sp = (*sp - 2) & mask;
+
+	laddr = ss_sel->desc.u.seg.segbase + new_sp;
+	cpu_lmemorywrite_w(laddr, value, CPU_PAGE_WRITE_DATA | ucrw);
+
+	*sp = new_sp;
+}
+
+static void
+callgate_stack_push32(selector_t* ss_sel, UINT32* sp, UINT32 value, BOOL ss32, int ucrw)
+{
+	UINT32 mask;
+	UINT32 new_sp;
+	UINT32 laddr;
+
+	mask = ss32 ? 0xffffffff : 0x0000ffff;
+	new_sp = (*sp - 4) & mask;
+
+	laddr = ss_sel->desc.u.seg.segbase + new_sp;
+	cpu_lmemorywrite_d(laddr, value, CPU_PAGE_WRITE_DATA | ucrw);
+
+	*sp = new_sp;
+}
+
 /*---
  * CALLfar_pm: call gate (MORE-PRIVILEGE)
  */
@@ -635,75 +667,100 @@ CALLfar_pm_call_gate_more_privilege(const selector_t *callgate_sel, selector_t *
 	param_count = callgate_sel->desc.u.gate.count;
 	VERBOSE(("CALLfar_pm: param_count = %d", param_count));
 
-	/* check stack size */
-	if (cs_sel->desc.d) {
-		stacksize = 16;
-	} else {
-		stacksize = 8;
-	}
+	/*
+	 * stack size must be based on call gate type, not target CS D-bit.
+	 */
 	if (callgate_sel->desc.type == CPU_SYSDESC_TYPE_CALL_32) {
-		stacksize += param_count * 4;
-	} else {
-		stacksize += param_count * 2;
+		stacksize = 16 + param_count * 4;
 	}
-	cpu_stack_push_check(ss_sel.idx, &ss_sel.desc, new_esp, stacksize, ss_sel.desc.d);
+	else {
+		stacksize = 8 + param_count * 2;
+	}
+
+	cpu_stack_push_check(ss_sel.idx, &ss_sel.desc, new_esp,
+		stacksize, ss_sel.desc.d);
+
+	/*
+	 * Page access privilege for the new stack.
+	 * During a more-privilege call, stack writes are effectively done at
+	 * the destination privilege level.
+	 */
+	rv = (cs_sel->desc.dpl == 3) ? CPU_MODE_USER : CPU_MODE_SUPERVISER;
 
 	if (callgate_sel->desc.type == CPU_SYSDESC_TYPE_CALL_32) {
-		/* dump param */
+		UINT32 tmp_esp;
+
+		/* Read parameters from old stack before changing CPU state. */
 		for (i = 0; i < param_count; i++) {
 			param[i] = cpu_vmemoryread_d(CPU_SS_INDEX, old_esp + i * 4);
 			VERBOSE(("CALLfar_pm: get param[%d] = %08x", i, param[i]));
 		}
 
+		tmp_esp = new_esp;
+
+		/*
+		 * Write the new stack frame without loading SS/CS yet.
+		 * If #PF happens here, the CPU still points to the original
+		 * call gate instruction, which is required for a fault.
+		 */
+		callgate_stack_push32(&ss_sel, &tmp_esp, old_ss, ss_sel.desc.d, rv);
+		callgate_stack_push32(&ss_sel, &tmp_esp, old_esp, ss_sel.desc.d, rv);
+
+		for (i = param_count; i > 0; i--) {
+			callgate_stack_push32(&ss_sel, &tmp_esp, param[i - 1],
+				ss_sel.desc.d, rv);
+			VERBOSE(("CALLfar_pm: set param[%d] = %08x", i - 1, param[i - 1]));
+		}
+
+		callgate_stack_push32(&ss_sel, &tmp_esp, old_cs, ss_sel.desc.d, rv);
+		callgate_stack_push32(&ss_sel, &tmp_esp, old_eip, ss_sel.desc.d, rv);
+
+		/*
+		 * Commit only after all faultable memory accesses succeeded.
+		 */
 		load_ss(ss_sel.selector, &ss_sel.desc, ss_sel.desc.dpl);
 		if (CPU_STAT_SS32) {
-			CPU_ESP = new_esp;
-		} else {
-			CPU_SP = (UINT16)new_esp;
+			CPU_ESP = tmp_esp;
+		}
+		else {
+			CPU_SP = (UINT16)tmp_esp;
 		}
 
 		load_cs(cs_sel->selector, &cs_sel->desc, cs_sel->desc.dpl);
 		CPU_EIP = callgate_sel->desc.u.gate.offset;
-
-		PUSH0_32(old_ss);
-		PUSH0_32(old_esp);
-
-		/* restore param */
-		for (i = param_count; i > 0; i--) {
-			PUSH0_32(param[i - 1]);
-			VERBOSE(("CALLfar_pm: set param[%d] = %08x", i - 1, param[i - 1]));
 		}
+	else {
+		UINT32 tmp_esp;
 
-		PUSH0_32(old_cs);
-		PUSH0_32(old_eip);
-	} else {
-		/* dump param */
 		for (i = 0; i < param_count; i++) {
 			param[i] = cpu_vmemoryread_w(CPU_SS_INDEX, old_esp + i * 2);
 			VERBOSE(("CALLfar_pm: get param[%d] = %04x", i, param[i]));
 		}
 
+		tmp_esp = new_esp;
+
+		callgate_stack_push16(&ss_sel, &tmp_esp, old_ss, ss_sel.desc.d, rv);
+		callgate_stack_push16(&ss_sel, &tmp_esp, (UINT16)old_esp, ss_sel.desc.d, rv);
+
+		for (i = param_count; i > 0; i--) {
+			callgate_stack_push16(&ss_sel, &tmp_esp, (UINT16)param[i - 1],
+				ss_sel.desc.d, rv);
+			VERBOSE(("CALLfar_pm: set param[%d] = %04x", i - 1, param[i - 1]));
+		}
+
+		callgate_stack_push16(&ss_sel, &tmp_esp, old_cs, ss_sel.desc.d, rv);
+		callgate_stack_push16(&ss_sel, &tmp_esp, (UINT16)old_eip, ss_sel.desc.d, rv);
+
 		load_ss(ss_sel.selector, &ss_sel.desc, ss_sel.desc.dpl);
 		if (CPU_STAT_SS32) {
-			CPU_ESP = new_esp;
-		} else {
-			CPU_SP = (UINT16)new_esp;
+			CPU_ESP = tmp_esp;
+		}
+		else {
+			CPU_SP = (UINT16)tmp_esp;
 		}
 
 		load_cs(cs_sel->selector, &cs_sel->desc, cs_sel->desc.dpl);
 		CPU_EIP = callgate_sel->desc.u.gate.offset;
-
-		PUSH0_16(old_ss);
-		PUSH0_16(old_esp);
-
-		/* restore param */
-		for (i = param_count; i > 0; i--) {
-			PUSH0_16(param[i - 1]);
-			VERBOSE(("CALLfar_pm: set param[%d] = %04x", i - 1, param[i - 1]));
-		}
-
-		PUSH0_16(old_cs);
-		PUSH0_16(old_eip);
 	}
 }
 
@@ -860,9 +917,19 @@ RETfar_pm(UINT nbytes)
 		VERBOSE(("RETfar_pm: RPL(%d) < CPL(%d)", cs_sel.rpl, CPU_STAT_CPL));
 		EXCEPTION(GP_EXCEPTION, cs_sel.idx);
 	}
-	if (!SEG_IS_CONFORMING_CODE(&cs_sel.desc) && (cs_sel.desc.dpl > cs_sel.rpl)) {
-		VERBOSE(("RETfar_pm: NON-COMFORMING-CODE-SEGMENT and DPL(%d) > RPL(%d)", cs_sel.desc.dpl, cs_sel.rpl));
+	//if (!SEG_IS_CONFORMING_CODE(&cs_sel.desc) && (cs_sel.desc.dpl > cs_sel.rpl)) {
+	//	VERBOSE(("RETfar_pm: NON-COMFORMING-CODE-SEGMENT and DPL(%d) > RPL(%d)", cs_sel.desc.dpl, cs_sel.rpl));
+	//	EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+	//}
+	if (!SEG_IS_CONFORMING_CODE(&cs_sel.desc)) {
+		if (cs_sel.desc.dpl != cs_sel.rpl) {
+			EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+		}
+	}
+	else {
+		if (cs_sel.desc.dpl > cs_sel.rpl) {
 		EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+	}
 	}
 
 	/* not present */
@@ -1154,9 +1221,19 @@ IRET_pm_protected_mode_return(UINT16 new_cs, UINT32 new_ip, UINT32 new_flags)
 		VERBOSE(("IRET_pm: RPL(%d) < CPL(%d)", cs_sel.rpl, CPU_STAT_CPL));
 		EXCEPTION(GP_EXCEPTION, cs_sel.idx);
 	}
-	if (SEG_IS_CONFORMING_CODE(&cs_sel.desc) && (cs_sel.desc.dpl > cs_sel.rpl)) {
-		VERBOSE(("IRET_pm: CONFORMING-CODE-SEGMENT and DPL(%d) > RPL(%d)", cs_sel.desc.dpl, cs_sel.rpl));
+	//if (SEG_IS_CONFORMING_CODE(&cs_sel.desc) && (cs_sel.desc.dpl > cs_sel.rpl)) {
+	//	VERBOSE(("IRET_pm: CONFORMING-CODE-SEGMENT and DPL(%d) > RPL(%d)", cs_sel.desc.dpl, cs_sel.rpl));
+	//	EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+	//}
+	if (!SEG_IS_CONFORMING_CODE(&cs_sel.desc)) {
+		if (cs_sel.desc.dpl != cs_sel.rpl) {
+			EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+		}
+	}
+	else {
+		if (cs_sel.desc.dpl > cs_sel.rpl) {
 		EXCEPTION(GP_EXCEPTION, cs_sel.idx);
+		}
 	}
 
 	/* not present */

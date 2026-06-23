@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								6/14/2026
+								6/20/2026
 
 ----- What's This
 
@@ -1151,10 +1151,10 @@ VDD (Virtual Device Driver)
 	VDDTerminateVDM
 	VDDInstallUserHook
 	VDDDeInstallUserHook
-	VDDAllocateDosHandle (*10)
-	VDDReleaseDosHandle (*10)
-	VDDAssociateNtHandle (*10)
-	VDDRetrieveNtHandle (*10)
+	VDDAllocateDosHandle
+	VDDReleaseDosHandle
+	VDDAssociateNtHandle
+	VDDRetrieveNtHandle
 	VdmTraceEvent (*10)
 	VdmParametersInfo (*10)
 	VdmGetParametersInfoError (*10)
