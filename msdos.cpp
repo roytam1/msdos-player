@@ -3032,7 +3032,7 @@ void debugger_main()
 					} else {
 						if((fp = fopen(file_path, "wb")) != NULL) {
 							for(UINT32 addr = start_addr; addr <= end_addr; addr++) {
-								fputc(read_byte(addr & ADDR_MASK),fp);
+								fputc(read_byte(addr & ADDR_MASK), fp);
 							}
 							fclose(fp);
 						} else {
@@ -6957,7 +6957,11 @@ int msdos_open(const char *path, int oflag)
 	}
 	
 	int fd = _open_osfhandle((intptr_t) h, oflag);
-	if(fd == -1) {
+	if(fd >= max_files) {
+		_close(fd);
+		fd = -1;
+		_doserrno = ERROR_TOO_MANY_OPEN_FILES;
+	} else if(fd == -1) {
 		CloseHandle(h);
 	}
 	return(fd);
@@ -22161,6 +22165,26 @@ void msdos_syscall(unsigned num)
 //			break;
 //		}
 	case 0x21:
+		if(num == 0x21 && CPU_AH != 0x50 && CPU_AH != 0x51 && CPU_AH != 0x62 && CPU_AH != 0x64 && CPU_AH < 0x6c) {
+			// from DOSBox commit r4481 (Push registers for most DOS function calls)
+			// This pretends INT 21h service pushes function entry registers onto the stack
+			// and will fix crashes in specific utilities like UNLZEX
+			
+			// NOTE: IRET is already executed to leave INT 21h handler when we reach here
+			// so IP, CS, and EFlags are at the top of dead stack
+//			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP -  2) = CPU_EIP;
+//			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP -  4) = CPU_CS;
+//			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP -  6) = CPU_EFLAG;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP -  8) = CPU_ES;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 10) = CPU_DS;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 12) = CPU_BP;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 14) = CPU_DI;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 16) = CPU_SI;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 18) = CPU_DX;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 20) = CPU_CX;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 22) = CPU_BX;
+			*(UINT16 *)(mem + CPU_SS_BASE + CPU_SP - 24) = CPU_AX;
+		}
 		// MS-DOS System Call
 		msdos_inc_indos();
 		CPU_SET_C_FLAG(0);
