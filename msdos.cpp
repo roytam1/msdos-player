@@ -27916,6 +27916,77 @@ HANDLE VDDRetrieveNtHandle(ULONG pPDB, SHORT hFile, PVOID* ppSFT, PVOID* ppJFT)
 	return INVALID_HANDLE_VALUE;
 }
 
+// I confirmed the behavior of VdmParametersInfo() and VdmGetParametersInfoError() on Windows 2000
+
+BOOL VdmParametersInfo(VDM_INFO_TYPE infotype, PVOID pBuffer, ULONG cbBufferSize)
+{
+	// It seems return-value of VdmGetParametersInfoError() never be reset even if VdmParametersInfo() succeeds
+//	VdmParametersInfoError = VDM_NO_ERROR;
+	
+	switch(infotype) {
+	case VDM_GET_TICK_COUNT:
+		if(cbBufferSize == 8) {
+			// It seems to return sec and usec as DWORD values
+			// NOTE: usec value is always (n * 1000), so it is better to use QueryPerformanceCounter()
+			DWORD time = timeGetTime();
+			((DWORD *)pBuffer)[0] = (time / 1000);
+			((DWORD *)pBuffer)[1] = (time % 1000) * 1000;
+			return TRUE;
+		} else {
+			VdmParametersInfoError = VDM_ERROR_INVALID_BUFFER_SIZE;
+		}
+		break;
+	case VDM_GET_TIMER0_INITIAL_COUNT:
+		if(cbBufferSize == 4) {
+			*(DWORD *)pBuffer = PIT_COUNT_VALUE(0);
+			return TRUE;
+		} else {
+			VdmParametersInfoError = VDM_ERROR_INVALID_BUFFER_SIZE;
+		}
+		break;
+	case VDM_GET_LAST_UPDATED_TIMER0_COUNT:
+		if(cbBufferSize == 2) {
+			if(!pit[0].count_latched) {
+				pit_latch_count(0);
+			}
+			*(WORD *)pBuffer = pit[0].latch;
+			return TRUE;
+		} else {
+			VdmParametersInfoError = VDM_ERROR_INVALID_BUFFER_SIZE;
+		}
+		break;
+	case VDM_LATCH_TIMER0_COUNT:
+		if(cbBufferSize == 2) {
+			pit_latch_count(0);
+			*(WORD *)pBuffer = pit[0].latch;
+			return TRUE;
+		} else {
+			VdmParametersInfoError = VDM_ERROR_INVALID_BUFFER_SIZE;
+		}
+		break;
+	case VDM_SET_NEXT_TIMER0_COUNT:
+		if(cbBufferSize == 2) {
+			// When succeeded, I found pBuffer value is CCCCh uing debug build of vdd dll
+			// It seems this command does nothing and pBuffer is not updated
+			return TRUE;
+		} else {
+			VdmParametersInfoError = VDM_ERROR_INVALID_BUFFER_SIZE;
+		}
+		break;
+	default:
+		VdmParametersInfoError = VDM_ERROR_INVALID_FUNCTION;
+		break;
+	}
+	return FALSE;
+}
+
+// NOTE: nt_vdd.h says return-value type is VDM_INFO_TYPE, but I believe this is simply the typo
+
+VDM_ERROR_TYPE VdmGetParametersInfoError(VOID)
+{
+	return VdmParametersInfoError;
+}
+
 BOOL vdd_io_read(int port, int size, void *val)
 {
 	for (int i = 0; i < 5; i++) {
@@ -28079,6 +28150,8 @@ void vdd_init_table(PVDD_FUNC_TABLE ptr)
 	ptr->VDDReleaseDosHandle = VDDReleaseDosHandle;
 	ptr->VDDAssociateNtHandle = VDDAssociateNtHandle;
 	ptr->VDDRetrieveNtHandle = VDDRetrieveNtHandle;
+	ptr->VdmParametersInfo = VdmParametersInfo;
+	ptr->VdmGetParametersInfoError = VdmGetParametersInfoError;
 }
 #endif
 
