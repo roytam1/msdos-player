@@ -535,6 +535,173 @@ cpu_memorywrite_f(UINT32 paddr, const REG80 *value)
 
 #include "cpu_mem.mcr"
 
+static void MEMCALL
+cpu_vmemorywrite_prepare_common(int idx, UINT32 offset, UINT length, UINT32 paddr[2], UINT *remain)
+{
+	descriptor_t *sdp;
+	UINT32 addr;
+	UINT first;
+	int exc;
+
+	__ASSERT((unsigned int)idx < CPU_SEGREG_NUM);
+	__ASSERT(length > 0);
+
+	sdp = &CPU_STAT_SREG(idx);
+	addr = sdp->u.seg.segbase + offset;
+
+	if (!CPU_STAT_PM) {
+		paddr[0] = addr;
+		if (remain != NULL) {
+			*remain = length;
+		}
+		return;
+	}
+
+	if (!SEG_IS_VALID(sdp)) {
+		exc = GP_EXCEPTION;
+		goto err;
+	}
+	if (!(sdp->flag & CPU_DESC_FLAG_WRITABLE)) {
+		cpu_memorywrite_check(sdp, offset, length, CHOOSE_EXCEPTION(idx));
+	} else if (!(sdp->flag & CPU_DESC_FLAG_WHOLEADR)) {
+		if (!check_limit_upstairs(sdp, offset, length, SEG_IS_32BIT(sdp))) {
+			goto range_failure;
+		}
+	}
+
+	if (!CPU_STAT_PAGING) {
+		paddr[0] = addr;
+		if (remain != NULL) {
+			*remain = length;
+		}
+		return;
+	}
+
+	first = CPU_PAGE_SIZE - (addr & CPU_PAGE_MASK);
+	paddr[0] = laddr2paddr(addr, CPU_PAGE_WRITE_DATA | CPU_STAT_USER_MODE);
+	if (first < length) {
+		paddr[1] = laddr2paddr(addr + first, CPU_PAGE_WRITE_DATA | CPU_STAT_USER_MODE);
+		if (remain != NULL) {
+			*remain = first;
+		}
+	} else if (remain != NULL) {
+		*remain = length;
+	}
+	return;
+
+range_failure:
+	VERBOSE(("cpu_vmemorywrite_prepare: type = %d, offset = %08x, length = %d, limit = %08x", sdp->type, offset, length, sdp->u.seg.limit));
+	exc = CHOOSE_EXCEPTION(idx);
+err:
+	EXCEPTION(exc, 0);
+}
+
+void MEMCALL
+cpu_vmemorywrite_prepare_b(int idx, UINT32 offset, UINT32 *paddr)
+{
+	UINT32 tmp[2];
+	UINT remain;
+
+	cpu_vmemorywrite_prepare_common(idx, offset, 1, tmp, &remain);
+	*paddr = tmp[0];
+}
+
+void MEMCALL
+cpu_vmemorywrite_prepare_w(int idx, UINT32 offset, UINT32 paddr[2], UINT *remain)
+{
+	cpu_vmemorywrite_prepare_common(idx, offset, 2, paddr, remain);
+}
+
+void MEMCALL
+cpu_vmemorywrite_prepare_d(int idx, UINT32 offset, UINT32 paddr[2], UINT *remain)
+{
+	cpu_vmemorywrite_prepare_common(idx, offset, 4, paddr, remain);
+}
+void MEMCALL
+cpu_vmemorywrite_commit_w(UINT32 paddr[2], UINT remain, UINT16 data)
+{
+	if (remain >= 2) {
+		cpu_memorywrite_w(paddr[0], data);
+	}
+	else {
+		cpu_memorywrite(paddr[0], (UINT8)data);
+		cpu_memorywrite(paddr[1], (UINT8)(data >> 8));
+	}
+}
+void MEMCALL
+cpu_vmemorywrite_commit_d(UINT32 paddr[2], UINT remain, UINT32 data)
+{
+	switch (remain) {
+	case 1:
+		cpu_memorywrite(paddr[0], (UINT8)data);
+		cpu_memorywrite_w(paddr[1], (UINT16)(data >> 8));
+		cpu_memorywrite(paddr[1] + 2, (UINT8)(data >> 24));
+		break;
+
+	case 2:
+		cpu_memorywrite_w(paddr[0], (UINT16)data);
+		cpu_memorywrite_w(paddr[1], (UINT16)(data >> 16));
+		break;
+
+	case 3:
+		cpu_memorywrite(paddr[0], (UINT8)data);
+		cpu_memorywrite_w(paddr[0] + 1, (UINT16)(data >> 8));
+		cpu_memorywrite(paddr[1], (UINT8)(data >> 24));
+		break;
+
+	default:
+		cpu_memorywrite_d(paddr[0], data);
+		break;
+	}
+}
+
+
+#if defined(USE_CPU_BULKREP)
+UINT8 * MEMCALL
+cpu_vmemory_get_direct_host_ptr(int idx, UINT32 offset, UINT leng, int ucrw)
+{
+	descriptor_t *sdp;
+	UINT32 addr;
+
+	__ASSERT((unsigned int)idx < CPU_SEGREG_NUM);
+	__ASSERT(leng > 0);
+
+	sdp = &CPU_STAT_SREG(idx);
+	addr = sdp->u.seg.segbase + offset;
+
+	if (!CPU_STAT_PM) {
+		return cpu_lmemory_get_direct_host_ptr(addr, leng, ucrw);
+	}
+
+	/*
+	 * Non-faulting segment probe for REP bulk fast paths.
+	 * If the descriptor has not already been validated for the whole
+	 * address space, fall back to the old one-element path so that segment
+	 * limit exceptions occur at exactly the normal instruction point.
+	 */
+	if (!SEG_IS_VALID(sdp) || !SEG_IS_PRESENT(sdp) || SEG_IS_SYSTEM(sdp)) {
+		return NULL;
+	}
+	if ((ucrw & CPU_PAGE_WRITE) != 0) {
+		if (SEG_IS_CODE(sdp) ||
+		    (SEG_IS_DATA(sdp) && !SEG_IS_WRITABLE_DATA(sdp)) ||
+		    !(sdp->flag & CPU_DESC_FLAG_WRITABLE)) {
+			return NULL;
+		}
+	} else {
+		if ((SEG_IS_CODE(sdp) && !SEG_IS_READABLE_CODE(sdp)) ||
+		    !(sdp->flag & CPU_DESC_FLAG_READABLE)) {
+			return NULL;
+		}
+	}
+	if (!(sdp->flag & CPU_DESC_FLAG_WHOLEADR)) {
+		return NULL;
+	}
+	return cpu_lmemory_get_direct_host_ptr(addr, leng, ucrw);
+}
+#endif
+
+
 DECLARE_VIRTUAL_ADDRESS_MEMORY_RW_FUNCTIONS(b, UINT8, 1)
 DECLARE_VIRTUAL_ADDRESS_MEMORY_RMW_FUNCTIONS(b, UINT8, 1)
 DECLARE_VIRTUAL_ADDRESS_MEMORY_RW_FUNCTIONS(w, UINT16, 2)
