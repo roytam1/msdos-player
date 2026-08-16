@@ -55,15 +55,11 @@ set_task_free(UINT16 selector)
 	UINT32 addr;
 	UINT32 h;
 
+	// freeは何度実行してもよい　実機確認済み
 	addr = CPU_GDTR_BASE + (selector & CPU_SEGMENT_SELECTOR_INDEX_MASK);
 	h = cpu_kmemoryread_d(addr + 4);
-	if (h & CPU_TSS_H_BUSY) {
-		h &= ~CPU_TSS_H_BUSY;
-		cpu_kmemorywrite_d(addr + 4, h);
-	} else {
-		ia32_panic("set_task_free: already free(%04x:%08x)",
-		    selector, h);
-	}
+	h &= ~CPU_TSS_H_BUSY;
+	cpu_kmemorywrite_d(addr + 4, h);
 }
 
 void CPUCALL
