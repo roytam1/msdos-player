@@ -5535,10 +5535,11 @@ bool update_console_input()
 							if(scn != 0x1d && scn != 0x2a && scn != 0x36 && scn != 0x38 && !(scn >= 0x5b && scn <= 0x5d && scn == scn_old)) {
 								if(kbc_buffer != NULL) {
 									enter_key_buf_lock();
-									if(enh) {
-										if(!(scn >= 0x78 && scn != 0x84)) {
+									if(chr == 0) {
+										if(scn >= 0x78 && scn != 0x84) {
+											set_kbc_buffer(0x00, 0x00, 0x00, 1);
+										} else {
 											set_kbc_buffer(0x00, enh, enh, 1);
-											chr = enh;
 										}
 									}
 									set_kbc_buffer(chr, scn, port_data, 1);
@@ -5565,9 +5566,8 @@ bool update_console_input()
 							}
 							if(kbc_buffer != NULL) {
 								enter_key_buf_lock();
-								if(enh) {
-									set_kbc_buffer(0x00, enh, enh, 1);
-									chr = enh;
+								if(chr == 0) {
+									set_kbc_buffer(0x00, 0x00, 0x00, 1);
 								}
 								set_kbc_buffer(chr, scn, port_data, 1);
 								leave_key_buf_lock();
@@ -5603,7 +5603,6 @@ bool update_console_input()
 									enter_key_buf_lock();
 									if(enh) {
 										set_kbc_buffer(0x00, enh, enh, 0);
-										chr = enh;
 									}
 									set_kbc_buffer(chr, scn, port_data, 0);
 									leave_key_buf_lock();
