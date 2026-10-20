@@ -7533,7 +7533,7 @@ retry:
 		key_recv >>= 16;
 	} else {
 		while(kbc_buffer != NULL) {
-			if(msdos_exit || (ctrl_break_checking && ctrl_break_pressed) || ctrl_c_pressed) {
+			if(msdos_exit || ctrl_break_pressed || ctrl_c_pressed) {
 				break;
 			}
 			if(!pcbios_is_key_buffer_empty()) {
@@ -7550,7 +7550,7 @@ retry:
 				}
 			}
 		}
-		if(msdos_exit || (ctrl_break_checking && ctrl_break_pressed) || ctrl_c_pressed) {
+		if(msdos_exit || ctrl_break_pressed || ctrl_c_pressed) {
 			// insert CR to terminate input loops
 			key_char = 0x0d;
 			key_scan = 0;
@@ -13906,8 +13906,12 @@ DWORD WINAPI msdos_int_21h_01h_thread(LPVOID)
 	CPU_AX_in_service &= 0xff00;
 	CPU_AX_in_service |= msdos_getche(0x21, 0x01);
 	
-	ctrl_break_detected = ctrl_break_pressed;
-	
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 	service_exit = true;
 	return(0);
 }
@@ -13933,7 +13937,13 @@ inline void msdos_int_21h_02h()
 	UINT8 data = CPU_DL;
 	msdos_putch(data, 0x21, 0x02);
 	CPU_AL = data;
-	ctrl_break_detected = ctrl_break_pressed;
+	
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 }
 
 inline void msdos_int_21h_03h()
@@ -13995,8 +14005,12 @@ DWORD WINAPI msdos_int_21h_08h_thread(LPVOID)
 	CPU_AX_in_service &= 0xff00;
 	CPU_AX_in_service |= msdos_getch(0x21, 0x08);
 	
-	ctrl_break_detected = ctrl_break_pressed;
-	
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 	service_exit = true;
 	return(0);
 }
@@ -14035,7 +14049,13 @@ inline void msdos_int_21h_09h()
 		}
 	}
 	CPU_AL = '$';
-	ctrl_break_detected = ctrl_break_pressed;
+	
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 }
 
 DWORD WINAPI msdos_int_21h_0ah_thread(LPVOID)
@@ -14043,17 +14063,26 @@ DWORD WINAPI msdos_int_21h_0ah_thread(LPVOID)
 	int ofs = CPU_DS_BASE_in_service + CPU_DX_in_service;
 	int max = mem[ofs] - 1;
 	UINT8 *buf = mem + ofs + 2;
-	int chr, p = 0;
+	int p = 0;
 	
-	while((chr = msdos_getch(0x21, 0x0a)) != 0x0d) {
-		if((ctrl_break_checking && ctrl_break_pressed) || ctrl_c_pressed) {
+	while(1) {
+		int chr = msdos_getch(0x21, 0x0a);
+		
+		if(ctrl_break_pressed || ctrl_c_pressed) {
 			p = 0;
-			msdos_putch(0x03, 0x21, 0x0a);
+			process_t *process = msdos_process_info_get(current_psp);
+			int fd = msdos_psp_get_file_table(1, current_psp);
+			if(fd < process->max_files && file_handler[fd].valid && !file_handler[fd].atty) {
+				// output 03h (ETX) when stdout is redirected to file
+				msdos_putch(0x03, 0x21, 0x0a);
+			} else {
+				// output ^C
+				msdos_putch(0x5e, 0x21, 0x0a);
+				msdos_putch(0x43, 0x21, 0x0a);
+			}
 			msdos_putch(0x0d, 0x21, 0x0a);
 			msdos_putch(0x0a, 0x21, 0x0a);
 			break;
-		} else if(ctrl_break_pressed) {
-			// skip this byte
 		} else if(chr == 0x00) {
 			// skip 2nd byte
 			while((chr = msdos_getch(0x21, 0x0a)) == 0x00) {
@@ -14083,6 +14112,9 @@ DWORD WINAPI msdos_int_21h_0ah_thread(LPVOID)
 					msdos_putch(0x08, 0x21, 0x0a);
 				}
 			}
+		} else if(chr == 0x0d) {
+			// carriage return
+			break;
 		} else if(chr == 0x1b) {
 			// escape
 			while(p > 0) {
@@ -14108,8 +14140,13 @@ DWORD WINAPI msdos_int_21h_0ah_thread(LPVOID)
 	buf[p] = 0x0d;
 	msdos_putch(0x0d, 0x21, 0x0a);
 	mem[ofs + 1] = p;
-	ctrl_break_detected = ctrl_break_pressed;
 	
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 	service_exit = true;
 	return(0);
 }
@@ -14140,7 +14177,12 @@ inline void msdos_int_21h_0bh()
 		CPU_AL = 0x00;
 		maybe_idle();
 	}
-	ctrl_break_detected = ctrl_break_pressed;
+	if(ctrl_break_pressed) {
+		ctrl_break_detected = true;
+	}
+	if(ctrl_c_pressed) {
+		ctrl_c_detected = true;
+	}
 }
 
 inline void msdos_int_21h_0ch()
@@ -15512,30 +15554,29 @@ DWORD WINAPI msdos_int_21h_3fh_thread(LPVOID)
 	while(max > p) {
 		int chr = msdos_getch(0x21, 0x3f);
 		
-		if((ctrl_break_checking && ctrl_break_pressed) || ctrl_c_pressed) {
+		if(ctrl_break_pressed || ctrl_c_pressed) {
 			p = 0;
 			buf[p++] = 0x0d;
 			if(max > p) {
 				buf[p++] = 0x0a;
 			}
-			msdos_putch(0x03, 0x21, 0x3f);
+			process_t *process = msdos_process_info_get(current_psp);
+			int fd = msdos_psp_get_file_table(1, current_psp);
+			if(fd < process->max_files && file_handler[fd].valid && !file_handler[fd].atty) {
+				// output 03h (ETX) when stdout is redirected to file
+				msdos_putch(0x03, 0x21, 0x3f);
+			} else {
+				// output ^C
+				msdos_putch(0x5e, 0x21, 0x3f);
+				msdos_putch(0x43, 0x21, 0x3f);
+			}
 			msdos_putch(0x0d, 0x21, 0x3f);
 			msdos_putch(0x0a, 0x21, 0x3f);
 			break;
-		} else if(ctrl_break_pressed) {
-			// skip this byte
 		} else if(chr == 0x00) {
 			// skip 2nd byte
 			while((chr = msdos_getch(0x21, 0x3f)) == 0x00) {
 			}
-		} else if(chr == 0x0d) {
-			// carriage return
-			buf[p++] = 0x0d;
-			if(max > p) {
-				buf[p++] = 0x0a;
-			}
-			msdos_putch('\n', 0x21, 0x3f);
-			break;
 		} else if(chr == 0x08) {
 			// back space
 			if(p > 0) {
@@ -15561,6 +15602,14 @@ DWORD WINAPI msdos_int_21h_3fh_thread(LPVOID)
 					msdos_putch(0x08, 0x21, 0x3f);
 				}
 			}
+		} else if(chr == 0x0d) {
+			// carriage return
+			buf[p++] = 0x0d;
+			if(max > p) {
+				buf[p++] = 0x0a;
+			}
+			msdos_putch('\n', 0x21, 0x3f);
+			break;
 		} else if(chr == 0x1b) {
 			// escape
 			while(p > 0) {
@@ -22144,7 +22193,7 @@ void msdos_syscall(unsigned num)
 	}
 	// this is called from dummy loop to wait until a serive that waits input is done
 	if(!(use_service_thread && in_service)) {
-		ctrl_break_detected = ctrl_break_pressed = ctrl_c_pressed = false;
+		ctrl_break_detected = ctrl_c_detected = false;
 	}
 	
 	switch(num) {
@@ -22722,9 +22771,10 @@ void msdos_syscall(unsigned num)
 			sda->suggested_action = 1; // retry
 			sda->locus_of_last_error = 1; // unknown
 		}
-		if((ctrl_break_checking && ctrl_break_detected) || ctrl_c_pressed) {
+		if(ctrl_break_checking ? (ctrl_break_pressed || ctrl_c_pressed) : (ctrl_break_detected || ctrl_c_pressed)) {
 			// raise int 23h
 			CPU_SOFT_INTERRUPT(0x23);
+			ctrl_break_detected = ctrl_break_pressed = ctrl_c_detected = ctrl_c_pressed = false;
 		}
 		msdos_dec_indos();
 		break;
