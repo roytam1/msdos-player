@@ -1087,7 +1087,7 @@ static COMMANDFUNC_RESULT pmescp_PutChar(void* param, const PRINTCMD_DATA& data,
 	}
 	int charHeightScale = owner->m_state.isDoubleHeight ? 2 : 1;
 	scaleY *= charHeightScale;
-	owner->m_state.charBaseLineOffset = max(owner->m_state.charBaseLineOffset, owner->m_state.CalcDotPitchY() * 24 * owner->m_dpiX * (charHeightScale - 1));
+	owner->m_state.charBaseLineOffset = max((double)owner->m_state.charBaseLineOffset, owner->m_state.CalcDotPitchY() * 24 * owner->m_dpiX * (charHeightScale - 1));
 	if (owner->CheckOverflowLine(charWidth)) {
 		owner->m_state.posX = 0;
 		owner->m_state.posY += owner->m_state.linespacing * owner->m_dpiY;
@@ -1671,7 +1671,7 @@ bool CPrintESCP::CheckOverflowLine(float addCharWidth)
 }
 bool CPrintESCP::CheckOverflowPage(float addLineHeight)
 {
-	return m_state.posY + addLineHeight > min(m_heightPixel, (m_state.pagelength - (m_state.topMargin + m_state.bottomMargin)) * m_dpiX);
+	return m_state.posY + addLineHeight > min((float)m_heightPixel, (m_state.pagelength - (m_state.topMargin + m_state.bottomMargin)) * m_dpiX);
 }
 
 PRINT_COMMAND_RESULT CPrintESCP::DoCommand()
