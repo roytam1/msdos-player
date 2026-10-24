@@ -213,6 +213,13 @@ public:
 	{
 		return(cnt == 0);
 	}
+#if defined(_MSC_VER) && (_MSC_VER >= 1910)
+	// avoid C26432 for VC++ 2017 or later
+	FIFO(const FIFO&) = delete;
+	FIFO& operator=(const FIFO&) = delete;
+	FIFO(FIFO&&) = delete;
+	FIFO& operator=(FIFO&&) = delete;
+#endif
 };
 
 /* ----------------------------------------------------------------------------

@@ -263,7 +263,7 @@ inline bool my_wcstr_endswith(const wchar_t *str, wchar_t chr)
 #define USE_ACTIVE_CP_TO_FILE_APIS
 
 #ifdef USE_ACTIVE_CP_TO_FILE_APIS
-UINT uCodePageOEM = GetOEMCP();
+UINT uCodePageOEM = 0;
 
 UINT GetFileApisCP()
 {
@@ -4414,6 +4414,9 @@ int main(int argc, char *argv[], char *envp[])
 	
 	use_service_thread = use_vram_thread = is_nt_40_or_later;
 	
+#ifdef USE_ACTIVE_CP_TO_FILE_APIS
+	uCodePageOEM = GetOEMCP();
+#endif
 	input_cp = get_input_code_page();
 	output_cp = get_output_code_page();
 	multibyte_cp = get_multibyte_code_page();
@@ -10509,7 +10512,7 @@ UINT32 get_ticks_since_midnight()
 {
 	SYSTEMTIME time;
 	MyGetLocalTime(&time);
-	unsigned __int64 msec = ((time.wHour * 60 + time.wMinute) * 60 + time.wSecond) * 1000 + time.wMilliseconds;
+	unsigned __int64 msec = (((unsigned __int64)(time.wHour) * 60 + time.wMinute) * 60 + time.wSecond) * 1000 + time.wMilliseconds;
 	unsigned __int64 tick = msec * 0x1800b0 / (24 * 60 * 60 * 1000);
 	return (UINT32)tick;
 }
@@ -15890,7 +15893,7 @@ inline void msdos_int_21h_43h(int lfn)
 					ULARGE_INTEGER hund;
 					hund.LowPart = local.dwLowDateTime;
 					hund.HighPart = local.dwHighDateTime;
-					hund.QuadPart += CPU_SI * 100000;
+					hund.QuadPart += (ULONGLONG)CPU_SI * 100000;
 					local.dwLowDateTime = hund.LowPart;
 					local.dwHighDateTime = hund.HighPart;
 				}
@@ -22771,7 +22774,7 @@ void msdos_syscall(unsigned num)
 			sda->suggested_action = 1; // retry
 			sda->locus_of_last_error = 1; // unknown
 		}
-		if(ctrl_break_checking ? (ctrl_break_pressed || ctrl_c_pressed) : (ctrl_break_detected || ctrl_c_pressed)) {
+		if(ctrl_break_checking ? (ctrl_break_pressed || ctrl_c_pressed) : (ctrl_break_detected || ctrl_c_detected)) {
 			// raise int 23h
 			CPU_SOFT_INTERRUPT(0x23);
 			ctrl_break_detected = ctrl_break_pressed = ctrl_c_detected = ctrl_c_pressed = false;
@@ -23263,7 +23266,7 @@ void msdos_syscall(unsigned num)
 	}
 #ifdef ENABLE_DEBUG_SYSCALL
 	if(num != 0x08 && num != 0x1c && fp_debug_log != NULL) {
-		fprintf(fp_debug_log, "out %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X)\n", num, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES);
+		fprintf(fp_debug_log, "out %02Xh (AX=%04X BX=%04X CX=%04X DX=%04X SI=%04X DI=%04X DS=%04X ES=%04X [%c%c])\n", num, CPU_AX, CPU_BX, CPU_CX, CPU_DX, CPU_SI, CPU_DI, CPU_DS, CPU_ES, CPU_C_FLAG ? 'C' : '-', CPU_Z_FLAG ? 'Z' : '-');
 	}
 #endif
 }
@@ -23468,7 +23471,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 0] = 0x9c;	// pushf
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 1] = 0x0e;	// push cs
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 2] = 0xe8;	// call 42h
-	UINT32 offset = 0x42 - (IRET_SIZE + 5 * 128 + 7);
+	UINT32 offset = (UINT32)(0x42 - (IRET_SIZE + 5 * 128 + 7));
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 3] = offset;
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 4] = offset >> 8;
 	mem[IRET_TOP + IRET_SIZE + 5 * 128 + 5] = offset >> 16;
@@ -26435,7 +26438,7 @@ void beep_update()
 		}
 		if(beep_freq != freq) {
 			if(whdr[0].lpData != NULL) {
-				int num = (int)(wfe.nAvgBytesPerSec * BEEP_BUFLEN_SECS * 2 / (BEEP_SAMPLE_RATE / freq) + 0.5);
+				int num = (int)((double)wfe.nAvgBytesPerSec * BEEP_BUFLEN_SECS * 2 / (BEEP_SAMPLE_RATE / freq) + 0.5);
 				int len = (1024 * wfe.nAvgBytesPerSec * BEEP_BUFLEN_SECS * 2) / num;
 				int half = len / 2, val = len, remain;
 				BYTE *lpWave = (BYTE *)whdr[0].lpData;
