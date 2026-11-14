@@ -2784,9 +2784,9 @@ static char *hexstring(UINT32 value, int digits)
 	static char buffer[20];
 	buffer[0] = '0';
 	if (digits)
-		snprintf(&buffer[1], 19, "%0*Xh", digits, value);
+		_snprintf(&buffer[1], 19, "%0*Xh", digits, value);
 	else
-		snprintf(&buffer[1], 19, "%Xh", value);
+		_snprintf(&buffer[1], 19, "%Xh", value);
 	return (buffer[1] >= '0' && buffer[1] <= '9') ? &buffer[1] : &buffer[0];
 }
 
@@ -2795,9 +2795,9 @@ static char *hexstring64(UINT32 lo, UINT32 hi)
 	static char buffer[40];
 	buffer[0] = '0';
 	if (hi != 0)
-		snprintf(&buffer[1], 39, "%X%08Xh", hi, lo);
+		_snprintf(&buffer[1], 39, "%X%08Xh", hi, lo);
 	else
-		snprintf(&buffer[1], 39, "%Xh", lo);
+		_snprintf(&buffer[1], 39, "%Xh", lo);
 	return (buffer[1] >= '0' && buffer[1] <= '9') ? &buffer[1] : &buffer[0];
 }
 
@@ -2813,9 +2813,9 @@ static char *shexstring(UINT32 value, int digits, int always)
 {
 	static char buffer[20];
 	if (value >= 0x80000000)
-		snprintf(buffer, 20, "-%s", hexstring(-value, digits));
+		_snprintf(buffer, 20, "-%s", hexstring(-value, digits));
 	else if (always)
-		snprintf(buffer, 20, "+%s", hexstring(value, digits));
+		_snprintf(buffer, 20, "+%s", hexstring(value, digits));
 	else
 		return hexstring(value, digits);
 	return buffer;

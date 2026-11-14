@@ -12,7 +12,7 @@ static void PREFIX186(_pusha)()    /* Opcode 0x60 */
 	unsigned tmp=m_regs.w[SP];
 
 #ifdef I80286
-	if(PM) i80286_check_permission(SS, m_regs.w[SP]-16, 16, I80286_WRITE);
+	if(PM) i80286_check_permission(SS, (UINT16)(m_regs.w[SP]-16), 16, I80286_WRITE);
 #endif
 	PUSH(m_regs.w[AX]);
 	PUSH(m_regs.w[CX]);
@@ -151,16 +151,19 @@ static void PREFIX186(_enter)()    /* Opcode 0xc8 */
 	nb += FETCH << 8;
 #ifdef I80286
 	level = FETCH & 0x1f;
-	if(PM) i80286_check_permission(SS, m_regs.w[SP]-2-(level*2), 2+(level*2), I80286_WRITE);
+	if(PM) i80286_check_permission(SS, (UINT16)(m_regs.w[SP]-2-(level*2)), 2+(level*2), I80286_WRITE);
 #else
 	level = FETCH;
 #endif
 	PUSH(m_regs.w[BP]);
-	m_regs.w[BP] = m_regs.w[SP];
+	UINT16 fp = m_regs.w[SP];
+	for (i=1;i<level;i++) {
+		m_regs.w[BP] -= 2;
+		PUSH(GetMemW(SS,m_regs.w[BP]));
+	}
+	if (level) PUSH(fp);
+	m_regs.w[BP] = fp;
 	m_regs.w[SP] -= nb;
-	for (i=1;i<level;i++)
-		PUSH(GetMemW(SS,m_regs.w[BP]-i*2));
-	if (level) PUSH(m_regs.w[BP]);
 }
 
 static void PREFIX186(_leave)()    /* Opcode 0xc9 */

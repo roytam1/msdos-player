@@ -53,7 +53,7 @@ typedef enum {
 	ESCP_LINEMODE_DOUBLEDOT = 4,
 } ESCP_LINEMODE;
 
-typedef struct {
+typedef struct PRINT_ESCP_STATE {
 	float posX; // •`‰æˆÊ’uX pixel
 	float posY; // •`‰æˆÊ’uY pixel
 
@@ -179,7 +179,7 @@ typedef struct {
 	}
 } PRINT_ESCP_STATE;
 
-typedef struct {
+typedef struct PRINT_ESCP_GDIOBJ {
 	HFONT oldfont;				/*!< Old Font */
 	HFONT fontbase;				/*!< Font Base */
 	HFONT fontSansSerif;		/*!< Font Sans-serif */

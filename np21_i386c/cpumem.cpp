@@ -133,6 +133,7 @@ PF_UINT32 MEMCALL memp_read32_paging(UINT32 address) {
 	return read_dword(address);
 }
 
+// ---- 高速版読み込み（paging用）　普通のメモリを優先的に処理する
 PF_UINT8 MEMCALL memp_read8_paging_fast(UINT32 address) {
 
 	address = address & CPU_ADRSMASK;

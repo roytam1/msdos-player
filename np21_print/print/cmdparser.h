@@ -93,7 +93,7 @@ typedef enum {
 	PRINTCMD_CALLBACK_RESULT_CANCEL = 3 // コマンド継続を取り消し、改めて現在のデータからコマンドを解釈する
 } PRINTCMD_CALLBACK_RESULT;
 
-typedef struct {
+typedef struct PRINTCMD_DEFINE {
 	UINT8 cmd[5]; // コマンド　複数バイトある場合は先に来るものから順に書く　null終端
 	int cmdlen;
 	PRINTCMD_TYPE type;
@@ -115,7 +115,7 @@ typedef struct {
 	bool varlength;
 } PRINTCMD_DEFINE;
 
-typedef struct {
+typedef struct PRINTCMD_DATA {
 	PRINTCMD_DEFINE *cmd;
 	std::vector<UINT8> data;
 } PRINTCMD_DATA;

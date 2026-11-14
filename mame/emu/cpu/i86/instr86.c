@@ -1398,7 +1398,7 @@ static void PREFIX86(_jnp)()    /* Opcode 0x7b */
 static void PREFIX86(_jl)()    /* Opcode 0x7c */
 {
 	int tmp = (int)((INT8)FETCH);
-	if ((SF!=OF)&&!ZF) {
+	if (SF!=OF) {
 		m_pc += tmp;
 /* ASG - can probably assume this is safe
         CHANGE_PC(m_pc);*/

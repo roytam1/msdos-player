@@ -799,7 +799,8 @@ PAIR32 dos_get_device(const char* name);
 #define DBCS_SIZE	0x10
 #define SFT_TOP		((DBCS_TOP + DBCS_SIZE + 15) & ~15U)
 #define SFT_SIZE	((6 + sizeof(sft_t) * max_files + 15) & ~15U)
-#define MEMORY_TOP	(SFT_TOP + SFT_SIZE)
+//#define MEMORY_TOP	(SFT_TOP + SFT_SIZE)
+UINT32 MEMORY_TOP;
 #ifdef SUPPORT_GRAPHIC_SCREEN
 #define MEMORY_END	0xa0000
 #define VGA_VRAM_TOP	0xa0000

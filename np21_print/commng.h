@@ -79,7 +79,7 @@ struct _commng
 	void	(*release)(COMMNG self);							/*!< release */
 };
 
-typedef struct {
+typedef struct _COMFLAG {
 	UINT32	size;
 	UINT32	sig;
 	UINT32	ver;
