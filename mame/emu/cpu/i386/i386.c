@@ -462,16 +462,27 @@ static int i386_limit_check(int seg, UINT32 offset, int size)
 	{
 		if((m_sreg[seg].flags & 0x0018) == 0x0010 && m_sreg[seg].flags & 0x0004) // if expand-down data segment
 		{
-			// compare if greater then 0xffffffff when we're passed the access size
-			if((offset <= m_sreg[seg].limit) || ((m_sreg[seg].d)?0:((offset + size - 1) > 0xffff)))
+			if(offset <= m_sreg[seg].limit)
 			{
 				logerror("Limit check at 0x%08x failed. Segment %04x, limit %08x, offset %08x (expand-down)\n",m_pc,m_sreg[seg].selector,m_sreg[seg].limit,offset);
 				return 1;
 			}
+			else
+			{
+				// Include every byte of the access without wrapping a 32-bit offset.
+				const UINT64 last = (UINT64)(offset) + size - 1;
+				const UINT32 upper_limit = m_sreg[seg].d ? 0xffffffffU : 0xffffU;
+				if(last > upper_limit)
+				{
+					logerror("Limit check at 0x%08x failed. Segment %04x, limit %08x, offset %08x (expand-down)\n",m_pc,m_sreg[seg].selector,m_sreg[seg].limit,offset);
+					return 1;
+				}
+			}
 		}
 		else
 		{
-			if((offset + size - 1) > m_sreg[seg].limit)
+			const UINT64 last = (UINT64)(offset) + size - 1;
+			if(last > m_sreg[seg].limit)
 			{
 				logerror("Limit check at 0x%08x failed. Segment %04x, limit %08x, offset %08x\n",m_pc,m_sreg[seg].selector,m_sreg[seg].limit,offset);
 				return 1;
@@ -2256,9 +2267,9 @@ static void i386_protected_mode_retf(UINT8 count, UINT8 operand32)
 		desc.selector = newSS;
 		i386_load_protected_mode_segment(&desc,NULL);
 		DPL = (desc.flags >> 5) & 0x03;  // descriptor privilege level
-		if((newSS & ~0x07) == 0)
+		if((newSS & ~0x03) == 0)
 		{
-			logerror("RETF: SS segment is null.\n");
+			logerror("RETF: GDT segment is null.\n");
 			FAULT(FAULT_GP,0)
 		}
 		if(newSS & 0x04)
@@ -3681,7 +3692,7 @@ static CPU_TRANSLATE( i386 )
 {
 	int ret = TRUE;
 	if(space == AS_PROGRAM)
-	ret = i386_translate_address(intention, true, address, NULL);
+		ret = i386_translate_address(intention, true, address, NULL);
 	*address &= m_a20_mask;
 	return ret;
 }

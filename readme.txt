@@ -1,5 +1,5 @@
 MS-DOS Player for Win32-x64 console
-								10/17/2026
+								10/24/2026
 
 ----- What's This
 
@@ -442,8 +442,8 @@ Please place msdos.exe and ntvdm.exe together.
 
 VC++ project files msdos.dsp/vcproj/vcxproj also contains the configurations
 for 80186, Pentium/PRO/MMX/2/3, and Cyrix MediaGX.
-You can build all binaries for several cpu models by running build6/9/15.bat.
-(VC++ 6.0 with SP6. VC++ 2008 with SP1, or VC++ 2017 are required)
+You can build all binaries for several cpu models by running build6/9/18.bat.
+(VC++ 6.0 with SP6. VC++ 2008 with SP1, or VC++ 2026 are required)
 
 
 ----- Internal Debugger

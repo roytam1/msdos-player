@@ -1,0 +1,724 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F7099130-A15B-4654-8981-DD3E0229A7AF}</ProjectGuid>
+    <RootNamespace>msdos</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>msdos</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>msdos</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>msdos</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>msdos</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Debug/msdos.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;HAS_IA32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\Debug/msdos.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0411</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;winmm.lib;psapi.lib;wsock32.lib;setupapi.lib;mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Debug/msdos.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/msdos.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/msdos.bsc</OutputFile>
+    </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>.\vista.manifest</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\Debug/msdos.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;HAS_IA32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeaderOutputFile>.\Debug/msdos.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0411</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;winmm.lib;psapi.lib;wsock32.lib;setupapi.lib;mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Debug/msdos.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/msdos.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/msdos.bsc</OutputFile>
+    </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>.\vista.manifest</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <TypeLibraryName>.\Release/msdos.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;HAS_IA32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/msdos.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0411</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;winmm.lib;psapi.lib;wsock32.lib;setupapi.lib;mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Release/msdos.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\Release/msdos.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/msdos.bsc</OutputFile>
+    </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>.\vista.manifest</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+      <TypeLibraryName>.\Release/msdos.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;HAS_IA32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeaderOutputFile>.\Release/msdos.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0411</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;winmm.lib;psapi.lib;wsock32.lib;setupapi.lib;mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Release/msdos.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\Release/msdos.pdb</ProgramDatabaseFile>
+      <SubSystem>Console</SubSystem>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX64</TargetMachine>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/msdos.bsc</OutputFile>
+    </Bscmake>
+    <Manifest>
+      <AdditionalManifestFiles>.\vista.manifest</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="msdos.cpp" />
+    <ClCompile Include="np21_i386c\cpucore.cpp" />
+    <ClCompile Include="np21_i386c\cpumem.cpp" />
+    <ClCompile Include="np21_i386c\ia32\cpu.cpp" />
+    <ClCompile Include="np21_i386c\ia32\cpu_io.cpp" />
+    <ClCompile Include="np21_i386c\ia32\cpu_mem.cpp" />
+    <ClCompile Include="np21_i386c\ia32\ctrlxfer.cpp" />
+    <ClCompile Include="np21_i386c\ia32\debug.cpp" />
+    <ClCompile Include="np21_i386c\ia32\exception.cpp" />
+    <ClCompile Include="np21_i386c\ia32\groups.cpp" />
+    <ClCompile Include="np21_i386c\ia32\ia32.cpp" />
+    <ClCompile Include="np21_i386c\ia32\inst_table.cpp" />
+    <ClCompile Include="np21_i386c\ia32\interface.cpp" />
+    <ClCompile Include="np21_i386c\ia32\paging.cpp" />
+    <ClCompile Include="np21_i386c\ia32\resolve.cpp" />
+    <ClCompile Include="np21_i386c\ia32\segments.cpp" />
+    <ClCompile Include="np21_i386c\ia32\task.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\bin_arith.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\bit_byte.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\ctrl_trans.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\data_trans.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\dec_arith.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\flag_ctrl.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\logic_arith.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\misc_inst.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\seg_reg.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\shift_rotate.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\string_inst.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\system_inst.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\fpdummy.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\fpemul_dosbox.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\fpemul_dosbox2.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\fpemul_softfloat.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\fpemul_softfloat3.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat\softfloat.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80M_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_i16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\extF80_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_mulAdd.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128M_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_mulAdd.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f128_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_mulAdd.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f16_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_mulAdd.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f32_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_add.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_div.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_eq.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_eq_signaling.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_isSignalingNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_le.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_le_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_lt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_lt_quiet.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_mul.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_mulAdd.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_rem.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_roundToInt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_sqrt.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_sub.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_i32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_i32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_i64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_i64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_ui32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_ui32_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_ui64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\f64_to_ui64_r_minMag.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i32_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\i64_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\softfloat_raiseFlags.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\softfloat_state.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_add128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_add256M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_addMagsExtF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_addMagsF128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_addMagsF16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_addMagsF32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_addMagsF64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_approxRecip32_1.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_approxRecipSqrt32_1.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_approxRecipSqrt_1Ks.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_approxRecip_1Ks.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_commonNaNToExtF80UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_commonNaNToF128UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_commonNaNToF16UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_commonNaNToF32UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_commonNaNToF64UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_countLeadingZeros16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_countLeadingZeros32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_countLeadingZeros64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_countLeadingZeros8.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_eq128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_extF80UIToCommonNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_f128UIToCommonNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_f16UIToCommonNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_f32UIToCommonNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_f64UIToCommonNaN.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_le128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_lt128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mul128By32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mul128To256M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mul64ByShifted32To128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mul64To128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mulAddF128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mulAddF16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mulAddF32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_mulAddF64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normRoundPackToExtF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normRoundPackToF128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normRoundPackToF16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normRoundPackToF32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normRoundPackToF64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normSubnormalExtF80Sig.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normSubnormalF128Sig.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normSubnormalF16Sig.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normSubnormalF32Sig.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_normSubnormalF64Sig.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_propagateNaNExtF80UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_propagateNaNF128UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_propagateNaNF16UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_propagateNaNF32UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_propagateNaNF64UI.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundPackToExtF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundPackToF128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundPackToF16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundPackToF32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundPackToF64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundToI16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundToI32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundToI64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundToUI32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_roundToUI64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam128Extra.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam256M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shiftRightJam64Extra.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftLeft128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftRight128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftRightJam128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftRightJam128Extra.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftRightJam64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_shortShiftRightJam64Extra.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_sub128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_sub256M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_subMagsExtF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_subMagsF128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_subMagsF16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_subMagsF32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\s_subMagsF64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui32_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_extF80.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_extF80M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_f128.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_f128M.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_f16.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_f32.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\fpu\softfloat3\ui64_to_f64.c" />
+    <ClCompile Include="np21_i386c\ia32\instructions\mmx\3dnow.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\mmx\mmx.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse\sse.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse2\sse2.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse3\sse3.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse4\sse4_1.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse4\sse4_2.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\sse4a\sse4a.cpp" />
+    <ClCompile Include="np21_i386c\ia32\instructions\ssse3\ssse3.cpp" />
+    <ClCompile Include="np21_print\cmbase.cpp" />
+    <ClCompile Include="np21_print\cmfile.cpp" />
+    <ClCompile Include="np21_print\cmpara.cpp" />
+    <ClCompile Include="np21_print\cmpipe.cpp" />
+    <ClCompile Include="np21_print\cmspooler.cpp" />
+    <ClCompile Include="np21_print\codecnv\eucsjis.cpp" />
+    <ClCompile Include="np21_print\codecnv\eucucs2.cpp" />
+    <ClCompile Include="np21_print\codecnv\sjiseuc.cpp" />
+    <ClCompile Include="np21_print\codecnv\sjisucs2.cpp" />
+    <ClCompile Include="np21_print\codecnv\tcswap16.cpp" />
+    <ClCompile Include="np21_print\codecnv\tcswap32.cpp" />
+    <ClCompile Include="np21_print\codecnv\textcnv.cpp" />
+    <ClCompile Include="np21_print\codecnv\ucs2sjis.cpp" />
+    <ClCompile Include="np21_print\codecnv\ucs2utf8.cpp" />
+    <ClCompile Include="np21_print\codecnv\utf8ucs2.cpp" />
+    <ClCompile Include="np21_print\print\cmdparser.cpp" />
+    <ClCompile Include="np21_print\print\pmbase.cpp" />
+    <ClCompile Include="np21_print\print\pmescp.cpp" />
+    <ClCompile Include="np21_print\print\pmpr201.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common.h" />
+    <ClInclude Include="lang_br.h" />
+    <ClInclude Include="lang_cn.h" />
+    <ClInclude Include="lang_de.h" />
+    <ClInclude Include="lang_dk.h" />
+    <ClInclude Include="lang_fi.h" />
+    <ClInclude Include="lang_fr.h" />
+    <ClInclude Include="lang_it.h" />
+    <ClInclude Include="lang_jp.h" />
+    <ClInclude Include="lang_ko.h" />
+    <ClInclude Include="lang_nl.h" />
+    <ClInclude Include="lang_pt.h" />
+    <ClInclude Include="lang_ru.h" />
+    <ClInclude Include="lang_sp.h" />
+    <ClInclude Include="lang_sw.h" />
+    <ClInclude Include="lang_tw.h" />
+    <ClInclude Include="msdos.h" />
+    <ClInclude Include="np21_i386c\cpucore.h" />
+    <ClInclude Include="np21_i386c\cpumem.h" />
+    <ClInclude Include="np21_i386c\ia32\cpu.h" />
+    <ClInclude Include="np21_i386c\ia32\cpu_def.h" />
+    <ClInclude Include="np21_i386c\ia32\cpu_io.h" />
+    <ClInclude Include="np21_i386c\ia32\cpu_mem.h" />
+    <ClInclude Include="np21_i386c\ia32\ctrlxfer.h" />
+    <ClInclude Include="np21_i386c\ia32\exception.h" />
+    <ClInclude Include="np21_i386c\ia32\groups.h" />
+    <ClInclude Include="np21_i386c\ia32\inst_table.h" />
+    <ClInclude Include="np21_i386c\ia32\interface.h" />
+    <ClInclude Include="np21_i386c\ia32\paging.h" />
+    <ClInclude Include="np21_i386c\ia32\resolve.h" />
+    <ClInclude Include="np21_i386c\ia32\segments.h" />
+    <ClInclude Include="np21_i386c\ia32\task.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\fp.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\fpumem.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat\softfloat-macros.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat\softfloat-specialize.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat\softfloat.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat\softfloatdef.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\internals.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\opts-GCC.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\platform.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\primitives.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\primitiveTypes.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\softfloat.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\softfloat_types.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\specialize.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\include\stdbool.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\fpu\softfloat3\include\stdint.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\mmx\3dnow.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\mmx\mmx.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse\sse.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse2\sse2.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse3\sse3.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse4\sse4_1.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse4\sse4_2.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\sse4a\sse4a.h" />
+    <ClInclude Include="np21_i386c\ia32\instructions\ssse3\sses3.h" />
+    <ClInclude Include="np21_print\cmbase.h" />
+    <ClInclude Include="np21_print\cmfile.h" />
+    <ClInclude Include="np21_print\commng.h" />
+    <ClInclude Include="np21_print\cmpara.h" />
+    <ClInclude Include="np21_print\cmpipe.h" />
+    <ClInclude Include="np21_print\cmspooler.h" />
+    <ClInclude Include="np21_print\codecnv\codecnv.h" />
+    <ClInclude Include="np21_print\codecnv\textcnv.h" />
+    <ClInclude Include="np21_print\print\cmdparser.h" />
+    <ClInclude Include="np21_print\print\pmbase.h" />
+    <ClInclude Include="np21_print\print\pmescp.h" />
+    <ClInclude Include="np21_print\print\pmpr201.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="vista.manifest" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

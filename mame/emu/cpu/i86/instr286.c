@@ -394,10 +394,10 @@ static void i80286_code_descriptor(UINT16 selector, UINT16 offset, int gate)
 					PUSH(oldsp);
 					for (i = GATECNT(desc)-1; i >= 0; i--)
 						PUSH(ReadWord(oldstk+(i*2)));
-				} else i80286_check_permission(SS, m_regs.w[SP]-4, 4, I80286_READ);
+				} else i80286_check_permission(SS, (UINT16)(m_regs.w[SP]-4), 4, I80286_READ);
 				SET_ACC(gatedesc);
 				WriteWord(addr+4, gatedesc[2]);
-				m_sregs[CS]=IDXTBL(gatesel) | DPL(r);
+				m_sregs[CS]=IDXTBL(gatesel) | DPL(CONF(r) ? m_sregs[CS] : r);
 				m_limit[CS]=LIMIT(gatedesc);
 				m_base[CS]=BASE(gatedesc);
 				m_rights[CS]=RIGHTS(gatedesc);
@@ -499,14 +499,14 @@ static void i80286_interrupt_descriptor(UINT16 number, int hwint, int error)
 			m_regs.w[SP] = tss_sp;
 			PUSH(oldss);
 			PUSH(oldsp);
-		} else i80286_check_permission(SS, m_regs.w[SP]-((error != -1)?8:6), (error != -1)?8:6, I80286_READ);
+		} else i80286_check_permission(SS, (UINT16)(m_regs.w[SP]-((error != -1)?8:6)), (error != -1)?8:6, I80286_READ);
 		SET_ACC(gatedesc);
 		WriteWord(addr+4, gatedesc[2]);
 		PREFIX(_pushf());
 		PUSH(m_sregs[CS]);
 		PUSH(m_pc-m_base[CS]);
 		if((hwint == 1) && (error != -1)) PUSH(error);
-		m_sregs[CS]=IDXTBL(gatesel) | DPL(r);
+		m_sregs[CS]=IDXTBL(gatesel) | DPL(CONF(r) ? m_sregs[CS] : r);
 		m_limit[CS]=LIMIT(gatedesc);
 		m_base[CS]=BASE(gatedesc);
 		m_rights[CS]=RIGHTS(gatedesc);

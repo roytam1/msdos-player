@@ -1,8 +1,17 @@
 Based on MAME 0.152.
-Fixes in MAME 0.154 to 0.288 are applied.
+Fixes in MAME 0.154 to 0.289 are applied.
 
-Mr. cracyc's fix is applied:
-https://github.com/mamedev/mame/commit/eeb81cdf30f80cd7ce797c4574b8534dd4cddc46
+Additional fixes are applied:
+
+Mr. cracyc
+https://github.com/mamedev/mame/commit/1bc96ab8fe65abef29fcf2f74446fe83aea9cad8
+Mr. Kenji Mouri
+https://github.com/mamedev/mame/commit/6c1c0f93b147fff56cce0a397d8939c474570532
+https://github.com/mamedev/mame/commit/894903e9a44d4f257436a2558f059940388e60fd
+Mr. BlueRain-debug
+https://github.com/mamedev/mame/commit/ce4fc166e50628c765e051ab0f356a3862f57ed3
+Mr. Dark Best
+https://github.com/mamedev/mame/commit/b2e5b579c118cda83692b9fb9abf41241c77ddbf
 
 i386_state are removed and all its members are changed to global variables.
 All registers can be accessed directly without cpustate->.

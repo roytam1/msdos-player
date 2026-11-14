@@ -512,7 +512,10 @@ void add_cpu_trace(UINT32 pc, UINT16 cs, UINT32 eip, BOOL op32);
 bool in_iret_table(int num);
 #endif
 
-// np21w printer emulation
+/* ----------------------------------------------------------------------------
+	np21w printer emulation
+---------------------------------------------------------------------------- */
+
 #define SUPPORT_NP21W_PRINTER
 
 #ifdef SUPPORT_NP21W_PRINTER

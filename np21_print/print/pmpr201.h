@@ -71,7 +71,7 @@ typedef enum {
 	PRINT_PR201_SCRIPTMODE_SUB = '2',
 } PRINT_PR201_SCRIPTMODE;
 
-typedef struct {
+typedef struct PRINT_PR201_STATE {
 	float posX; // ï`âÊà íuX pixel
 	float posY; // ï`âÊà íuY pixel
 	float actualLineHeight; // åªç›ÇÃçsÇÃé¿ç€ÇÃçÇÇ≥
@@ -169,7 +169,7 @@ typedef struct {
 	}
 } PRINT_PR201_STATE;
 
-typedef struct {
+typedef struct PRINT_PR201_GDIOBJ {
 	HFONT oldfont;			/*!< Old Font */
 	HFONT fontbase;			/*!< Font Base */
 	HFONT fontrot90;		/*!< Font Rotation */

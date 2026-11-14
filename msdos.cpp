@@ -1343,16 +1343,9 @@ int cpu_type = 0, cpu_step = 0;
 UINT8 *get_mem_ptr(UINT32 byteaddress, UINT32 size)
 {
 #if !defined(USE_DEBUGGER)
-	if(byteaddress >= 0x100000) {
-		UINT64 endaddress = (UINT64)byteaddress + size - 1;
-		if(endaddress < MAX_MEM) {
-			return mem + byteaddress;
-		}
-	} else if(byteaddress >= MEMORY_TOP) {
-		UINT64 endaddress = (UINT64)byteaddress + size - 1;
-		if(endaddress < MEMORY_END) {
-			return mem + byteaddress;
-		}
+	UINT64 endaddress = (UINT64)byteaddress + size - 1;
+	if((byteaddress >= MEMORY_TOP && endaddress < MEMORY_END) || (byteaddress >= 0x100000 && endaddress < MAX_MEM)) {
+		return mem + byteaddress;
 	}
 #endif
 	return NULL;
@@ -2491,9 +2484,9 @@ void debugger_main()
 {
 	char buffer[8192];
 	
-	buffer[0] = 0xff; // IAC
-	buffer[1] = 0xfb; // WILL
-	buffer[2] = 0x01; // ECHO
+	buffer[0] = (char)0xff; // IAC
+	buffer[1] = (char)0xfb; // WILL
+	buffer[2] = (char)0x01; // ECHO
 	telnet_send(buffer, 3);
 	
 	telnet_command("\033[20h"); // cr-lf
@@ -10285,7 +10278,7 @@ void msdos_process_terminate(int psp_seg, int ret, int mem_free)
 	
 	psp_t *psp = (psp_t *)(mem + (psp_seg << 4));
 	
-	if(psp->int_22h.dw == 0) {
+	if(psp->parent_psp == 0 || psp->int_22h.dw == 0) {
 		// jump to ffff:0000 to exit MS-DOS Player if int 22h address is null
 		// this situation may occur if the current psp address was changed
 		// but int 22h address in the new psp may not have been set
@@ -23446,6 +23439,7 @@ int msdos_init(int argc, char *argv[], char *envp[], int standard_env)
 	}
 	
 	// init MCB
+	MEMORY_TOP = SFT_TOP + SFT_SIZE;
 	int seg = MEMORY_TOP >> 4;
 	
 	// iret table

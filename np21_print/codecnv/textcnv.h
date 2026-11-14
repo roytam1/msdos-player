@@ -17,7 +17,7 @@ enum {
 typedef UINT (*TCTOOEM)(OEMCHAR *dst, UINT dcnt, const void *src, UINT scnt);
 typedef UINT (*TCFROMOEM)(void *dst, UINT dcnt, const OEMCHAR *src, UINT scnt);
 
-typedef struct {
+typedef struct TCINF {
 	UINT8		caps;
 	UINT8		xendian;
 	UINT8		width;
